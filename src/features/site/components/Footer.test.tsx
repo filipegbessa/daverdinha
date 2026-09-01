@@ -13,4 +13,12 @@ describe('Footer', () => {
       expect.stringContaining('https://wa.me/5521986509259'),
     );
   });
+
+  it('links to the privacy policy page', () => {
+    render(<Footer />);
+    expect(screen.getByRole('link', { name: 'Política de Privacidade' })).toHaveAttribute(
+      'href',
+      '/politica-de-privacidade',
+    );
+  });
 });

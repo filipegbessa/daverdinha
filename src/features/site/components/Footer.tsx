@@ -11,6 +11,9 @@ export function Footer() {
         <Link href={getWhatsAppUrl('Oi! Vim pelo site da Da Verdinha 🌱')} target="_blank" className="underline underline-offset-4">
           Falar no WhatsApp
         </Link>
+        <Link href="/politica-de-privacidade" className="underline underline-offset-4">
+          Política de Privacidade
+        </Link>
       </div>
       <p>© {new Date().getFullYear()} Da Verdinha</p>
     </footer>
