@@ -4,9 +4,11 @@ Frontend do projeto Da Verdinha (Next.js + Tailwind + shadcn/ui).
 
 ## Setup local
 
-1. `cp .env.local.example .env.local` e preencher `NEXT_PUBLIC_WHATSAPP_NUMBER` com o número real.
+1. `cp .env.local.example .env.local`.
 2. `npm install`
 3. `npm run dev`
+
+Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/business.ts`, não em `.env` — edite ali pra atualizar.
 
 ## Testes
 
