@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Lora, Raleway } from 'next/font/google';
+import { GoogleAnalytics } from '@next/third-parties/google';
 import './globals.css';
 import { BUSINESS_INFO } from '@/features/site/lib/business-info';
+import { shouldEnableAnalytics } from '@/lib/analytics';
 
 const lora = Lora({ subsets: ['latin'], variable: '--font-lora', display: 'swap' });
 const raleway = Raleway({ subsets: ['latin'], variable: '--font-raleway', display: 'swap' });
@@ -25,7 +27,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${lora.variable} ${raleway.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {shouldEnableAnalytics() && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}
+      </body>
     </html>
   );
 }
