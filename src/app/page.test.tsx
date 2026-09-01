@@ -1,6 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import Page from './page';
 
+// Hero is now an async Server Component (fetches active hero slides) — RTL can't
+// resolve a nested async component synchronously, so it's mocked here. Hero has
+// its own dedicated tests (Hero.test.tsx) covering the fetch/fallback/carousel logic.
+jest.mock('@/features/site/components/Hero', () => ({
+  Hero: () => <h1>Um cantinho verde pra chamar de seu</h1>,
+}));
+
 describe('Home page', () => {
   it('renders the core static sections', () => {
     render(<Page />);
