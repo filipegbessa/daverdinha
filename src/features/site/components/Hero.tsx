@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 
 export function Hero() {
@@ -9,15 +10,13 @@ export function Hero() {
       <p className="mx-auto mt-4 max-w-xl text-ink-soft">
         Ateliê de plantas no Santo Cristo, Rio de Janeiro. Vasos, mudas e atendimento direto pelo WhatsApp.
       </p>
-      <Button
-        render={
-          <Link href={getWhatsAppUrl('Oi! Gostaria de saber mais sobre a Da Verdinha 🌱')} target="_blank">
-            Falar no WhatsApp
-          </Link>
-        }
-        size="lg"
-        className="mt-8 bg-moss hover:bg-moss/90"
-      />
+      <Link
+        href={getWhatsAppUrl('Oi! Gostaria de saber mais sobre a Da Verdinha 🌱')}
+        target="_blank"
+        className={cn(buttonVariants({ variant: 'default', size: 'lg' }), 'mt-8 bg-moss hover:bg-moss/90')}
+      >
+        Falar no WhatsApp
+      </Link>
     </section>
   );
 }
