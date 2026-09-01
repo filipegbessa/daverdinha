@@ -14,6 +14,10 @@ export default {
         sand: '#e4dfce',
         'sand-line': '#cfc6a8',
       },
+      fontFamily: {
+        serif: ['var(--font-lora)', 'ui-serif', 'Georgia', 'serif'],
+        sans: ['var(--font-raleway)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
     },
   },
   plugins: [],
