@@ -14,4 +14,13 @@ describe('Home page', () => {
     expect(screen.getAllByText('Da Verdinha').length).toBeGreaterThan(0);
     expect(screen.getByText(/Ateliê de plantas no Santo Cristo/)).toBeInTheDocument();
   });
+
+  it('renders the LocalBusiness JSON-LD script tag', () => {
+    const { container } = render(<Page />);
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).not.toBeNull();
+    const json = JSON.parse(script!.textContent!);
+    expect(json['@type']).toBe('LocalBusiness');
+    expect(json.name).toBe('Da Verdinha');
+  });
 });
