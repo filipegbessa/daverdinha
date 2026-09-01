@@ -21,4 +21,9 @@ describe('Footer', () => {
       '/politica-de-privacidade',
     );
   });
+
+  it('shows the real CNPJ', () => {
+    render(<Footer />);
+    expect(screen.getByText('CNPJ 66.371.530/0001-54')).toBeInTheDocument();
+  });
 });

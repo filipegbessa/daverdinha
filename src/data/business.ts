@@ -34,6 +34,11 @@ export const businessInfo = {
     formatted: 'R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030',
   },
 
+  legal: {
+    cnpj: '66.371.530/0001-54',
+    razaoSocial: '66.371.530 Alana Viana Moreno',
+  },
+
   areaServed: DELIVERY_ZONES.map((z) => z.zona),
 } as const;
 
@@ -50,5 +55,6 @@ export function generateLocalBusinessJsonLd(): Record<string, unknown> {
     areaServed: businessInfo.areaServed,
     telephone: businessInfo.contact.phone.number,
     address: businessInfo.address.formatted,
+    taxID: businessInfo.legal.cnpj,
   };
 }

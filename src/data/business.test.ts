@@ -7,6 +7,8 @@ describe('businessInfo', () => {
     expect(businessInfo.contact.instagram.url).toBe('https://www.instagram.com/daverdinha_/');
     expect(businessInfo.address.formatted).toBe('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030');
     expect(businessInfo.areaServed).toEqual(['Zona Sul', 'Centro', 'Zona Portuária', 'Zona Norte']);
+    expect(businessInfo.legal.cnpj).toBe('66.371.530/0001-54');
+    expect(businessInfo.legal.razaoSocial).toBe('66.371.530 Alana Viana Moreno');
   });
 });
 
@@ -18,6 +20,7 @@ describe('generateLocalBusinessJsonLd', () => {
     expect(json.telephone).toBe('5521986509259');
     expect(json.address).toBe('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030');
     expect(json.sameAs).toEqual(['https://www.instagram.com/daverdinha_/']);
+    expect(json.taxID).toBe('66.371.530/0001-54');
   });
 
   it('includes url only when NEXT_PUBLIC_SITE_URL is set', () => {

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AtSign, MessageCircle } from 'lucide-react';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
+import { businessInfo } from '@/data/business';
 
 export function Footer() {
   return (
@@ -27,6 +28,7 @@ export function Footer() {
         </Link>
       </div>
       <p>© {new Date().getFullYear()} Da Verdinha</p>
+      <p className="text-xs">CNPJ {businessInfo.legal.cnpj}</p>
     </footer>
   );
 }
