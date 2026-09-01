@@ -18,6 +18,10 @@ export default {
         serif: ['var(--font-lora)', 'ui-serif', 'Georgia', 'serif'],
         sans: ['var(--font-raleway)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
+      boxShadow: {
+        card: '0 4px 16px -6px rgba(24, 41, 30, 0.10)',
+        soft: '0 12px 32px -10px rgba(24, 89, 40, 0.22)',
+      },
     },
   },
   plugins: [],
