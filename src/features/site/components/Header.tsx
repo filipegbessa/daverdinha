@@ -10,10 +10,10 @@ export function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <span className="flex items-center gap-2 font-serif text-lg font-semibold text-ink">
           <Leaf className="size-5 text-moss" strokeWidth={2} aria-hidden="true" />
-          Da Verdinha
+          Daverdinha
         </span>
         <Link
-          href={getWhatsAppUrl('Oi! Vim pelo site da Da Verdinha 🌱')}
+          href={getWhatsAppUrl('Oi! Vim pelo site da Daverdinha 🌱')}
           target="_blank"
           className={cn(
             buttonVariants({ variant: 'default', size: 'default' }),

@@ -12,13 +12,13 @@ describe('Location', () => {
     const link = screen.getByRole('link', { name: 'Ver no Google Maps' });
     expect(link.getAttribute('href')).toBe(
       'https://www.google.com/maps/search/?api=1&query=' +
-        encodeURIComponent('Da Verdinha, R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030'),
+        encodeURIComponent('Daverdinha, R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030'),
     );
   });
 
   it('embeds a map iframe pointing at the address, no API key needed', () => {
     render(<Location />);
-    const iframe = screen.getByTitle('Mapa de localização da Da Verdinha');
+    const iframe = screen.getByTitle('Mapa de localização da Daverdinha');
     expect(iframe).toHaveAttribute(
       'src',
       'https://maps.google.com/maps?q=' +

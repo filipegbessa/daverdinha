@@ -7,14 +7,14 @@ export function About() {
     <section className="bg-sand px-6 py-16 md:py-24">
       <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2 md:gap-16">
         <ImagePlaceholder
-          alt="Foto do espaço da Da Verdinha"
+          alt="Foto do espaço da Daverdinha"
           className="order-last aspect-[4/3] max-h-[420px] rounded-[1rem_2.5rem_1rem_2.5rem] shadow-card md:order-first"
         />
         <div className="text-center md:text-left">
           <Eyebrow>Sobre</Eyebrow>
-          <h2 className="mt-3 font-serif text-2xl font-semibold text-ink">Da Verdinha</h2>
+          <h2 className="mt-3 font-serif text-2xl font-semibold text-ink">Daverdinha</h2>
           <p className="mt-4 text-lg text-ink-soft">
-            Da Verdinha é um espaço pra plantar, criar e brindar 🌱 Atendimento e entrega combinados direto pelo
+            Daverdinha é um espaço pra plantar, criar e brindar 🌱 Atendimento e entrega combinados direto pelo
             WhatsApp — é só chamar a gente por lá.
           </p>
           <Link

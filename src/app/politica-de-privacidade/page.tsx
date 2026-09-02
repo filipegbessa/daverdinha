@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { businessInfo } from '@/data/business';
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidade — Da Verdinha',
+  title: 'Política de Privacidade — Daverdinha',
 };
 
 export default function PoliticaDePrivacidadePage() {
@@ -11,7 +11,7 @@ export default function PoliticaDePrivacidadePage() {
       <h1 className="text-3xl font-semibold">Política de Privacidade</h1>
       <div className="mt-6 space-y-6 text-ink-soft">
         <p>
-          A Da Verdinha é um ateliê de plantas no Santo Cristo, Rio de Janeiro. Esta página explica quais
+          A Daverdinha é um ateliê de plantas no Santo Cristo, Rio de Janeiro. Esta página explica quais
           dados coletamos quando você visita este site ou fala com a gente pelo WhatsApp, e como usamos essas
           informações.
         </p>

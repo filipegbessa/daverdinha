@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { Header } from './Header';
 
 describe('Header', () => {
-  it('shows the Da Verdinha wordmark', () => {
+  it('shows the Daverdinha wordmark', () => {
     render(<Header />);
-    expect(screen.getByText('Da Verdinha')).toBeInTheDocument();
+    expect(screen.getByText('Daverdinha')).toBeInTheDocument();
   });
 
   it('links the CTA button to WhatsApp with a prefilled greeting', () => {

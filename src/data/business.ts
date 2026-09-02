@@ -1,7 +1,7 @@
 /**
  * Informações do negócio
  *
- * Fonte única dos dados reais da Da Verdinha — nome, contato, endereço.
+ * Fonte única dos dados reais da Daverdinha — nome, contato, endereço.
  * Editar aqui atualiza em todo o site (SEO, seção de localização, avaliações).
  *
  * Não confundir com variáveis de ambiente (.env), que são pra configuração
@@ -11,7 +11,7 @@
 import { DELIVERY_ZONES } from '@/features/site/lib/delivery-zones';
 
 export const businessInfo = {
-  name: 'Da Verdinha',
+  name: 'Daverdinha',
   description:
     'Vasos, mudas e um cantinho verde pra chamar de seu. Atendimento e entrega combinados direto pelo WhatsApp.',
 

@@ -9,17 +9,17 @@ const lora = Lora({ subsets: ['latin'], variable: '--font-lora', display: 'swap'
 const raleway = Raleway({ subsets: ['latin'], variable: '--font-raleway', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Da Verdinha — Ateliê de plantas no Rio de Janeiro',
+  title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
   description: businessInfo.description,
   openGraph: {
-    title: 'Da Verdinha — Ateliê de plantas no Rio de Janeiro',
+    title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
     description: businessInfo.description,
     type: 'website',
     url: process.env.NEXT_PUBLIC_SITE_URL,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Da Verdinha — Ateliê de plantas no Rio de Janeiro',
+    title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
     description: businessInfo.description,
   },
 };

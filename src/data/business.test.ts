@@ -2,7 +2,7 @@ import { businessInfo, generateLocalBusinessJsonLd } from './business';
 
 describe('businessInfo', () => {
   it('has the confirmed real business facts', () => {
-    expect(businessInfo.name).toBe('Da Verdinha');
+    expect(businessInfo.name).toBe('Daverdinha');
     expect(businessInfo.contact.phone.number).toBe('5521986509259');
     expect(businessInfo.contact.instagram.url).toBe('https://www.instagram.com/daverdinha_/');
     expect(businessInfo.address.formatted).toBe('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030');
@@ -16,7 +16,7 @@ describe('generateLocalBusinessJsonLd', () => {
   it('always includes name, telephone, and address (all now hardcoded, never conditional)', () => {
     const json = generateLocalBusinessJsonLd();
     expect(json['@type']).toBe('LocalBusiness');
-    expect(json.name).toBe('Da Verdinha');
+    expect(json.name).toBe('Daverdinha');
     expect(json.telephone).toBe('5521986509259');
     expect(json.address).toBe('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030');
     expect(json.sameAs).toEqual(['https://www.instagram.com/daverdinha_/']);

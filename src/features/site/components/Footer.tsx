@@ -16,7 +16,7 @@ export function Footer() {
           @daverdinha_
         </Link>
         <Link
-          href={getWhatsAppUrl('Oi! Vim pelo site da Da Verdinha 🌱')}
+          href={getWhatsAppUrl('Oi! Vim pelo site da Daverdinha 🌱')}
           target="_blank"
           className="flex items-center gap-1.5 text-ink-soft underline underline-offset-4"
         >
@@ -27,7 +27,7 @@ export function Footer() {
           Política de Privacidade
         </Link>
       </div>
-      <p>© {new Date().getFullYear()} Da Verdinha</p>
+      <p>© {new Date().getFullYear()} Daverdinha</p>
       <p className="text-xs">CNPJ {businessInfo.legal.cnpj}</p>
     </footer>
   );

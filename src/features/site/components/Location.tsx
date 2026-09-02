@@ -25,7 +25,7 @@ export function Location() {
           Ver no Google Maps
         </Link>
         <iframe
-          title="Mapa de localização da Da Verdinha"
+          title="Mapa de localização da Daverdinha"
           src={`https://maps.google.com/maps?q=${embedQuery}&output=embed`}
           className="mx-auto mt-6 h-64 w-full rounded-2xl border-0 shadow-card"
           loading="lazy"

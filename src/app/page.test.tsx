@@ -15,7 +15,7 @@ describe('Home page', () => {
     expect(screen.getByText('Onde entregamos')).toBeInTheDocument();
     expect(screen.getByText('Onde estamos')).toBeInTheDocument();
     expect(screen.getByText('Perguntas frequentes')).toBeInTheDocument();
-    expect(screen.getAllByText('Da Verdinha').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Daverdinha').length).toBeGreaterThan(0);
   });
 
   it('renders the LocalBusiness JSON-LD script tag', () => {

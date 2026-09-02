@@ -1,6 +1,6 @@
 # daverdinha
 
-Frontend do projeto Da Verdinha (Next.js + Tailwind + shadcn/ui).
+Frontend do projeto Daverdinha (Next.js + Tailwind + shadcn/ui).
 
 ## Setup local
 
