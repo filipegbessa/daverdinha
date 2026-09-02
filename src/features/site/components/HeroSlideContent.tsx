@@ -34,7 +34,7 @@ export function HeroSlideContent({ slide }: { slide: HeroSlide }) {
       <ImagePlaceholder
         src={slide.imageUrl ?? undefined}
         alt={`Foto — ${slide.titulo}`}
-        className="aspect-[4/3] max-h-[420px] rounded-[2.5rem_1rem_2.5rem_1rem] shadow-card"
+        className="aspect-4/3 max-h-105 rounded-[2.5rem_1rem_2.5rem_1rem] shadow-card"
       />
     </div>
   );

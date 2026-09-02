@@ -8,7 +8,7 @@ export function About() {
       <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2 md:gap-16">
         <ImagePlaceholder
           alt="Foto do espaço da Daverdinha"
-          className="order-last aspect-[4/3] max-h-[420px] rounded-[1rem_2.5rem_1rem_2.5rem] shadow-card md:order-first"
+          className="order-last aspect-4/3 max-h-105 rounded-[1rem_2.5rem_1rem_2.5rem] shadow-card md:order-first"
         />
         <div className="text-center md:text-left">
           <Eyebrow>Sobre</Eyebrow>
