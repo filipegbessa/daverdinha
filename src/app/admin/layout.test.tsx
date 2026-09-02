@@ -3,7 +3,14 @@ import AdminLayout from './layout';
 
 jest.mock('@clerk/nextjs', () => ({ UserButton: () => <div data-testid="user-button" /> }));
 
+const mockUsePathname = jest.fn();
+jest.mock('next/navigation', () => ({ usePathname: () => mockUsePathname() }));
+
 describe('AdminLayout', () => {
+  beforeEach(() => {
+    mockUsePathname.mockReturnValue('/admin');
+  });
+
   it('renders links to every admin section', () => {
     render(
       <AdminLayout>
@@ -25,5 +32,16 @@ describe('AdminLayout', () => {
       </AdminLayout>,
     );
     expect(screen.getByText('conteúdo')).toBeInTheDocument();
+  });
+
+  it('marks the current route as the active nav link', () => {
+    mockUsePathname.mockReturnValue('/admin/conversas/abc-123');
+    render(
+      <AdminLayout>
+        <p>conteúdo</p>
+      </AdminLayout>,
+    );
+    expect(screen.getByRole('link', { name: 'Conversas' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Dashboard' })).not.toHaveAttribute('aria-current');
   });
 });
