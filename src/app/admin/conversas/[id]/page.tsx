@@ -1,40 +1,15 @@
 'use client';
-import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useApiClient } from '@/features/admin/lib/api-client';
+import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import type { ConversationWithMessages } from '@/features/admin/types/admin';
 
 export default function ConversaDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { apiFetch } = useApiClient();
-  const [conversation, setConversation] = useState<ConversationWithMessages | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    setIsLoading(true);
-    setError(null);
-
-    apiFetch<ConversationWithMessages>(`/conversations/${id}`)
-      .then((data) => {
-        if (cancelled) return;
-        setConversation(data);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Erro ao carregar conversa');
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [apiFetch, id]);
+  const {
+    data: conversation,
+    isLoading,
+    error,
+  } = useApiResource<ConversationWithMessages>(`/conversations/${id}`);
 
   return (
     <div>
@@ -42,8 +17,8 @@ export default function ConversaDetailPage() {
       {!isLoading && error && <p className="text-red-600">{error}</p>}
       {!isLoading && !error && conversation && (
         <>
-          <h1 className="text-2xl font-semibold">{conversation.telefone}</h1>
-          <p className="text-ink-soft">{conversation.nome ?? 'Nome não informado'}</p>
+          <h1 className="text-2xl font-semibold">{conversation.phone}</h1>
+          <p className="text-ink-soft">{conversation.name ?? 'Nome não informado'}</p>
           <div className="mt-6 space-y-2">
             {conversation.messages.map((message) => (
               <div

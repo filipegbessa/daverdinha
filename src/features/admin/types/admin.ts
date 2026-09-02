@@ -9,18 +9,18 @@ export type MenuItemType = 'texto' | 'entrega' | 'atendente';
 
 export interface MenuItem {
   id: string;
-  ordem: number;
-  tema: string;
-  tipo: MenuItemType;
-  resposta: string | null;
+  order: number;
+  topic: string;
+  type: MenuItemType;
+  reply: string | null;
   active: boolean;
 }
 
 export interface DeliveryLocation {
   id: string;
-  zona: string;
-  nomeRegiao: string;
-  atendida: boolean;
+  zone: string;
+  regionName: string;
+  covered: boolean;
 }
 
 export type ConversationStatus = 'bot_active' | 'paused_human';
@@ -28,8 +28,8 @@ export type EntryPoint = 'menu' | 'catalog';
 
 export interface Conversation {
   id: string;
-  telefone: string;
-  nome: string | null;
+  phone: string;
+  name: string | null;
   status: ConversationStatus;
   entryPoint: EntryPoint | null;
   updatedAt: string;

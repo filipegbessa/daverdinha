@@ -1,8 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useApiClient } from '@/features/admin/lib/api-client';
+import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import type { Conversation } from '@/features/admin/types/admin';
 
 const STATUS_LABEL: Record<Conversation['status'], string> = {
@@ -16,35 +15,8 @@ const ENTRY_POINT_LABEL: Record<string, string> = {
 };
 
 export default function ConversasPage() {
-  const { apiFetch } = useApiClient();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    setIsLoading(true);
-    setError(null);
-
-    apiFetch<Conversation[]>('/conversations')
-      .then((data) => {
-        if (cancelled) return;
-        setConversations(data);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Erro ao carregar conversas');
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [apiFetch]);
+  const { data, isLoading, error } = useApiResource<Conversation[]>('/conversations');
+  const conversations = data ?? [];
 
   return (
     <div>
@@ -67,10 +39,10 @@ export default function ConversasPage() {
               <TableRow key={conversation.id}>
                 <TableCell>
                   <Link href={`/admin/conversas/${conversation.id}`} className="underline underline-offset-4">
-                    {conversation.telefone}
+                    {conversation.phone}
                   </Link>
                 </TableCell>
-                <TableCell>{conversation.nome ?? '—'}</TableCell>
+                <TableCell>{conversation.name ?? '—'}</TableCell>
                 <TableCell>{STATUS_LABEL[conversation.status]}</TableCell>
                 <TableCell>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</TableCell>
                 <TableCell>{new Date(conversation.updatedAt).toLocaleString('pt-BR')}</TableCell>

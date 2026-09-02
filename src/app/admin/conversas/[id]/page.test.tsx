@@ -7,8 +7,8 @@ jest.mock('next/navigation', () => ({ useParams: () => ({ id: 'c1' }) }));
 
 const conversation = {
   id: 'c1',
-  telefone: '5521999999999',
-  nome: 'Maria',
+  phone: '5521999999999',
+  name: 'Maria',
   status: 'paused_human' as const,
   entryPoint: 'menu' as const,
   updatedAt: '2026-08-31T14:32:00Z',

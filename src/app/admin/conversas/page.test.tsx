@@ -7,16 +7,16 @@ jest.mock('@/features/admin/lib/api-client');
 const conversations = [
   {
     id: 'c1',
-    telefone: '5521999999999',
-    nome: 'Maria',
+    phone: '5521999999999',
+    name: 'Maria',
     status: 'paused_human' as const,
     entryPoint: 'menu' as const,
     updatedAt: '2026-08-31T14:32:00Z',
   },
   {
     id: 'c2',
-    telefone: '5521988888888',
-    nome: null,
+    phone: '5521988888888',
+    name: null,
     status: 'bot_active' as const,
     entryPoint: 'catalog' as const,
     updatedAt: '2026-08-30T10:00:00Z',
