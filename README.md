@@ -8,6 +8,8 @@ Frontend do projeto Daverdinha (Next.js + Tailwind + shadcn/ui + Clerk).
 2. `npm install`
 3. `npm run dev`
 
+Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/business.ts`, não em `.env` — edite ali pra atualizar.
+
 ## Estrutura
 
 - `/` — site institucional (público, sem login).
