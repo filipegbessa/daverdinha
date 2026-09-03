@@ -1,21 +1,5 @@
 import '@testing-library/jest-dom';
 
-// Monkey-patch toBeDisabled to also recognize aria-disabled
-const originalMatchers = expect.getMatchers ? expect.getMatchers() : {};
-expect.extend({
-  toBeDisabled(received: HTMLElement) {
-    const isDisabled =
-      received.hasAttribute('disabled') ||
-      received.getAttribute('aria-disabled') === 'true';
-
-    return {
-      pass: isDisabled,
-      message: () =>
-        `Expected element to be disabled but it was not`,
-    };
-  },
-});
-
 // jsdom doesn't implement matchMedia — default to "motion allowed" everywhere,
 // individual tests override this to simulate prefers-reduced-motion.
 // Guarded because some tests (e.g. middleware) run under the Node test

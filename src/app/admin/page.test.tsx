@@ -15,7 +15,7 @@ describe('DashboardPage', () => {
     render(<DashboardPage />);
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
-    expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('lets the operator toggle the bot on when at least one menu item is active', async () => {
@@ -27,7 +27,7 @@ describe('DashboardPage', () => {
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<DashboardPage />);
-    await waitFor(() => expect(screen.getByRole('switch')).not.toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('switch')).not.toHaveAttribute('aria-disabled', 'true'));
 
     await userEvent.click(screen.getByRole('switch'));
 
@@ -48,11 +48,23 @@ describe('DashboardPage', () => {
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<DashboardPage />);
-    await waitFor(() => expect(screen.getByRole('switch')).not.toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('switch')).not.toHaveAttribute('aria-disabled', 'true'));
     await userEvent.click(screen.getByRole('switch'));
 
     await waitFor(() =>
       expect(screen.getByText('Não é possível ligar o bot sem nenhum item de menu ativo.')).toBeInTheDocument(),
     );
+  });
+
+  it('shows an error and stops loading when the initial data fetch fails', async () => {
+    const apiFetch = jest.fn().mockRejectedValue(new Error('Não foi possível carregar os dados do painel.'));
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<DashboardPage />);
+
+    await waitFor(() =>
+      expect(screen.getByText('Não foi possível carregar os dados do painel.')).toBeInTheDocument(),
+    );
+    expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
   });
 });

@@ -11,12 +11,14 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([apiFetch<BotSettings>('/bot-settings'), apiFetch<MenuItem[]>('/menu-items')]).then(
-      ([settingsData, items]) => {
+    Promise.all([apiFetch<BotSettings>('/bot-settings'), apiFetch<MenuItem[]>('/menu-items')])
+      .then(([settingsData, items]) => {
         setSettings(settingsData);
         setActiveCount(items.filter((item) => item.active).length);
-      },
-    );
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Não foi possível carregar os dados do painel.');
+      });
   }, [apiFetch]);
 
   async function handleToggle(checked: boolean) {
@@ -32,7 +34,15 @@ export default function DashboardPage() {
     }
   }
 
-  if (!settings) return <p>Carregando...</p>;
+  if (!settings) {
+    return error ? (
+      <p role="alert" className="mt-4 rounded border border-berry bg-berry/10 p-3 text-berry">
+        {error}
+      </p>
+    ) : (
+      <p>Carregando...</p>
+    );
+  }
 
   return (
     <div>
@@ -47,7 +57,11 @@ export default function DashboardPage() {
         <Switch checked={settings.botEnabled} disabled={activeCount === 0} onCheckedChange={handleToggle} />
         <span>{settings.botEnabled ? 'Bot ativo' : 'Bot desativado'}</span>
       </div>
-      {error && <p className="mt-2 text-berry">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-berry">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
