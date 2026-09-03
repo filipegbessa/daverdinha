@@ -41,4 +41,26 @@ describe('MensagensPage', () => {
     );
     expect(await screen.findByRole('status')).toHaveTextContent('Salvo!');
   });
+
+  it('shows an error and stops loading when the initial data fetch fails', async () => {
+    const apiFetch = jest.fn().mockRejectedValue(new Error('Não foi possível carregar as mensagens.'));
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<MensagensPage />);
+
+    await waitFor(() => expect(screen.getByText('Não foi possível carregar as mensagens.')).toBeInTheDocument());
+    expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+  });
+
+  it('shows an error message when saving fails', async () => {
+    const apiFetch = jest.fn().mockResolvedValueOnce(settings).mockRejectedValueOnce(new Error('Erro ao salvar as mensagens.'));
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<MensagensPage />);
+    await screen.findByDisplayValue('Oi! Bem-vinda(o) à Daverdinha 🌱');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(screen.getByText('Erro ao salvar as mensagens.')).toBeInTheDocument());
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
 });

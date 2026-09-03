@@ -11,20 +11,38 @@ export default function MensagensPage() {
   const { apiFetch } = useApiClient();
   const [form, setForm] = useState<MessagesForm | null>(null);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch<MessagesForm>('/bot-settings').then(setForm);
+    apiFetch<MessagesForm>('/bot-settings')
+      .then(setForm)
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Não foi possível carregar as mensagens.');
+      });
   }, [apiFetch]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form) return;
     setSaved(false);
-    await apiFetch('/bot-settings', { method: 'PATCH', body: JSON.stringify(form) });
-    setSaved(true);
+    setError(null);
+    try {
+      await apiFetch('/bot-settings', { method: 'PATCH', body: JSON.stringify(form) });
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar');
+    }
   }
 
-  if (!form) return <p>Carregando...</p>;
+  if (!form) {
+    return error ? (
+      <p role="alert" className="mt-4 rounded border border-berry bg-berry/10 p-3 text-berry">
+        {error}
+      </p>
+    ) : (
+      <p>Carregando...</p>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
@@ -61,6 +79,11 @@ export default function MensagensPage() {
       </div>
       <Button type="submit">Salvar</Button>
       {saved && <p role="status">Salvo!</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-berry">
+          {error}
+        </p>
+      )}
     </form>
   );
 }
