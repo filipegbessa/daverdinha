@@ -1,23 +1,22 @@
 # daverdinha
 
-Frontend do projeto Daverdinha (Next.js + Tailwind + shadcn/ui).
+Frontend do projeto Daverdinha (Next.js + Tailwind + shadcn/ui + Clerk).
 
 ## Setup local
 
-1. `cp .env.local.example .env.local`.
+1. `cp .env.local.example .env.local` e preencher as chaves do Clerk (dashboard.clerk.com) e demais variáveis.
 2. `npm install`
 3. `npm run dev`
 
-Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/business.ts`, não em `.env` — edite ali pra atualizar.
+## Estrutura
+
+- `/` — site institucional (público, sem login).
+- `/politica-de-privacidade` — página pública.
+- `/login` — acesso ao admin via Clerk.
+- `/admin/*` — sistema de gestão (autenticado): dashboard, mensagens, menu, entregas, conversas.
 
 ## Testes
 
 `npm test`
 
-## Estrutura
-
-- `/` — site institucional (público, sem login).
-- `/admin/*` — sistema de gestão (autenticado via Clerk, ver plano separado).
-
-Ver `docs/superpowers/plans/2026-08-31-da-verdinha-site-institucional.md` e
-`docs/superpowers/plans/2026-08-31-da-verdinha-admin.md` (raiz do monorepo) para o desenho completo.
+Ver os 3 planos em `docs/superpowers/plans/` (site institucional, admin, e o backend em `daverdinha-api`) pro desenho completo.
