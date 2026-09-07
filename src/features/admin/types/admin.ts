@@ -1,11 +1,21 @@
 export interface BotSettings {
   botEnabled: boolean;
   welcomeMessage: string;
+  menuPrompt: string;
   deliveryPrompt: string;
   deliveryWaitMessage: string;
+  deliveryNotCoveredMessage: string;
+  deliveryUnrecognizedMessage: string;
+  invalidAttemptsExceededMessage: string;
 }
 
-export type MenuItemType = 'texto' | 'entrega' | 'atendente';
+export type MenuItemType = 'texto' | 'entrega' | 'atendente' | 'pergunta';
+
+export interface MenuItemAnswerOption {
+  id: string;
+  keywords: string[];
+  reply: string;
+}
 
 export interface MenuItem {
   id: string;
@@ -13,6 +23,9 @@ export interface MenuItem {
   topic: string;
   type: MenuItemType;
   reply: string | null;
+  question: string | null;
+  noMatchReply: string | null;
+  answerOptions: MenuItemAnswerOption[];
   active: boolean;
 }
 
