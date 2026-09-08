@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import type { BotSettings } from '@/features/admin/types/admin';
 
-type MessagesForm = Pick<BotSettings, 'welcomeMessage' | 'deliveryPrompt' | 'deliveryWaitMessage'>;
+type MessagesForm = Pick<BotSettings, 'welcomeMessage' | 'invalidAttemptsExceededMessage'>;
 
 export default function MensagensPage() {
   const { apiFetch } = useApiClient();
@@ -47,36 +47,33 @@ export default function MensagensPage() {
   return (
     <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
       <h1 className="text-2xl font-semibold">Mensagens</h1>
+
       <div>
         <label htmlFor="welcomeMessage" className="block font-medium">
           Mensagem de boas-vindas
         </label>
+        <p className="text-sm text-muted-foreground">Enviada assim que a conversa começa.</p>
         <Textarea
           id="welcomeMessage"
           value={form.welcomeMessage}
           onChange={(e) => setForm({ ...form, welcomeMessage: e.target.value })}
         />
       </div>
+
       <div>
-        <label htmlFor="deliveryPrompt" className="block font-medium">
-          Pergunta de endereço de entrega
+        <label htmlFor="invalidAttemptsExceededMessage" className="block font-medium">
+          Mensagem de escalonamento
         </label>
+        <p className="text-sm text-muted-foreground">
+          Enviada quando o cliente erra a opção do menu 3 vezes seguidas.
+        </p>
         <Textarea
-          id="deliveryPrompt"
-          value={form.deliveryPrompt}
-          onChange={(e) => setForm({ ...form, deliveryPrompt: e.target.value })}
+          id="invalidAttemptsExceededMessage"
+          value={form.invalidAttemptsExceededMessage}
+          onChange={(e) => setForm({ ...form, invalidAttemptsExceededMessage: e.target.value })}
         />
       </div>
-      <div>
-        <label htmlFor="deliveryWaitMessage" className="block font-medium">
-          Mensagem de espera
-        </label>
-        <Textarea
-          id="deliveryWaitMessage"
-          value={form.deliveryWaitMessage}
-          onChange={(e) => setForm({ ...form, deliveryWaitMessage: e.target.value })}
-        />
-      </div>
+
       <Button type="submit">Salvar</Button>
       {saved && <p role="status">Salvo!</p>}
       {error && (
