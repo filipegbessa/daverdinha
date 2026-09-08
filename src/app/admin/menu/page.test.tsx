@@ -6,8 +6,8 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 jest.mock('@/features/admin/lib/api-client');
 
 const items = [
-  { id: 'm1', order: 0, topic: 'Locais de entrega', type: 'entrega' as const, reply: null, active: true },
-  { id: 'm2', order: 1, topic: 'Bingo de Plantas', type: 'texto' as const, reply: 'Todo sábado', active: true },
+  { id: 'm1', order: 0, topic: 'Locais de entrega', type: 'entrega' as const, isSystem: true, reply: null, active: true },
+  { id: 'm2', order: 1, topic: 'Bingo de Plantas', type: 'texto' as const, isSystem: false, reply: 'Todo sábado', active: true },
 ];
 
 describe('MenuPage', () => {
@@ -120,11 +120,11 @@ describe('MenuPage', () => {
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<MenuPage />);
-    await screen.findByText('Locais de entrega');
+    await screen.findByText('Bingo de Plantas');
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Excluir' })[0]);
+    await userEvent.click(screen.getByRole('button', { name: 'Excluir' }));
 
-    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/menu-items/m1', { method: 'DELETE' }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/menu-items/m2', { method: 'DELETE' }));
   });
 
   it('shows an inline error when deleting fails', async () => {
@@ -135,11 +135,21 @@ describe('MenuPage', () => {
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<MenuPage />);
-    await screen.findByText('Locais de entrega');
+    await screen.findByText('Bingo de Plantas');
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Excluir' })[0]);
+    await userEvent.click(screen.getByRole('button', { name: 'Excluir' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao excluir item de menu.');
+  });
+
+  it('does not show an Excluir button for the system item', async () => {
+    const apiFetch = jest.fn().mockResolvedValue(items);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<MenuPage />);
+    await screen.findByText('Locais de entrega');
+
+    expect(screen.getAllByRole('button', { name: 'Excluir' })).toHaveLength(1);
   });
 
   it('opens the dialog to create a new item and reloads the list on save', async () => {

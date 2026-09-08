@@ -115,9 +115,11 @@ export default function MenuPage() {
             <Button variant="outline" onClick={() => setEditing(item)}>
               Editar
             </Button>
-            <Button variant="destructive" onClick={() => remove(item)}>
-              Excluir
-            </Button>
+            {!item.isSystem && (
+              <Button variant="destructive" onClick={() => remove(item)}>
+                Excluir
+              </Button>
+            )}
           </li>
         ))}
       </ul>
