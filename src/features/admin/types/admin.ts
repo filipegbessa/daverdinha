@@ -1,11 +1,6 @@
 export interface BotSettings {
   botEnabled: boolean;
   welcomeMessage: string;
-  menuPrompt: string;
-  deliveryPrompt: string;
-  deliveryWaitMessage: string;
-  deliveryNotCoveredMessage: string;
-  deliveryUnrecognizedMessage: string;
   invalidAttemptsExceededMessage: string;
 }
 
@@ -22,10 +17,15 @@ export interface MenuItem {
   order: number;
   topic: string;
   type: MenuItemType;
+  isSystem: boolean;
   reply: string | null;
   question: string | null;
   noMatchReply: string | null;
   answerOptions: MenuItemAnswerOption[];
+  deliveryPrompt: string | null;
+  deliveryConfirmedMessage: string | null;
+  deliveryNotCoveredMessage: string | null;
+  deliveryUnrecognizedMessage: string | null;
   active: boolean;
 }
 
