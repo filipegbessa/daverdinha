@@ -49,20 +49,19 @@ export default function EntregasPage() {
   async function toggleZone(zoneLocations: DeliveryLocation[]) {
     setError(null);
     const nextCovered = !zoneLocations.every((loc) => loc.covered);
-    try {
-      await Promise.all(
-        zoneLocations
-          .filter((loc) => loc.covered !== nextCovered)
-          .map((loc) =>
-            apiFetch(`/delivery-locations/${loc.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ covered: nextCovered }),
-            }),
-          ),
-      );
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao atualizar a região.');
+    const results = await Promise.allSettled(
+      zoneLocations
+        .filter((loc) => loc.covered !== nextCovered)
+        .map((loc) =>
+          apiFetch(`/delivery-locations/${loc.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ covered: nextCovered }),
+          }),
+        ),
+    );
+    await load();
+    if (results.some((result) => result.status === 'rejected')) {
+      setError('Erro ao atualizar a região.');
     }
   }
 
@@ -158,7 +157,7 @@ function IndeterminateCheckbox({
 
   useEffect(() => {
     if (ref.current) ref.current.indeterminate = indeterminate;
-  }, [indeterminate]);
+  });
 
   return <input ref={ref} type="checkbox" checked={checked} onChange={onChange} {...rest} />;
 }

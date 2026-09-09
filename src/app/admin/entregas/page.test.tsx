@@ -129,6 +129,35 @@ describe('EntregasPage', () => {
     expect(apiFetch).not.toHaveBeenCalledWith('/delivery-locations/l1', expect.anything());
   });
 
+  it('reloads and shows an error when part of a region batch fails', async () => {
+    // Local fixture: two bairros in the same region both need to flip, so the
+    // batch has two PATCH calls in flight -- one succeeds, one fails.
+    const zonaSul = [
+      { id: 'l1', zone: 'Zona Sul', regionName: 'Ipanema', covered: false },
+      { id: 'l2', zone: 'Zona Sul', regionName: 'Copacabana', covered: false },
+    ];
+    const apiFetch = jest
+      .fn()
+      .mockResolvedValueOnce(zonaSul) // initial load
+      .mockResolvedValueOnce(undefined) // PATCH l1 succeeds
+      .mockRejectedValueOnce(new Error('nope')) // PATCH l2 fails
+      .mockResolvedValueOnce([
+        { id: 'l1', zone: 'Zona Sul', regionName: 'Ipanema', covered: true },
+        { id: 'l2', zone: 'Zona Sul', regionName: 'Copacabana', covered: false },
+      ]); // reload reflecting the server's actual (partially-updated) state
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<EntregasPage />);
+    await screen.findByText('Ipanema');
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Sul' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao atualizar a região.');
+    // the reload happened -- the list reflects the server's real (partial) state, not the stale pre-click one
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Atendida Ipanema' })).toBeChecked());
+    expect(screen.getByRole('switch', { name: 'Atendida Copacabana' })).not.toBeChecked();
+  });
+
   it('clicking a fully-covered region checkbox uncovers every bairro in it', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
