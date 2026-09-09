@@ -38,6 +38,17 @@ Página para configurar as 2 mensagens globais do bot:
 
 Todas as demais mensagens do bot vivem agora nos itens individuais de menu (um para cada item, e 4 para o item especial de localidades).
 
+### /admin/conversas
+
+Lista de conversas com clientes; cada linha abre o detalhe em `/admin/conversas/[id]`.
+
+Na página de detalhe:
+
+- **Nome do contato**: pode ser editado a qualquer momento, independente do status da conversa.
+- **Pausar bot**: enquanto a conversa está `bot_active`, esse botão transfere o atendimento para um humano sob demanda.
+- **Responder e Reativar bot**: uma vez `paused_human` — seja pelo botão acima, seja pela lógica de escalonamento do próprio bot — a página passa a exibir um formulário de resposta (enviada pela mesma API do WhatsApp Cloud que o bot usa) e o botão "Reativar bot", que devolve a conversa ao bot.
+- A página é atualizada automaticamente a cada 5 segundos enquanto estiver aberta.
+
 ## Testes
 
 `npm test`

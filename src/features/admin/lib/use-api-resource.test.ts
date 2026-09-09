@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { useApiResource } from './use-api-resource';
 import { useApiClient } from './api-client';
 
@@ -113,5 +113,82 @@ describe('useApiResource', () => {
     rerender();
 
     expect(apiFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('polls at the given interval when pollIntervalMs is provided', async () => {
+    jest.useFakeTimers();
+    const apiFetch = jest.fn().mockResolvedValue({ id: 'c1' });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    renderHook(() => useApiResource<{ id: string }>('/conversations/c1', { pollIntervalMs: 5000 }));
+
+    // Flush the initial fetch's promise resolution inside `act` before
+    // advancing fake timers — otherwise the resulting state update lands
+    // outside any `act` call and React warns, even though the assertions
+    // below already wait for the right thing.
+    await act(async () => {});
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5000);
+    });
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5000);
+    });
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(3));
+
+    jest.useRealTimers();
+  });
+
+  it('does not poll when pollIntervalMs is not provided', async () => {
+    jest.useFakeTimers();
+    const apiFetch = jest.fn().mockResolvedValue({ id: 'c1' });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    renderHook(() => useApiResource<{ id: string }>('/conversations/c1'));
+
+    await act(async () => {});
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(1));
+
+    jest.advanceTimersByTime(60000);
+
+    expect(apiFetch).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
+  });
+
+  it('refetch() triggers an immediate fetch outside the poll interval', async () => {
+    const apiFetch = jest.fn().mockResolvedValueOnce({ id: 'c1' }).mockResolvedValueOnce({ id: 'c1-updated' });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    const { result } = renderHook(() => useApiResource<{ id: string }>('/conversations/c1'));
+
+    await waitFor(() => expect(result.current.data).toEqual({ id: 'c1' }));
+
+    act(() => {
+      result.current.refetch();
+    });
+
+    await waitFor(() => expect(result.current.data).toEqual({ id: 'c1-updated' }));
+    expect(apiFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not flip isLoading back to true on a background poll refetch once data has already loaded', async () => {
+    jest.useFakeTimers();
+    const apiFetch = jest.fn().mockResolvedValue({ id: 'c1' });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    const { result } = renderHook(() => useApiResource<{ id: string }>('/conversations/c1', { pollIntervalMs: 5000 }));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5000);
+    });
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
+
+    expect(result.current.isLoading).toBe(false);
+    jest.useRealTimers();
   });
 });
