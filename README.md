@@ -38,6 +38,14 @@ Página para configurar as 2 mensagens globais do bot:
 
 Todas as demais mensagens do bot vivem agora nos itens individuais de menu (um para cada item, e 4 para o item especial de localidades).
 
+### /admin/entregas
+
+Página para configurar quais bairros do Rio de Janeiro o bot considera atendidos.
+
+- A lista de bairros é fixa: mostra todos os bairros oficiais do Rio, agrupados por região administrativa, com dados vindos do seed do backend. O admin não pode mais criar, renomear nem excluir um bairro — só ligar/desligar a cobertura.
+- Cada bairro tem um toggle individual de atende/não atende. Cada região tem um checkbox de "marcar todos", que fica marcado se todos os bairros da região atendem, desmarcado se nenhum atende, e indeterminado se só parte atende; clicar nele liga ou desliga a região inteira de uma vez.
+- Um filtro de status ("Todas"/"Atende"/"Não atende") restringe quais bairros aparecem dentro de cada região — mas o cabeçalho da região continua visível mesmo se o filtro esconder todos os seus bairros.
+
 ### /admin/conversas
 
 Lista de conversas com clientes; cada linha abre o detalhe em `/admin/conversas/[id]`.
