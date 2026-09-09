@@ -1,11 +1,12 @@
 'use client';
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
+import { formatPhone } from '@/features/admin/lib/format-phone';
 import type { ConversationWithMessages } from '@/features/admin/types/admin';
 
 export default function ConversaDetailPage() {
@@ -18,6 +19,7 @@ export default function ConversaDetailPage() {
     refetch,
   } = useApiResource<ConversationWithMessages>(`/conversations/${id}`, { pollIntervalMs: 5000 });
 
+  const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState('');
   const [savingName, setSavingName] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -25,6 +27,7 @@ export default function ConversaDetailPage() {
   const [pausing, setPausing] = useState(false);
   const [reactivating, setReactivating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
 
   // useLayoutEffect (not useEffect): the sync must land in the same commit
   // as the render that shows the fetched conversation, so the input's value
@@ -39,12 +42,21 @@ export default function ConversaDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation?.name]);
 
+  useLayoutEffect(() => {
+    const el = messagesRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+    // Scroll to the latest message on load and whenever the message count
+    // changes (a reply just sent, or a new one arriving via poll).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation?.messages.length]);
+
   async function handleSaveName(e: React.FormEvent) {
     e.preventDefault();
     setActionError(null);
     setSavingName(true);
     try {
       await apiFetch(`/conversations/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) });
+      setEditingName(false);
       refetch();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Erro ao salvar o nome.');
@@ -97,89 +109,117 @@ export default function ConversaDetailPage() {
     }
   }
 
+  if (isLoading) {
+    return <p className="text-ink-soft">Carregando...</p>;
+  }
+
+  if (error && !conversation) {
+    return <p className="text-red-600">{error}</p>;
+  }
+
+  if (!conversation) {
+    return null;
+  }
+
   return (
-    <div>
-      {isLoading && <p className="text-ink-soft">Carregando...</p>}
-      {!isLoading && error && !conversation && <p className="text-red-600">{error}</p>}
-      {!isLoading && conversation && (
-        <>
-          <h1 className="text-2xl font-semibold">{conversation.phone}</h1>
-
-          {error && (
-            <p role="alert" className="mt-2 text-red-600">
-              {error}
-            </p>
+    <div className="flex h-full flex-col">
+      <div className="flex flex-none flex-wrap items-start justify-between gap-4 border-b border-sand-line pb-4">
+        <div>
+          <h1 className="text-2xl font-semibold">{conversation.name || formatPhone(conversation.phone)}</h1>
+          {!editingName && (
+            <div className="mt-1 flex items-center gap-2 text-sm text-ink-soft">
+              {conversation.name && <span>{formatPhone(conversation.phone)}</span>}
+              <button
+                type="button"
+                onClick={() => setEditingName(true)}
+                className="underline underline-offset-4 hover:text-ink"
+              >
+                {conversation.name ? 'editar nome' : '+ adicionar nome'}
+              </button>
+            </div>
           )}
-
-          <form onSubmit={handleSaveName} className="mt-2 flex items-end gap-2">
-            <div>
-              <label htmlFor="contactName" className="block text-sm font-medium">
+          {editingName && (
+            <form onSubmit={handleSaveName} className="mt-2 flex flex-wrap items-center gap-2">
+              <label htmlFor="contactName" className="sr-only">
                 Nome
               </label>
               <Input
                 id="contactName"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Nome não informado"
+                placeholder="Nome do cliente"
+                autoFocus
               />
-            </div>
-            <Button type="submit" variant="outline" disabled={savingName}>
-              Salvar nome
+              <Button type="submit" disabled={savingName}>
+                Salvar nome
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setEditingName(false)}>
+                Cancelar
+              </Button>
+            </form>
+          )}
+        </div>
+        {conversation.status === 'paused_human' ? (
+          <Button variant="outline" onClick={handleReactivate} disabled={reactivating}>
+            Reativar bot
+          </Button>
+        ) : (
+          <Button variant="outline" onClick={handlePause} disabled={pausing}>
+            Pausar bot
+          </Button>
+        )}
+      </div>
+
+      {error && (
+        <p role="alert" className="mt-2 flex-none text-red-600">
+          {error}
+        </p>
+      )}
+
+      <div ref={messagesRef} className="my-4 flex-1 space-y-2 overflow-y-auto">
+        {conversation.messages.map((message) => (
+          <div
+            key={message.id}
+            data-testid="message-bubble"
+            className={
+              message.direction === 'inbound'
+                ? 'max-w-md rounded bg-sand p-3'
+                : 'ml-auto max-w-md rounded bg-moss/10 p-3 text-right'
+            }
+          >
+            <p>{message.body}</p>
+            <p className="mt-1 text-xs text-ink-soft">{new Date(message.createdAt).toLocaleString('pt-BR')}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex-none border-t border-sand-line pt-3">
+        {conversation.status === 'paused_human' ? (
+          <form onSubmit={handleReply} className="flex items-end gap-2">
+            <label htmlFor="replyText" className="sr-only">
+              Responder
+            </label>
+            <Textarea
+              id="replyText"
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              required
+              rows={2}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={sending}>
+              Enviar
             </Button>
           </form>
-
-          {actionError && (
-            <p role="alert" className="mt-2 text-red-600">
-              {actionError}
-            </p>
-          )}
-
-          <div className="mt-6 space-y-2">
-            {conversation.messages.map((message) => (
-              <div
-                key={message.id}
-                data-testid="message-bubble"
-                className={
-                  message.direction === 'inbound'
-                    ? 'max-w-md rounded bg-sand p-3'
-                    : 'ml-auto max-w-md rounded bg-moss/10 p-3 text-right'
-                }
-              >
-                <p>{message.body}</p>
-                <p className="mt-1 text-xs text-ink-soft">{new Date(message.createdAt).toLocaleString('pt-BR')}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 space-y-3">
-            {conversation.status === 'paused_human' ? (
-              <>
-                <form onSubmit={handleReply} className="space-y-2">
-                  <label htmlFor="replyText" className="block font-medium">
-                    Responder
-                  </label>
-                  <Textarea
-                    id="replyText"
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    required
-                  />
-                  <Button type="submit" disabled={sending}>
-                    Enviar
-                  </Button>
-                </form>
-                <Button variant="outline" onClick={handleReactivate} disabled={reactivating}>
-                  Reativar bot
-                </Button>
-              </>
-            ) : (
-              <Button variant="outline" onClick={handlePause} disabled={pausing}>
-                Pausar bot
-              </Button>
-            )}
-          </div>
-        </>
-      )}
+        ) : (
+          <p className="text-sm text-ink-soft">O bot está respondendo essa conversa automaticamente.</p>
+        )}
+        {actionError && (
+          <p role="alert" className="mt-2 text-red-600">
+            {actionError}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

@@ -45,6 +45,7 @@ export interface Conversation {
   name: string | null;
   status: ConversationStatus;
   entryPoint: EntryPoint | null;
+  unread: boolean;
   updatedAt: string;
 }
 

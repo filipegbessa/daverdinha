@@ -19,20 +19,32 @@ const conversation = {
   ],
 };
 
+const unnamedConversation = { ...conversation, name: null };
+
 describe('ConversaDetailPage', () => {
-  it('shows the conversation metadata and every message in order', async () => {
+  it('shows the contact name as the heading, the formatted phone as a subtitle, and every message in order', async () => {
     const apiFetch = jest.fn().mockResolvedValue(conversation);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
 
-    expect(await screen.findByText('5521999999999')).toBeInTheDocument();
-    expect(screen.getByLabelText('Nome')).toHaveValue('Maria');
+    expect(await screen.findByRole('heading', { name: 'Maria' })).toBeInTheDocument();
+    expect(screen.getByText('+55 (21) 99999-9999')).toBeInTheDocument();
     expect(apiFetch).toHaveBeenCalledWith('/conversations/c1');
 
     const messages = screen.getAllByTestId('message-bubble');
     expect(messages[0]).toHaveTextContent('Oi, boa tarde!');
     expect(messages[1]).toHaveTextContent('Oi! Como posso ajudar?');
+  });
+
+  it('shows the formatted phone as the heading when the conversation has no name', async () => {
+    const apiFetch = jest.fn().mockResolvedValue(unnamedConversation);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    expect(await screen.findByRole('heading', { name: '+55 (21) 99999-9999' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '+ adicionar nome' })).toBeInTheDocument();
   });
 
   it('shows a loading state while the request is in flight', async () => {
@@ -49,7 +61,7 @@ describe('ConversaDetailPage', () => {
     expect(screen.getByText(/carregando/i)).toBeInTheDocument();
 
     resolveFetch(conversation);
-    await screen.findByText('5521999999999');
+    await screen.findByRole('heading', { name: 'Maria' });
     expect(screen.queryByText(/carregando/i)).not.toBeInTheDocument();
   });
 
@@ -63,7 +75,7 @@ describe('ConversaDetailPage', () => {
     expect(screen.queryByText(/carregando/i)).not.toBeInTheDocument();
   });
 
-  it('lets the operator edit and save the contact name', async () => {
+  it('lets the operator open the name editor, edit and save the contact name', async () => {
     const apiFetch = jest
       .fn()
       .mockResolvedValueOnce(conversation)
@@ -72,7 +84,11 @@ describe('ConversaDetailPage', () => {
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
-    const field = await screen.findByLabelText('Nome');
+    await screen.findByRole('heading', { name: 'Maria' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'editar nome' }));
+    const field = screen.getByLabelText('Nome');
+    expect(field).toHaveValue('Maria');
     await userEvent.clear(field);
     await userEvent.type(field, 'Maria Silva');
     await userEvent.click(screen.getByRole('button', { name: 'Salvar nome' }));
@@ -83,6 +99,20 @@ describe('ConversaDetailPage', () => {
         body: JSON.stringify({ name: 'Maria Silva' }),
       }),
     );
+  });
+
+  it('closes the name editor without saving when Cancelar is clicked', async () => {
+    const apiFetch = jest.fn().mockResolvedValue(conversation);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+    await screen.findByRole('heading', { name: 'Maria' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'editar nome' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.queryByLabelText('Nome')).not.toBeInTheDocument();
+    expect(apiFetch).toHaveBeenCalledTimes(1);
   });
 
   it('shows a Pausar bot button (and no reply form) when the conversation is bot_active', async () => {
@@ -166,7 +196,7 @@ describe('ConversaDetailPage', () => {
 
     render(<ConversaDetailPage />);
 
-    await screen.findByText('5521999999999');
+    await screen.findByRole('heading', { name: 'Maria' });
     expect(screen.queryByLabelText('Responder')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Reativar bot' })).not.toBeInTheDocument();
   });
@@ -276,16 +306,16 @@ describe('ConversaDetailPage', () => {
     // outside any `act` call and React warns, even though the assertions
     // below already wait for the right thing.
     await act(async () => {});
-    await screen.findByText('5521999999999');
+    await screen.findByRole('heading', { name: 'Maria' });
 
     await act(async () => {
       await jest.advanceTimersByTimeAsync(5000);
     });
     await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
 
-    expect(screen.getByText('5521999999999')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Maria' })).toBeInTheDocument();
     expect(screen.getAllByTestId('message-bubble')).toHaveLength(2);
-    expect(screen.getByLabelText('Nome')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'editar nome' })).toBeInTheDocument();
 
     jest.useRealTimers();
   });

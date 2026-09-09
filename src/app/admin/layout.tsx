@@ -24,8 +24,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [navOpen, setNavOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-paper text-ink">
-      <div className="flex items-center justify-between border-b border-moss-line bg-sand p-4 md:hidden">
+    <div className="flex h-screen flex-col bg-paper text-ink md:flex-row">
+      <div className="flex flex-none items-center justify-between border-b border-moss-line bg-sand p-4 md:hidden">
         <p className="font-serif text-lg font-semibold text-moss">Daverdinha</p>
         <button
           type="button"
