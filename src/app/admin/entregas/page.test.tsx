@@ -51,7 +51,7 @@ describe('EntregasPage', () => {
     render(<EntregasPage />);
     await screen.findByText('Ipanema');
 
-    await userEvent.click(screen.getByRole('switch', { name: 'Atendida Ipanema' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Atendida Ipanema' }));
 
     await waitFor(() =>
       expect(apiFetch).toHaveBeenCalledWith('/delivery-locations/l1', {
@@ -71,7 +71,7 @@ describe('EntregasPage', () => {
     render(<EntregasPage />);
     await screen.findByText('Ipanema');
 
-    await userEvent.click(screen.getByRole('switch', { name: 'Atendida Ipanema' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Atendida Ipanema' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao atualizar local de entrega.');
   });
@@ -154,8 +154,8 @@ describe('EntregasPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao atualizar a região.');
     // the reload happened -- the list reflects the server's real (partial) state, not the stale pre-click one
-    await waitFor(() => expect(screen.getByRole('switch', { name: 'Atendida Ipanema' })).toBeChecked());
-    expect(screen.getByRole('switch', { name: 'Atendida Copacabana' })).not.toBeChecked();
+    await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Atendida Ipanema' })).toBeChecked());
+    expect(screen.getByRole('checkbox', { name: 'Atendida Copacabana' })).not.toBeChecked();
   });
 
   it('clicking a fully-covered region checkbox uncovers every bairro in it', async () => {

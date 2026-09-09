@@ -1,6 +1,5 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Switch } from '@/components/ui/switch';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import type { DeliveryLocation } from '@/features/admin/types/admin';
 
@@ -108,37 +107,42 @@ export default function EntregasPage() {
           {error}
         </p>
       )}
-      {Object.entries(byZone).map(([zone, zoneLocations]) => {
-        const visible = zoneLocations.filter(matchesFilter);
-        const allCovered = zoneLocations.every((loc) => loc.covered);
-        const noneCovered = zoneLocations.every((loc) => !loc.covered);
+      <div className="mt-6 space-y-4">
+        {Object.entries(byZone).map(([zone, zoneLocations]) => {
+          const visible = zoneLocations.filter(matchesFilter);
+          const allCovered = zoneLocations.every((loc) => loc.covered);
+          const noneCovered = zoneLocations.every((loc) => !loc.covered);
 
-        return (
-          <div key={zone} className="mt-6">
-            <div className="flex items-center gap-2">
-              <IndeterminateCheckbox
-                checked={allCovered}
-                indeterminate={!allCovered && !noneCovered}
-                onChange={() => toggleZone(zoneLocations)}
-                aria-label={`Marcar toda a região ${zone}`}
-              />
-              <h2 className="font-medium text-berry">{zone}</h2>
+          return (
+            <div key={zone} className="overflow-hidden rounded-lg border border-sand-line">
+              <div className="flex items-center gap-2 bg-sand px-3 py-2">
+                <IndeterminateCheckbox
+                  checked={allCovered}
+                  indeterminate={!allCovered && !noneCovered}
+                  onChange={() => toggleZone(zoneLocations)}
+                  aria-label={`Marcar toda a região ${zone}`}
+                  className="h-4 w-4 accent-berry"
+                />
+                <h2 className="text-sm font-semibold tracking-wide text-berry uppercase">{zone}</h2>
+              </div>
+              <ul className="grid grid-cols-1 gap-x-4 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                {visible.map((location) => (
+                  <li key={location.id} className="flex items-center gap-2 py-1">
+                    <input
+                      type="checkbox"
+                      checked={location.covered}
+                      onChange={() => toggleCovered(location)}
+                      aria-label={`Atendida ${location.regionName}`}
+                      className="h-4 w-4 accent-berry"
+                    />
+                    <span className="text-sm">{location.regionName}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="mt-2 space-y-1">
-              {visible.map((location) => (
-                <li key={location.id} className="flex items-center gap-3 py-1">
-                  <span className="flex-1">{location.regionName}</span>
-                  <Switch
-                    checked={location.covered}
-                    onCheckedChange={() => toggleCovered(location)}
-                    aria-label={`Atendida ${location.regionName}`}
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
