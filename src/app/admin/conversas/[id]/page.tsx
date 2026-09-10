@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { formatPhone } from '@/features/admin/lib/format-phone';
+import { formatCurrency } from '@/features/admin/lib/format-currency';
 import type { ConversationWithMessages } from '@/features/admin/types/admin';
 
 export default function ConversaDetailPage() {
@@ -197,7 +198,18 @@ export default function ConversaDetailPage() {
                   🛒 Pedido pelo catálogo
                 </p>
               )}
-              <p className={kind === 'order' ? 'mt-1 whitespace-pre-line' : undefined}>{message.body}</p>
+              {kind === 'order' && message.orderItems && message.orderItems.length > 0 ? (
+                <ul className="mt-1 space-y-0.5">
+                  {message.orderItems.map((item) => (
+                    <li key={item.id}>
+                      - {item.productName ?? item.productRetailerId} x{item.quantity}
+                      {item.unitPrice && item.currency ? ` — ${formatCurrency(item.unitPrice, item.currency)}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={kind === 'order' ? 'mt-1 whitespace-pre-line' : undefined}>{message.body}</p>
+              )}
               <p className="mt-1 text-xs text-ink-soft">{new Date(message.createdAt).toLocaleString('pt-BR')}</p>
             </div>
           );

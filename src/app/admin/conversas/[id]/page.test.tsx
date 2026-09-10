@@ -330,7 +330,38 @@ describe('ConversaDetailPage', () => {
     expect(bubbles[0]).toHaveAttribute('data-message-kind', 'text');
   });
 
-  it('renders a catalog-order message with a distinct highlighted layout instead of a normal bubble', async () => {
+  it('renders a catalog-order message with a distinct highlighted layout, listing the structured order items with a formatted price', async () => {
+    const orderMessage = {
+      id: 'msg3',
+      direction: 'inbound' as const,
+      kind: 'order' as const,
+      body: null,
+      orderItems: [
+        {
+          id: 'oi1',
+          catalogId: 'cat1',
+          productRetailerId: 'vaso-01',
+          productName: 'Vaso de Cerâmica',
+          quantity: 2,
+          unitPrice: '35.00',
+          currency: 'BRL',
+        },
+      ],
+      createdAt: '2026-08-31T14:32:00Z',
+    };
+    const apiFetch = jest.fn().mockResolvedValue({ ...conversation, messages: [orderMessage] });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubble = await screen.findByTestId('message-bubble');
+    expect(bubble).toHaveAttribute('data-message-kind', 'order');
+    expect(bubble).toHaveTextContent('🛒 Pedido pelo catálogo');
+    expect(bubble).toHaveTextContent('Vaso de Cerâmica x2');
+    expect(bubble).toHaveTextContent('R$ 35,00');
+  });
+
+  it('falls back to the raw body for older catalog-order messages without structured order items', async () => {
     const orderMessage = {
       id: 'msg3',
       direction: 'inbound' as const,
@@ -344,8 +375,6 @@ describe('ConversaDetailPage', () => {
     render(<ConversaDetailPage />);
 
     const bubble = await screen.findByTestId('message-bubble');
-    expect(bubble).toHaveAttribute('data-message-kind', 'order');
-    expect(bubble).toHaveTextContent('🛒 Pedido pelo catálogo');
     expect(bubble).toHaveTextContent('Produto vaso-01');
   });
 
