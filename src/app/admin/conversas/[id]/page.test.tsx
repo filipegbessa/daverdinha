@@ -319,4 +319,51 @@ describe('ConversaDetailPage', () => {
 
     jest.useRealTimers();
   });
+
+  it('defaults a message with no kind to the normal text layout', async () => {
+    const apiFetch = jest.fn().mockResolvedValue(conversation);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubbles = await screen.findAllByTestId('message-bubble');
+    expect(bubbles[0]).toHaveAttribute('data-message-kind', 'text');
+  });
+
+  it('renders a catalog-order message with a distinct highlighted layout instead of a normal bubble', async () => {
+    const orderMessage = {
+      id: 'msg3',
+      direction: 'inbound' as const,
+      kind: 'order' as const,
+      body: 'Pedido pelo catálogo:\n- Produto vaso-01 x2 — BRL 35.00',
+      createdAt: '2026-08-31T14:32:00Z',
+    };
+    const apiFetch = jest.fn().mockResolvedValue({ ...conversation, messages: [orderMessage] });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubble = await screen.findByTestId('message-bubble');
+    expect(bubble).toHaveAttribute('data-message-kind', 'order');
+    expect(bubble).toHaveTextContent('🛒 Pedido pelo catálogo');
+    expect(bubble).toHaveTextContent('Produto vaso-01');
+  });
+
+  it('renders an invalid-content message distinctly from a normal text bubble', async () => {
+    const invalidMessage = {
+      id: 'msg3',
+      direction: 'inbound' as const,
+      kind: 'invalid_content' as const,
+      body: '[Conteúdo inválido]',
+      createdAt: '2026-08-31T14:32:00Z',
+    };
+    const apiFetch = jest.fn().mockResolvedValue({ ...conversation, messages: [invalidMessage] });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubble = await screen.findByTestId('message-bubble');
+    expect(bubble).toHaveAttribute('data-message-kind', 'invalid_content');
+    expect(bubble).toHaveTextContent('[Conteúdo inválido]');
+  });
 });

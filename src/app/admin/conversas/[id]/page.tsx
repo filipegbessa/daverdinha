@@ -177,20 +177,31 @@ export default function ConversaDetailPage() {
       )}
 
       <div ref={messagesRef} className="my-4 flex-1 space-y-2 overflow-y-auto">
-        {conversation.messages.map((message) => (
-          <div
-            key={message.id}
-            data-testid="message-bubble"
-            className={
-              message.direction === 'inbound'
-                ? 'max-w-md rounded bg-sand p-3'
-                : 'ml-auto max-w-md rounded bg-moss/10 p-3 text-right'
-            }
-          >
-            <p>{message.body}</p>
-            <p className="mt-1 text-xs text-ink-soft">{new Date(message.createdAt).toLocaleString('pt-BR')}</p>
-          </div>
-        ))}
+        {conversation.messages.map((message) => {
+          const kind = message.kind ?? 'text';
+          return (
+            <div
+              key={message.id}
+              data-testid="message-bubble"
+              data-message-kind={kind}
+              className={
+                kind === 'order'
+                  ? 'max-w-md rounded border-2 border-amber-400 bg-amber-50 p-3'
+                  : message.direction === 'inbound'
+                    ? `max-w-md rounded bg-sand p-3${kind === 'invalid_content' ? ' italic text-ink-soft' : ''}`
+                    : 'ml-auto max-w-md rounded bg-moss/10 p-3 text-right'
+              }
+            >
+              {kind === 'order' && (
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                  🛒 Pedido pelo catálogo
+                </p>
+              )}
+              <p className={kind === 'order' ? 'mt-1 whitespace-pre-line' : undefined}>{message.body}</p>
+              <p className="mt-1 text-xs text-ink-soft">{new Date(message.createdAt).toLocaleString('pt-BR')}</p>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex-none border-t border-sand-line pt-3">

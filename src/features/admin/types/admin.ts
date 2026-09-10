@@ -50,10 +50,12 @@ export interface Conversation {
 }
 
 export type MessageDirection = 'inbound' | 'outbound';
+export type MessageKind = 'text' | 'invalid_content' | 'order';
 
 export interface Message {
   id: string;
   direction: MessageDirection;
+  kind?: MessageKind;
   body: string;
   createdAt: string;
 }
