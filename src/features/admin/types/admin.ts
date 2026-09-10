@@ -56,7 +56,6 @@ export type MessageKind = 'text' | 'invalid_content' | 'order';
 
 export interface OrderItem {
   id: string;
-  catalogId: string;
   productRetailerId: string;
   productName: string | null;
   quantity: number;
@@ -64,12 +63,18 @@ export interface OrderItem {
   currency: string | null;
 }
 
+export interface Order {
+  id: string;
+  catalogId: string;
+  items: OrderItem[];
+}
+
 export interface Message {
   id: string;
   direction: MessageDirection;
   kind?: MessageKind;
   body: string | null;
-  orderItems?: OrderItem[];
+  order?: Order | null;
   createdAt: string;
 }
 

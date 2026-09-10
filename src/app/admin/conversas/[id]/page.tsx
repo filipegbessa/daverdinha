@@ -198,9 +198,9 @@ export default function ConversaDetailPage() {
                   🛒 Pedido pelo catálogo
                 </p>
               )}
-              {kind === 'order' && message.orderItems && message.orderItems.length > 0 ? (
+              {kind === 'order' && message.order && message.order.items.length > 0 ? (
                 <ul className="mt-1 space-y-0.5">
-                  {message.orderItems.map((item) => (
+                  {message.order.items.map((item) => (
                     <li key={item.id}>
                       - {item.productName ?? item.productRetailerId} x{item.quantity}
                       {item.unitPrice && item.currency ? ` — ${formatCurrency(item.unitPrice, item.currency)}` : ''}

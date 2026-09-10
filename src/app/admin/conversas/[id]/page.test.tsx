@@ -336,17 +336,20 @@ describe('ConversaDetailPage', () => {
       direction: 'inbound' as const,
       kind: 'order' as const,
       body: null,
-      orderItems: [
-        {
-          id: 'oi1',
-          catalogId: 'cat1',
-          productRetailerId: 'vaso-01',
-          productName: 'Vaso de Cerâmica',
-          quantity: 2,
-          unitPrice: '35.00',
-          currency: 'BRL',
-        },
-      ],
+      order: {
+        id: 'o1',
+        catalogId: 'cat1',
+        items: [
+          {
+            id: 'oi1',
+            productRetailerId: 'vaso-01',
+            productName: 'Vaso de Cerâmica',
+            quantity: 2,
+            unitPrice: '35.00',
+            currency: 'BRL',
+          },
+        ],
+      },
       createdAt: '2026-08-31T14:32:00Z',
     };
     const apiFetch = jest.fn().mockResolvedValue({ ...conversation, messages: [orderMessage] });
