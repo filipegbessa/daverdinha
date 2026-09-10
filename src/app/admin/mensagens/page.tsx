@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import type { BotSettings } from '@/features/admin/types/admin';
 
-type MessagesForm = Pick<BotSettings, 'welcomeMessage' | 'invalidAttemptsExceededMessage'>;
+type MessagesForm = Pick<
+  BotSettings,
+  'welcomeMessage' | 'invalidAttemptsExceededMessage' | 'mediaReceivedMessage' | 'orderReceivedMessage'
+>;
 
 export default function MensagensPage() {
   const { apiFetch } = useApiClient();
@@ -71,6 +74,36 @@ export default function MensagensPage() {
           id="invalidAttemptsExceededMessage"
           value={form.invalidAttemptsExceededMessage}
           onChange={(e) => setForm({ ...form, invalidAttemptsExceededMessage: e.target.value })}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="mediaReceivedMessage" className="block font-medium">
+          Mensagem de conteúdo inválido
+        </label>
+        <p className="text-sm text-muted-foreground">
+          Enviada quando o cliente manda áudio, figurinha, vídeo ou outro conteúdo que o bot não entende. O bot
+          continua a conversa normalmente depois.
+        </p>
+        <Textarea
+          id="mediaReceivedMessage"
+          value={form.mediaReceivedMessage}
+          onChange={(e) => setForm({ ...form, mediaReceivedMessage: e.target.value })}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="orderReceivedMessage" className="block font-medium">
+          Mensagem de pedido pelo catálogo
+        </label>
+        <p className="text-sm text-muted-foreground">
+          Enviada quando o cliente faz um pedido pelo catálogo do WhatsApp, antes de transferir para um
+          atendente.
+        </p>
+        <Textarea
+          id="orderReceivedMessage"
+          value={form.orderReceivedMessage}
+          onChange={(e) => setForm({ ...form, orderReceivedMessage: e.target.value })}
         />
       </div>
 

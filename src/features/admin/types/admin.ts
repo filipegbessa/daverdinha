@@ -2,6 +2,8 @@ export interface BotSettings {
   botEnabled: boolean;
   welcomeMessage: string;
   invalidAttemptsExceededMessage: string;
+  mediaReceivedMessage: string;
+  orderReceivedMessage: string;
 }
 
 export type MenuItemType = 'texto' | 'entrega' | 'atendente' | 'pergunta';
