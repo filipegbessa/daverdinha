@@ -1,10 +1,11 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Lora, Raleway } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import './globals.css';
 import { businessInfo } from '@/data/business';
 import { shouldEnableAnalytics } from '@/lib/analytics';
+import { ServiceWorkerRegistration } from '@/components/service-worker-registration';
 
 const lora = Lora({ subsets: ['latin'], variable: '--font-lora', display: 'swap' });
 const raleway = Raleway({ subsets: ['latin'], variable: '--font-raleway', display: 'swap' });
@@ -12,6 +13,15 @@ const raleway = Raleway({ subsets: ['latin'], variable: '--font-raleway', displa
 export const metadata: Metadata = {
   title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
   description: businessInfo.description,
+  icons: {
+    icon: [{ url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Daverdinha',
+  },
   openGraph: {
     title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
     description: businessInfo.description,
@@ -25,12 +35,17 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: '#185928',
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>
       <html lang="pt-BR" className={`${lora.variable} ${raleway.variable}`}>
         <body>
           {children}
+          <ServiceWorkerRegistration />
           {shouldEnableAnalytics() && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}
         </body>
       </html>
