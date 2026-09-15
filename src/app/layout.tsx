@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import { Lora, Raleway } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
-import { GoogleAnalytics } from '@next/third-parties/google';
 import './globals.css';
 import { businessInfo } from '@/data/business';
 import { shouldEnableAnalytics } from '@/lib/analytics';
 import { ServiceWorkerRegistration } from '@/components/service-worker-registration';
+import { Analytics } from '@/components/analytics';
 
 const lora = Lora({ subsets: ['latin'], variable: '--font-lora', display: 'swap' });
 const raleway = Raleway({ subsets: ['latin'], variable: '--font-raleway', display: 'swap' });
@@ -46,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body>
           {children}
           <ServiceWorkerRegistration />
-          {shouldEnableAnalytics() && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}
+          {shouldEnableAnalytics() && <Analytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />}
         </body>
       </html>
     </ClerkProvider>
