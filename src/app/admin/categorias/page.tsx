@@ -13,6 +13,7 @@ export default function CategoriasPage() {
   const [deleting, setDeleting] = useState<Category | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     return apiFetch<Category[]>('/categories')
@@ -31,17 +32,27 @@ export default function CategoriasPage() {
 
   async function handleConfirmDelete() {
     if (!deleting) return;
-    setError(null);
+    setDeleteError(null);
     setDeletingBusy(true);
     try {
       await apiFetch(`/categories/${deleting.id}`, { method: 'DELETE' });
       setDeleting(null);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao excluir categoria.');
+      setDeleteError(err instanceof Error ? err.message : 'Erro ao excluir categoria.');
     } finally {
       setDeletingBusy(false);
     }
+  }
+
+  function openDeleteDialog(category: Category) {
+    setDeleteError(null);
+    setDeleting(category);
+  }
+
+  function closeDeleteDialog() {
+    setDeleting(null);
+    setDeleteError(null);
   }
 
   return (
@@ -70,7 +81,7 @@ export default function CategoriasPage() {
               <Button variant="outline" onClick={() => setEditing(category)}>
                 Editar
               </Button>
-              <Button variant="destructive" onClick={() => setDeleting(category)}>
+              <Button variant="destructive" onClick={() => openDeleteDialog(category)}>
                 Excluir
               </Button>
             </li>
@@ -88,7 +99,7 @@ export default function CategoriasPage() {
         />
       )}
       {deleting && (
-        <Dialog open onOpenChange={(open) => !open && setDeleting(null)}>
+        <Dialog open onOpenChange={(open) => !open && closeDeleteDialog()}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Excluir categoria &quot;{deleting.name}&quot;?</DialogTitle>
@@ -98,8 +109,13 @@ export default function CategoriasPage() {
                 ? `Essa categoria está em ${deleting.conversationCount} conversa(s). Excluir vai remover a marcação dessas conversas.`
                 : 'Essa categoria não está em nenhuma conversa no momento.'}
             </p>
+            {deleteError && (
+              <p role="alert" className="text-berry">
+                {deleteError}
+              </p>
+            )}
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setDeleting(null)}>
+              <Button variant="outline" onClick={closeDeleteDialog}>
                 Cancelar
               </Button>
               <Button variant="destructive" onClick={handleConfirmDelete} disabled={deletingBusy}>

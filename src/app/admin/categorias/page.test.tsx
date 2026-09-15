@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CategoriasPage from './page';
 import { useApiClient } from '@/features/admin/lib/api-client';
@@ -51,6 +51,27 @@ describe('CategoriasPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
 
     expect(apiFetch).toHaveBeenCalledWith('/categories/cat1', { method: 'DELETE' });
+  });
+
+  it('shows the delete error inside the still-open dialog when the delete fails', async () => {
+    const apiFetch = jest.fn().mockResolvedValue(categories);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<CategoriasPage />);
+    const [deleteBingoButton] = await screen.findAllByRole('button', { name: 'Excluir' });
+    await userEvent.click(deleteBingoButton);
+
+    apiFetch.mockRejectedValueOnce(new Error('Não é possível excluir: categoria em uso.'));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Não é possível excluir: categoria em uso.');
+    expect(alert).toBeVisible();
+    // The dialog must stay open (not just present-but-hidden) so the error is
+    // actually perceivable, rather than sitting behind the dialog's inert
+    // background content.
+    expect(screen.getByRole('heading', { name: 'Excluir categoria "Bingo"?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirmar exclusão' })).toBeInTheDocument();
   });
 
   it('cancelling the delete dialog does not call the API', async () => {
