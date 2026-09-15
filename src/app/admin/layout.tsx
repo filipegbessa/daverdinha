@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { PushNotificationBanner } from '@/components/push-notification-banner';
+import { InstallAppNavItem } from '@/components/install-app-nav-item';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard' },
@@ -84,6 +85,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </li>
               );
             })}
+            <InstallAppNavItem />
           </ul>
           <div className="mt-8 border-t border-moss-line pt-4">
             <UserButton />
