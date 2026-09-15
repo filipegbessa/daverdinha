@@ -7,6 +7,10 @@ jest.mock('@clerk/nextjs', () => ({ UserButton: () => <div data-testid="user-but
 const mockUsePathname = jest.fn();
 jest.mock('next/navigation', () => ({ usePathname: () => mockUsePathname() }));
 
+jest.mock('@/features/admin/lib/use-push-subscription', () => ({
+  usePushSubscription: () => ({ subscribe: jest.fn(), subscribing: false, error: null }),
+}));
+
 describe('AdminLayout', () => {
   beforeEach(() => {
     mockUsePathname.mockReturnValue('/admin');

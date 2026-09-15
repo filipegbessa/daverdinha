@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
+import { PushNotificationBanner } from '@/components/push-notification-banner';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard' },
@@ -25,6 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex h-screen flex-col bg-paper text-ink md:flex-row">
+      <PushNotificationBanner />
       <div className="flex flex-none items-center justify-between border-b border-moss-line bg-sand p-4 md:hidden">
         <p className="font-serif text-lg font-semibold text-moss">Daverdinha</p>
         <button
