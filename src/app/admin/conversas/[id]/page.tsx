@@ -8,7 +8,7 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { formatPhone } from '@/features/admin/lib/format-phone';
 import { formatCurrency } from '@/features/admin/lib/format-currency';
-import type { ConversationWithMessages } from '@/features/admin/types/admin';
+import type { Category, ConversationWithMessages } from '@/features/admin/types/admin';
 
 export default function ConversaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +19,7 @@ export default function ConversaDetailPage() {
     error,
     refetch,
   } = useApiResource<ConversationWithMessages>(`/conversations/${id}`, { pollIntervalMs: 5000 });
+  const { data: allCategories } = useApiResource<Category[]>('/categories');
 
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState('');
@@ -27,6 +28,7 @@ export default function ConversaDetailPage() {
   const [sending, setSending] = useState(false);
   const [pausing, setPausing] = useState(false);
   const [reactivating, setReactivating] = useState(false);
+  const [togglingCategoryId, setTogglingCategoryId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
 
@@ -110,6 +112,21 @@ export default function ConversaDetailPage() {
     }
   }
 
+  async function handleToggleCategory(categoryId: string, attached: boolean) {
+    setActionError(null);
+    setTogglingCategoryId(categoryId);
+    try {
+      await apiFetch(`/conversations/${id}/categories/${categoryId}`, {
+        method: attached ? 'DELETE' : 'POST',
+      });
+      refetch();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Erro ao atualizar categoria.');
+    } finally {
+      setTogglingCategoryId(null);
+    }
+  }
+
   if (isLoading) {
     return <p className="text-ink-soft">Carregando...</p>;
   }
@@ -175,6 +192,30 @@ export default function ConversaDetailPage() {
         <p role="alert" className="mt-2 flex-none text-red-600">
           {error}
         </p>
+      )}
+
+      {allCategories && allCategories.length > 0 && (
+        <div className="flex flex-none flex-wrap gap-2 border-b border-sand-line py-3">
+          {allCategories.map((cat) => {
+            const attached = conversation.categories.some((c) => c.id === cat.id);
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => handleToggleCategory(cat.id, attached)}
+                disabled={togglingCategoryId === cat.id}
+                className="rounded-full border-2 px-3 py-1 text-sm font-medium"
+                style={
+                  attached
+                    ? { backgroundColor: cat.color, borderColor: cat.color, color: '#fff' }
+                    : { borderColor: cat.color, color: cat.color, backgroundColor: 'transparent' }
+                }
+              >
+                {cat.name}
+              </button>
+            );
+          })}
+        </div>
       )}
 
       <div ref={messagesRef} className="my-4 flex-1 space-y-2 overflow-y-auto">

@@ -13,6 +13,7 @@ const conversation = {
   status: 'paused_human' as const,
   entryPoint: 'menu' as const,
   updatedAt: '2026-08-31T14:32:00Z',
+  categories: [] as { id: string; name: string; color: string }[],
   messages: [
     { id: 'msg1', direction: 'inbound' as const, body: 'Oi, boa tarde!', createdAt: '2026-08-31T14:31:00Z' },
     { id: 'msg2', direction: 'outbound' as const, body: 'Oi! Como posso ajudar?', createdAt: '2026-08-31T14:31:05Z' },
@@ -76,11 +77,11 @@ describe('ConversaDetailPage', () => {
   });
 
   it('lets the operator open the name editor, edit and save the contact name', async () => {
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce(conversation)
-      .mockResolvedValueOnce({ ...conversation, name: 'Maria Silva' })
-      .mockResolvedValueOnce({ ...conversation, name: 'Maria Silva' });
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve([]);
+      if (options?.method === 'PATCH') return Promise.resolve({ ...conversation, name: 'Maria Silva' });
+      return Promise.resolve(conversation);
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
@@ -112,7 +113,7 @@ describe('ConversaDetailPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
     expect(screen.queryByLabelText('Nome')).not.toBeInTheDocument();
-    expect(apiFetch).toHaveBeenCalledTimes(1);
+    expect(apiFetch).toHaveBeenCalledTimes(2);
   });
 
   it('shows a Pausar bot button (and no reply form) when the conversation is bot_active', async () => {
@@ -127,11 +128,13 @@ describe('ConversaDetailPage', () => {
   });
 
   it('pauses the bot on click', async () => {
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce({ ...conversation, status: 'bot_active' })
-      .mockResolvedValueOnce({ id: 'c1', status: 'paused_human' })
-      .mockResolvedValueOnce({ ...conversation, status: 'paused_human' });
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve([]);
+      if (options?.method === 'POST' && path === '/conversations/c1/pause') {
+        return Promise.resolve({ id: 'c1', status: 'paused_human' });
+      }
+      return Promise.resolve({ ...conversation, status: 'bot_active' });
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
@@ -145,15 +148,15 @@ describe('ConversaDetailPage', () => {
 
   it('disables the Pausar bot button while the request is in flight', async () => {
     let resolvePause: (value: unknown) => void = () => {};
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce({ ...conversation, status: 'bot_active' })
-      .mockReturnValueOnce(
-        new Promise((resolve) => {
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve([]);
+      if (options?.method === 'POST' && path === '/conversations/c1/pause') {
+        return new Promise((resolve) => {
           resolvePause = resolve;
-        }),
-      )
-      .mockResolvedValueOnce({ ...conversation, status: 'paused_human' });
+        });
+      }
+      return Promise.resolve({ ...conversation, status: 'bot_active' });
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
@@ -167,10 +170,13 @@ describe('ConversaDetailPage', () => {
   });
 
   it('shows an inline error when pausing fails', async () => {
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce({ ...conversation, status: 'bot_active' })
-      .mockRejectedValueOnce(new Error('Erro ao pausar o bot.'));
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve([]);
+      if (options?.method === 'POST' && path === '/conversations/c1/pause') {
+        return Promise.reject(new Error('Erro ao pausar o bot.'));
+      }
+      return Promise.resolve({ ...conversation, status: 'bot_active' });
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
@@ -202,11 +208,11 @@ describe('ConversaDetailPage', () => {
   });
 
   it('sends a reply and clears the field on success', async () => {
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce(conversation)
-      .mockResolvedValueOnce({ id: 'm1' })
-      .mockResolvedValueOnce(conversation);
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve([]);
+      if (options?.method === 'POST' && path === '/conversations/c1/reply') return Promise.resolve({ id: 'm1' });
+      return Promise.resolve(conversation);
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
@@ -224,10 +230,13 @@ describe('ConversaDetailPage', () => {
   });
 
   it('shows an inline error when sending a reply fails', async () => {
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce(conversation)
-      .mockRejectedValueOnce(new Error('Erro ao enviar resposta.'));
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve([]);
+      if (options?.method === 'POST' && path === '/conversations/c1/reply') {
+        return Promise.reject(new Error('Erro ao enviar resposta.'));
+      }
+      return Promise.resolve(conversation);
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
@@ -239,11 +248,13 @@ describe('ConversaDetailPage', () => {
   });
 
   it('reactivates the bot on click', async () => {
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce(conversation)
-      .mockResolvedValueOnce({ id: 'c1', status: 'bot_active' })
-      .mockResolvedValueOnce({ ...conversation, status: 'bot_active' });
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve([]);
+      if (options?.method === 'POST' && path === '/conversations/c1/reactivate') {
+        return Promise.resolve({ id: 'c1', status: 'bot_active' });
+      }
+      return Promise.resolve(conversation);
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
@@ -257,15 +268,15 @@ describe('ConversaDetailPage', () => {
 
   it('disables the Reativar bot button while the request is in flight', async () => {
     let resolveReactivate: (value: unknown) => void = () => {};
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce(conversation)
-      .mockReturnValueOnce(
-        new Promise((resolve) => {
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve([]);
+      if (options?.method === 'POST' && path === '/conversations/c1/reactivate') {
+        return new Promise((resolve) => {
           resolveReactivate = resolve;
-        }),
-      )
-      .mockResolvedValueOnce({ ...conversation, status: 'bot_active' });
+        });
+      }
+      return Promise.resolve(conversation);
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
@@ -279,10 +290,13 @@ describe('ConversaDetailPage', () => {
   });
 
   it('shows an inline error when reactivating fails', async () => {
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce(conversation)
-      .mockRejectedValueOnce(new Error('Erro ao reativar o bot.'));
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve([]);
+      if (options?.method === 'POST' && path === '/conversations/c1/reactivate') {
+        return Promise.reject(new Error('Erro ao reativar o bot.'));
+      }
+      return Promise.resolve(conversation);
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
@@ -294,10 +308,13 @@ describe('ConversaDetailPage', () => {
 
   it('keeps showing the conversation when a background poll fails', async () => {
     jest.useFakeTimers();
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce(conversation)
-      .mockRejectedValueOnce(new Error('Erro de rede'));
+    let conversationCalls = 0;
+    const apiFetch = jest.fn((path: string) => {
+      if (path === '/categories') return Promise.resolve([]);
+      conversationCalls += 1;
+      if (conversationCalls === 1) return Promise.resolve(conversation);
+      return Promise.reject(new Error('Erro de rede'));
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
@@ -311,7 +328,7 @@ describe('ConversaDetailPage', () => {
     await act(async () => {
       await jest.advanceTimersByTimeAsync(5000);
     });
-    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(3));
 
     expect(screen.getByRole('heading', { name: 'Maria' })).toBeInTheDocument();
     expect(screen.getAllByTestId('message-bubble')).toHaveLength(2);
@@ -397,5 +414,60 @@ describe('ConversaDetailPage', () => {
     const bubble = await screen.findByTestId('message-bubble');
     expect(bubble).toHaveAttribute('data-message-kind', 'invalid_content');
     expect(bubble).toHaveTextContent('[Conteúdo inválido]');
+  });
+
+  it('renders every category as a chip, filled for attached ones and outlined for the rest', async () => {
+    const allCategories = [
+      { id: 'cat1', name: 'Bingo', color: '#185928' },
+      { id: 'cat2', name: 'Fechou compra', color: '#7a3247' },
+    ];
+    const apiFetch = jest.fn((path: string) => {
+      if (path === '/categories') return Promise.resolve(allCategories);
+      return Promise.resolve({ ...conversation, categories: [allCategories[0]] });
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bingoChip = await screen.findByRole('button', { name: 'Bingo' });
+    const fechouChip = screen.getByRole('button', { name: 'Fechou compra' });
+    expect(bingoChip).toHaveStyle({ backgroundColor: '#185928' });
+    expect(fechouChip).not.toHaveStyle({ backgroundColor: '#7a3247' });
+  });
+
+  it('attaches a category when its chip is clicked while detached', async () => {
+    const allCategories = [{ id: 'cat1', name: 'Bingo', color: '#185928' }];
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve(allCategories);
+      if (options?.method === 'POST' && path === '/conversations/c1/categories/cat1') {
+        return Promise.resolve(undefined);
+      }
+      return Promise.resolve({ ...conversation, categories: [] });
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+    const chip = await screen.findByRole('button', { name: 'Bingo' });
+    await userEvent.click(chip);
+
+    expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/categories/cat1', { method: 'POST' });
+  });
+
+  it('detaches a category when its chip is clicked while attached', async () => {
+    const allCategories = [{ id: 'cat1', name: 'Bingo', color: '#185928' }];
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve(allCategories);
+      if (options?.method === 'DELETE' && path === '/conversations/c1/categories/cat1') {
+        return Promise.resolve(undefined);
+      }
+      return Promise.resolve({ ...conversation, categories: allCategories });
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+    const chip = await screen.findByRole('button', { name: 'Bingo' });
+    await userEvent.click(chip);
+
+    expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/categories/cat1', { method: 'DELETE' });
   });
 });
