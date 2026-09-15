@@ -27,6 +27,7 @@ describe('AdminLayout', () => {
     expect(screen.getByRole('link', { name: 'Menu' })).toHaveAttribute('href', '/admin/menu');
     expect(screen.getByRole('link', { name: 'Entregas' })).toHaveAttribute('href', '/admin/entregas');
     expect(screen.getByRole('link', { name: 'Destaques' })).toHaveAttribute('href', '/admin/destaques');
+    expect(screen.getByRole('link', { name: 'Categorias' })).toHaveAttribute('href', '/admin/categorias');
     expect(screen.getByRole('link', { name: 'Conversas' })).toHaveAttribute('href', '/admin/conversas');
   });
 
