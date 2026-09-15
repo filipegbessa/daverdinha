@@ -28,7 +28,7 @@ export default function ConversaDetailPage() {
   const [sending, setSending] = useState(false);
   const [pausing, setPausing] = useState(false);
   const [reactivating, setReactivating] = useState(false);
-  const [togglingCategoryId, setTogglingCategoryId] = useState<string | null>(null);
+  const [pendingCategory, setPendingCategory] = useState<{ id: string; attach: boolean } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -46,6 +46,14 @@ export default function ConversaDetailPage() {
     // stomp on an in-progress edit the operator hasn't saved yet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation?.name]);
+
+  useEffect(() => {
+    if (!pendingCategory || !conversation) return;
+    const isAttached = conversation.categories.some((c) => c.id === pendingCategory.id);
+    if (isAttached === pendingCategory.attach) {
+      setPendingCategory(null);
+    }
+  }, [conversation, pendingCategory]);
 
   useEffect(() => {
     if (!categoryMenuOpen) return;
@@ -127,7 +135,11 @@ export default function ConversaDetailPage() {
 
   async function handleToggleCategory(categoryId: string, attached: boolean) {
     setActionError(null);
-    setTogglingCategoryId(categoryId);
+    // Stays pending until the effect below sees the refetched conversation
+    // actually reflect the change — clearing it as soon as the POST/DELETE
+    // resolves (before the list refreshes) let the chip look re-enabled for
+    // the gap between the request finishing and the refetch landing.
+    setPendingCategory({ id: categoryId, attach: !attached });
     try {
       await apiFetch(`/conversations/${id}/categories/${categoryId}`, {
         method: attached ? 'DELETE' : 'POST',
@@ -135,8 +147,7 @@ export default function ConversaDetailPage() {
       refetch();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Erro ao atualizar categoria.');
-    } finally {
-      setTogglingCategoryId(null);
+      setPendingCategory(null);
     }
   }
 
@@ -209,20 +220,26 @@ export default function ConversaDetailPage() {
 
       {allCategories && allCategories.length > 0 && (
         <div className="flex flex-none flex-wrap items-center gap-2 border-b border-sand-line py-3">
-          {conversation.categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => handleToggleCategory(cat.id, true)}
-              disabled={togglingCategoryId === cat.id}
-              title="Remover categoria"
-              className="flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium text-white"
-              style={{ backgroundColor: cat.color }}
-            >
-              {cat.name}
-              <span aria-hidden="true">×</span>
-            </button>
-          ))}
+          {conversation.categories.map((cat) => {
+            const isPending = pendingCategory?.id === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => handleToggleCategory(cat.id, true)}
+                disabled={isPending}
+                aria-busy={isPending}
+                title="Remover categoria"
+                className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium text-white ${
+                  isPending ? 'cursor-wait opacity-50' : ''
+                }`}
+                style={{ backgroundColor: cat.color }}
+              >
+                {cat.name}
+                <span aria-hidden="true">×</span>
+              </button>
+            );
+          })}
           <div className="relative" ref={categoryMenuRef}>
             <Button
               type="button"
@@ -246,23 +263,29 @@ export default function ConversaDetailPage() {
                   if (available.length === 0) {
                     return <p className="px-2 py-1.5 text-sm text-ink-soft">Todas já adicionadas.</p>;
                   }
-                  return available.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      role="menuitem"
-                      onClick={() => handleToggleCategory(cat.id, false)}
-                      disabled={togglingCategoryId === cat.id}
-                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-sand"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="h-2.5 w-2.5 flex-none rounded-full"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                      {cat.name}
-                    </button>
-                  ));
+                  return available.map((cat) => {
+                    const isPending = pendingCategory?.id === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => handleToggleCategory(cat.id, false)}
+                        disabled={isPending}
+                        aria-busy={isPending}
+                        className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-sand ${
+                          isPending ? 'cursor-wait opacity-50' : ''
+                        }`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="h-2.5 w-2.5 flex-none rounded-full"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        {cat.name}
+                      </button>
+                    );
+                  });
                 })()}
               </div>
             )}

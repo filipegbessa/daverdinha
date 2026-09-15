@@ -477,4 +477,38 @@ describe('ConversaDetailPage', () => {
 
     expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/categories/cat1', { method: 'DELETE' });
   });
+
+  it('keeps the header chip disabled until the refetch confirms the category is actually gone', async () => {
+    const allCategories = [{ id: 'cat1', name: 'Bingo', color: '#185928' }];
+    let resolveRefetch!: (value: unknown) => void;
+    let conversationFetchCount = 0;
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/categories') return Promise.resolve(allCategories);
+      if (options?.method === 'DELETE') return Promise.resolve(undefined);
+      conversationFetchCount += 1;
+      if (conversationFetchCount === 1) {
+        return Promise.resolve({ ...conversation, categories: allCategories });
+      }
+      // The refetch triggered after the DELETE resolves: kept pending so the
+      // test can assert the chip is still disabled/visible in that gap.
+      return new Promise((resolve) => {
+        resolveRefetch = resolve;
+      });
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+    const chip = await screen.findByRole('button', { name: /Bingo/ });
+    await userEvent.click(chip);
+
+    // The DELETE call itself already resolved (it's a plain
+    // Promise.resolve above), but the chip must stay disabled and visible
+    // until the *refetched* conversation confirms the category is gone.
+    await waitFor(() => expect(chip).toBeDisabled());
+    expect(screen.getByRole('button', { name: /Bingo/ })).toBeInTheDocument();
+
+    resolveRefetch({ ...conversation, categories: [] });
+
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Bingo/ })).not.toBeInTheDocument());
+  });
 });

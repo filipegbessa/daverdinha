@@ -83,6 +83,32 @@ describe('MenuPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao reordenar itens de menu.');
   });
 
+  it('disables every move button and row action while a reorder is in flight', async () => {
+    let resolveReorder!: () => void;
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (options?.method === 'PATCH' && path === '/menu-items/reorder') {
+        return new Promise<void>((resolve) => {
+          resolveReorder = resolve;
+        });
+      }
+      return Promise.resolve(items);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<MenuPage />);
+    await screen.findByText('Bingo de Plantas');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra cima' }));
+
+    expect(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra cima' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Mover Locais de entrega pra baixo' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Ativar Locais de entrega' })).toHaveAttribute('aria-disabled', 'true');
+    screen.getAllByRole('button', { name: 'Editar' }).forEach((button) => expect(button).toBeDisabled());
+
+    resolveReorder();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra cima' })).not.toBeDisabled());
+  });
+
   it('toggling active calls PATCH with the flipped value', async () => {
     const apiFetch = jest.fn().mockResolvedValue(items);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });

@@ -11,6 +11,7 @@ export default function MenuPage() {
   const [items, setItems] = useState<MenuItem[] | null>(null);
   const [editing, setEditing] = useState<MenuItem | 'new' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
 
   const load = useCallback(() => {
     return apiFetch<MenuItem[]>('/menu-items')
@@ -57,6 +58,7 @@ export default function MenuPage() {
     [reordered[index], reordered[swapWith]] = [reordered[swapWith], reordered[index]];
 
     setError(null);
+    setReordering(true);
     try {
       await apiFetch('/menu-items/reorder', {
         method: 'PATCH',
@@ -65,6 +67,8 @@ export default function MenuPage() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao reordenar itens de menu.');
+    } finally {
+      setReordering(false);
     }
   }
 
@@ -89,14 +93,14 @@ export default function MenuPage() {
           {error}
         </p>
       )}
-      <ul className="mt-6 space-y-2">
+      <ul className={`mt-6 space-y-2 ${reordering ? 'cursor-wait opacity-50' : ''}`} aria-busy={reordering}>
         {items.map((item, index) => (
           <li key={item.id} className="flex items-center gap-3 rounded border border-sand-line p-3">
             <div className="flex flex-col">
               <button
                 type="button"
                 aria-label={`Mover ${item.topic} pra cima`}
-                disabled={index === 0}
+                disabled={reordering || index === 0}
                 onClick={() => move(item, 'up')}
               >
                 ▲
@@ -104,19 +108,24 @@ export default function MenuPage() {
               <button
                 type="button"
                 aria-label={`Mover ${item.topic} pra baixo`}
-                disabled={index === items.length - 1}
+                disabled={reordering || index === items.length - 1}
                 onClick={() => move(item, 'down')}
               >
                 ▼
               </button>
             </div>
             <span className="flex-1">{item.topic}</span>
-            <Switch checked={item.active} onCheckedChange={() => toggleActive(item)} aria-label={`Ativar ${item.topic}`} />
-            <Button variant="outline" onClick={() => setEditing(item)}>
+            <Switch
+              checked={item.active}
+              onCheckedChange={() => toggleActive(item)}
+              disabled={reordering}
+              aria-label={`Ativar ${item.topic}`}
+            />
+            <Button variant="outline" disabled={reordering} onClick={() => setEditing(item)}>
               Editar
             </Button>
             {!item.isSystem && (
-              <Button variant="destructive" onClick={() => remove(item)}>
+              <Button variant="destructive" disabled={reordering} onClick={() => remove(item)}>
                 Excluir
               </Button>
             )}
