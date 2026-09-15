@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { PushNotificationBanner } from '@/components/push-notification-banner';
 import { InstallAppNavItem } from '@/components/install-app-nav-item';
+import { useApiResource } from '@/features/admin/lib/use-api-resource';
+import type { Conversation } from '@/features/admin/types/admin';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard' },
@@ -25,6 +27,21 @@ function isActiveRoute(pathname: string, href: string) {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
+  const { data: conversations } = useApiResource<Conversation[]>('/conversations', { pollIntervalMs: 15000 });
+  const unreadCount = conversations?.filter((c) => c.unread).length ?? 0;
+
+  useEffect(() => {
+    // Chrome/Edge/Android PWAs support the Badging API; Safari/iOS and
+    // browser-tab (non-installed) contexts don't — feature-detect at the
+    // call site rather than assuming availability.
+    if (unreadCount > 0) {
+      if (typeof navigator.setAppBadge === 'function') {
+        navigator.setAppBadge(unreadCount).catch(() => {});
+      }
+    } else if (typeof navigator.clearAppBadge === 'function') {
+      navigator.clearAppBadge().catch(() => {});
+    }
+  }, [unreadCount]);
 
   return (
     <div className="flex h-screen flex-col bg-paper text-ink">
@@ -71,17 +88,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <ul className="flex-1 space-y-1">
             {NAV_ITEMS.map((item) => {
               const active = isActiveRoute(pathname, item.href);
+              const showUnreadBadge = item.href === '/admin/conversas' && unreadCount > 0;
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     aria-current={active ? 'page' : undefined}
                     onClick={() => setNavOpen(false)}
-                    className={`block rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss ${
+                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss ${
                       active ? 'bg-moss font-medium text-paper' : 'text-ink-soft hover:bg-paper hover:text-ink'
                     }`}
                   >
-                    {item.label}
+                    <span>{item.label}</span>
+                    {showUnreadBadge && (
+                      <span
+                        aria-hidden="true"
+                        className="ml-2 inline-flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-berry px-1.5 text-xs font-semibold text-white"
+                      >
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );

@@ -168,6 +168,31 @@ describe('MenuPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao excluir item de menu.');
   });
 
+  it('disables every move button and row action while a delete is in flight', async () => {
+    let resolveDelete!: () => void;
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (options?.method === 'DELETE') {
+        return new Promise<void>((resolve) => {
+          resolveDelete = resolve;
+        });
+      }
+      return Promise.resolve(items);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<MenuPage />);
+    await screen.findByText('Bingo de Plantas');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Excluir' }));
+
+    expect(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra cima' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Ativar Locais de entrega' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: 'Excluir' })).toBeDisabled();
+
+    resolveDelete();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra cima' })).not.toBeDisabled());
+  });
+
   it('does not show an Excluir button for the system item', async () => {
     const apiFetch = jest.fn().mockResolvedValue(items);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });

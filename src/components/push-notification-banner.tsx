@@ -4,10 +4,33 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { usePushSubscription } from '@/features/admin/lib/use-push-subscription';
 
+const DISMISSED_STORAGE_KEY = 'daverdinha:push-banner-dismissed';
+
+function readDismissed(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(DISMISSED_STORAGE_KEY) === 'true';
+  } catch {
+    // Storage may be unavailable (private browsing, disabled cookies) — the
+    // banner just won't remember the dismissal across reloads in that case.
+    return false;
+  }
+}
+
 export function PushNotificationBanner() {
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(readDismissed);
   const { subscribe, subscribing, error } = usePushSubscription();
+
+  function handleDismiss() {
+    setDismissed(true);
+    try {
+      window.localStorage.setItem(DISMISSED_STORAGE_KEY, 'true');
+    } catch {
+      // Best-effort: the banner still hides for the rest of this session
+      // even if it can't be persisted.
+    }
+  }
 
   useEffect(() => {
     if (typeof Notification === 'undefined') {
@@ -64,7 +87,7 @@ export function PushNotificationBanner() {
         </Button>
         <button
           type="button"
-          onClick={() => setDismissed(true)}
+          onClick={handleDismiss}
           aria-label="Fechar aviso de notificações"
           className="rounded-lg p-1 text-ink-soft hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
         >

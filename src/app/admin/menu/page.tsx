@@ -11,7 +11,7 @@ export default function MenuPage() {
   const [items, setItems] = useState<MenuItem[] | null>(null);
   const [editing, setEditing] = useState<MenuItem | 'new' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [reordering, setReordering] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
     return apiFetch<MenuItem[]>('/menu-items')
@@ -30,21 +30,27 @@ export default function MenuPage() {
 
   async function toggleActive(item: MenuItem) {
     setError(null);
+    setBusy(true);
     try {
       await apiFetch(`/menu-items/${item.id}`, { method: 'PATCH', body: JSON.stringify({ active: !item.active }) });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao atualizar item de menu.');
+    } finally {
+      setBusy(false);
     }
   }
 
   async function remove(item: MenuItem) {
     setError(null);
+    setBusy(true);
     try {
       await apiFetch(`/menu-items/${item.id}`, { method: 'DELETE' });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao excluir item de menu.');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -58,7 +64,7 @@ export default function MenuPage() {
     [reordered[index], reordered[swapWith]] = [reordered[swapWith], reordered[index]];
 
     setError(null);
-    setReordering(true);
+    setBusy(true);
     try {
       await apiFetch('/menu-items/reorder', {
         method: 'PATCH',
@@ -68,7 +74,7 @@ export default function MenuPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao reordenar itens de menu.');
     } finally {
-      setReordering(false);
+      setBusy(false);
     }
   }
 
@@ -93,14 +99,14 @@ export default function MenuPage() {
           {error}
         </p>
       )}
-      <ul className={`mt-6 space-y-2 ${reordering ? 'cursor-wait opacity-50' : ''}`} aria-busy={reordering}>
+      <ul className={`mt-6 space-y-2 ${busy ? 'cursor-wait opacity-50' : ''}`} aria-busy={busy}>
         {items.map((item, index) => (
           <li key={item.id} className="flex items-center gap-3 rounded border border-sand-line p-3">
             <div className="flex flex-col">
               <button
                 type="button"
                 aria-label={`Mover ${item.topic} pra cima`}
-                disabled={reordering || index === 0}
+                disabled={busy || index === 0}
                 onClick={() => move(item, 'up')}
               >
                 ▲
@@ -108,7 +114,7 @@ export default function MenuPage() {
               <button
                 type="button"
                 aria-label={`Mover ${item.topic} pra baixo`}
-                disabled={reordering || index === items.length - 1}
+                disabled={busy || index === items.length - 1}
                 onClick={() => move(item, 'down')}
               >
                 ▼
@@ -118,14 +124,14 @@ export default function MenuPage() {
             <Switch
               checked={item.active}
               onCheckedChange={() => toggleActive(item)}
-              disabled={reordering}
+              disabled={busy}
               aria-label={`Ativar ${item.topic}`}
             />
-            <Button variant="outline" disabled={reordering} onClick={() => setEditing(item)}>
+            <Button variant="outline" disabled={busy} onClick={() => setEditing(item)}>
               Editar
             </Button>
             {!item.isSystem && (
-              <Button variant="destructive" disabled={reordering} onClick={() => remove(item)}>
+              <Button variant="destructive" disabled={busy} onClick={() => remove(item)}>
                 Excluir
               </Button>
             )}
