@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ConversaDetailPage from './page';
 import { useApiClient } from '@/features/admin/lib/api-client';
@@ -416,7 +416,7 @@ describe('ConversaDetailPage', () => {
     expect(bubble).toHaveTextContent('[Conteúdo inválido]');
   });
 
-  it('renders every category as a chip, filled for attached ones and outlined for the rest', async () => {
+  it('renders only attached categories as chips in the header', async () => {
     const allCategories = [
       { id: 'cat1', name: 'Bingo', color: '#185928' },
       { id: 'cat2', name: 'Fechou compra', color: '#7a3247' },
@@ -429,31 +429,38 @@ describe('ConversaDetailPage', () => {
 
     render(<ConversaDetailPage />);
 
-    const bingoChip = await screen.findByRole('button', { name: 'Bingo' });
-    const fechouChip = screen.getByRole('button', { name: 'Fechou compra' });
+    const bingoChip = await screen.findByRole('button', { name: /Bingo/ });
     expect(bingoChip).toHaveStyle({ backgroundColor: '#185928' });
-    expect(fechouChip).not.toHaveStyle({ backgroundColor: '#7a3247' });
+    expect(screen.queryByRole('button', { name: /Fechou compra/ })).not.toBeInTheDocument();
   });
 
-  it('attaches a category when its chip is clicked while detached', async () => {
-    const allCategories = [{ id: 'cat1', name: 'Bingo', color: '#185928' }];
+  it('lists only unattached categories in the "+ Categoria" menu and attaches one on click', async () => {
+    const allCategories = [
+      { id: 'cat1', name: 'Bingo', color: '#185928' },
+      { id: 'cat2', name: 'Fechou compra', color: '#7a3247' },
+    ];
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
       if (path === '/categories') return Promise.resolve(allCategories);
-      if (options?.method === 'POST' && path === '/conversations/c1/categories/cat1') {
+      if (options?.method === 'POST' && path === '/conversations/c1/categories/cat2') {
         return Promise.resolve(undefined);
       }
-      return Promise.resolve({ ...conversation, categories: [] });
+      return Promise.resolve({ ...conversation, categories: [allCategories[0]] });
     });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
-    const chip = await screen.findByRole('button', { name: 'Bingo' });
-    await userEvent.click(chip);
+    await screen.findByRole('button', { name: /Bingo/ });
+    await userEvent.click(screen.getByRole('button', { name: '+ Categoria' }));
 
-    expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/categories/cat1', { method: 'POST' });
+    const menu = await screen.findByRole('menu', { name: 'Adicionar categoria' });
+    expect(within(menu).queryByRole('menuitem', { name: 'Bingo' })).not.toBeInTheDocument();
+    const option = within(menu).getByRole('menuitem', { name: 'Fechou compra' });
+    await userEvent.click(option);
+
+    expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/categories/cat2', { method: 'POST' });
   });
 
-  it('detaches a category when its chip is clicked while attached', async () => {
+  it('detaches a category when its header chip is clicked', async () => {
     const allCategories = [{ id: 'cat1', name: 'Bingo', color: '#185928' }];
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
       if (path === '/categories') return Promise.resolve(allCategories);
@@ -465,7 +472,7 @@ describe('ConversaDetailPage', () => {
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversaDetailPage />);
-    const chip = await screen.findByRole('button', { name: 'Bingo' });
+    const chip = await screen.findByRole('button', { name: /Bingo/ });
     await userEvent.click(chip);
 
     expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/categories/cat1', { method: 'DELETE' });

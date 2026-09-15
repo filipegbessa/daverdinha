@@ -1,5 +1,5 @@
 'use client';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,9 @@ export default function ConversaDetailPage() {
   const [reactivating, setReactivating] = useState(false);
   const [togglingCategoryId, setTogglingCategoryId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const categoryMenuRef = useRef<HTMLDivElement>(null);
 
   // useLayoutEffect (not useEffect): the sync must land in the same commit
   // as the render that shows the fetched conversation, so the input's value
@@ -44,6 +46,17 @@ export default function ConversaDetailPage() {
     // stomp on an in-progress edit the operator hasn't saved yet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation?.name]);
+
+  useEffect(() => {
+    if (!categoryMenuOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (categoryMenuRef.current && !categoryMenuRef.current.contains(e.target as Node)) {
+        setCategoryMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [categoryMenuOpen]);
 
   useLayoutEffect(() => {
     const el = messagesRef.current;
@@ -195,26 +208,65 @@ export default function ConversaDetailPage() {
       )}
 
       {allCategories && allCategories.length > 0 && (
-        <div className="flex flex-none flex-wrap gap-2 border-b border-sand-line py-3">
-          {allCategories.map((cat) => {
-            const attached = conversation.categories.some((c) => c.id === cat.id);
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => handleToggleCategory(cat.id, attached)}
-                disabled={togglingCategoryId === cat.id}
-                className="rounded-full border-2 px-3 py-1 text-sm font-medium"
-                style={
-                  attached
-                    ? { backgroundColor: cat.color, borderColor: cat.color, color: '#fff' }
-                    : { borderColor: cat.color, color: cat.color, backgroundColor: 'transparent' }
-                }
+        <div className="flex flex-none flex-wrap items-center gap-2 border-b border-sand-line py-3">
+          {conversation.categories.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => handleToggleCategory(cat.id, true)}
+              disabled={togglingCategoryId === cat.id}
+              title="Remover categoria"
+              className="flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium text-white"
+              style={{ backgroundColor: cat.color }}
+            >
+              {cat.name}
+              <span aria-hidden="true">×</span>
+            </button>
+          ))}
+          <div className="relative" ref={categoryMenuRef}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCategoryMenuOpen((open) => !open)}
+              aria-expanded={categoryMenuOpen}
+            >
+              + Categoria
+            </Button>
+            {categoryMenuOpen && (
+              <div
+                role="menu"
+                aria-label="Adicionar categoria"
+                className="absolute left-0 top-full z-10 mt-1 w-48 rounded-md border border-sand-line bg-paper p-1 shadow-md"
               >
-                {cat.name}
-              </button>
-            );
-          })}
+                {(() => {
+                  const available = allCategories.filter(
+                    (cat) => !conversation.categories.some((c) => c.id === cat.id),
+                  );
+                  if (available.length === 0) {
+                    return <p className="px-2 py-1.5 text-sm text-ink-soft">Todas já adicionadas.</p>;
+                  }
+                  return available.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleToggleCategory(cat.id, false)}
+                      disabled={togglingCategoryId === cat.id}
+                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-sand"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="h-2.5 w-2.5 flex-none rounded-full"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      {cat.name}
+                    </button>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

@@ -202,6 +202,52 @@ describe('EntregasPage', () => {
     expect(screen.queryByText('Barra da Tijuca')).not.toBeInTheDocument();
   });
 
+  it('disables a bairro checkbox while its PATCH request is in flight', async () => {
+    let resolvePatch!: () => void;
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (options?.method === 'PATCH') {
+        return new Promise((resolve) => {
+          resolvePatch = () => resolve(undefined);
+        });
+      }
+      return Promise.resolve(locations);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<EntregasPage />);
+    await screen.findByText('Ipanema');
+
+    const checkbox = screen.getByRole('checkbox', { name: 'Atendida Ipanema' });
+    await userEvent.click(checkbox);
+
+    expect(checkbox).toBeDisabled();
+    resolvePatch();
+    await waitFor(() => expect(checkbox).not.toBeDisabled());
+  });
+
+  it('disables every bairro checkbox in a region while its batch PATCH is in flight', async () => {
+    const resolvers: Array<() => void> = [];
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (options?.method === 'PATCH') {
+        return new Promise((resolve) => resolvers.push(() => resolve(undefined)));
+      }
+      return Promise.resolve(locations);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<EntregasPage />);
+    await screen.findByText('Ipanema');
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Sul' }));
+
+    expect(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Sul' })).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: 'Atendida Copacabana' })).toBeDisabled();
+    resolvers.forEach((resolve) => resolve());
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Sul' })).not.toBeDisabled(),
+    );
+  });
+
   it('renders no controls to create, rename, or delete a bairro', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
