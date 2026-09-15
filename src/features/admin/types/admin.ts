@@ -41,6 +41,13 @@ export interface DeliveryLocation {
 export type ConversationStatus = 'bot_active' | 'paused_human';
 export type EntryPoint = 'menu' | 'catalog';
 
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+  conversationCount?: number;
+}
+
 export interface Conversation {
   id: string;
   phone: string;
@@ -49,6 +56,7 @@ export interface Conversation {
   entryPoint: EntryPoint | null;
   unread: boolean;
   updatedAt: string;
+  categories: Category[];
 }
 
 export type MessageDirection = 'inbound' | 'outbound';
