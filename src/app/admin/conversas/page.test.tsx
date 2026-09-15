@@ -5,6 +5,17 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 
 jest.mock('@/features/admin/lib/api-client');
 
+// The page fetches both '/conversations' and '/categories' through the same
+// `apiFetch`. Pre-existing tests only care about the conversations list, so
+// this keeps '/categories' resolving to an empty list instead of resolving
+// the conversations array for that path too (which would create bogus
+// category filter options and break tests asserting on the row contents).
+function mockConversationsApi(conversationsResponse: unknown) {
+  return jest.fn((path: string) =>
+    path === '/categories' ? Promise.resolve([]) : Promise.resolve(conversationsResponse),
+  );
+}
+
 const conversations = [
   {
     id: 'c1',
@@ -14,6 +25,7 @@ const conversations = [
     entryPoint: 'menu' as const,
     unread: true,
     updatedAt: '2026-08-31T14:32:00Z',
+    categories: [],
   },
   {
     id: 'c2',
@@ -23,12 +35,13 @@ const conversations = [
     entryPoint: 'catalog' as const,
     unread: false,
     updatedAt: '2026-08-30T10:00:00Z',
+    categories: [],
   },
 ];
 
 describe('ConversasPage', () => {
   it('lists every conversation with name first, formatted phone, status and entry point', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(conversations);
+    const apiFetch = mockConversationsApi(conversations);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversasPage />);
@@ -40,7 +53,7 @@ describe('ConversasPage', () => {
   });
 
   it('links the name to its conversation detail page', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(conversations);
+    const apiFetch = mockConversationsApi(conversations);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversasPage />);
@@ -50,7 +63,7 @@ describe('ConversasPage', () => {
   });
 
   it('links the formatted phone when the conversation has no name', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(conversations);
+    const apiFetch = mockConversationsApi(conversations);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversasPage />);
@@ -63,7 +76,7 @@ describe('ConversasPage', () => {
   });
 
   it('shows an unread indicator only for unread conversations', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(conversations);
+    const apiFetch = mockConversationsApi(conversations);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversasPage />);
@@ -75,7 +88,7 @@ describe('ConversasPage', () => {
   });
 
   it('filtering by "Não lidas" shows only unread conversations', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(conversations);
+    const apiFetch = mockConversationsApi(conversations);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversasPage />);
@@ -88,7 +101,7 @@ describe('ConversasPage', () => {
   });
 
   it('searching by name filters the list', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(conversations);
+    const apiFetch = mockConversationsApi(conversations);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversasPage />);
@@ -101,7 +114,7 @@ describe('ConversasPage', () => {
   });
 
   it('searching by phone digits filters the list', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(conversations);
+    const apiFetch = mockConversationsApi(conversations);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversasPage />);
@@ -115,11 +128,12 @@ describe('ConversasPage', () => {
 
   it('shows a loading state while the request is in flight', async () => {
     let resolveFetch: (value: typeof conversations) => void = () => {};
-    const apiFetch = jest.fn().mockReturnValue(
-      new Promise<typeof conversations>((resolve) => {
+    const apiFetch = jest.fn((path: string) => {
+      if (path === '/categories') return Promise.resolve([]);
+      return new Promise<typeof conversations>((resolve) => {
         resolveFetch = resolve;
-      }),
-    );
+      });
+    });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<ConversasPage />);
@@ -139,5 +153,66 @@ describe('ConversasPage', () => {
 
     expect(await screen.findByText('Erro 500')).toBeInTheDocument();
     expect(screen.queryByText(/carregando/i)).not.toBeInTheDocument();
+  });
+
+  it('shows a colored dot per attached category in a new column', async () => {
+    const apiFetch = jest.fn((path: string) => {
+      if (path === '/categories') return Promise.resolve([{ id: 'cat1', name: 'Bingo', color: '#185928' }]);
+      return Promise.resolve([
+        {
+          id: '1',
+          phone: '5521999999999',
+          name: 'Maria',
+          status: 'bot_active' as const,
+          entryPoint: 'menu' as const,
+          unread: false,
+          updatedAt: '2026-01-01T00:00:00Z',
+          categories: [{ id: 'cat1', name: 'Bingo', color: '#185928' }],
+        },
+      ]);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversasPage />);
+
+    expect(await screen.findByTitle('Bingo')).toHaveStyle({ backgroundColor: '#185928' });
+  });
+
+  it('filters the list down to conversations with the selected category', async () => {
+    const apiFetch = jest.fn((path: string) => {
+      if (path === '/categories') return Promise.resolve([{ id: 'cat1', name: 'Bingo', color: '#185928' }]);
+      return Promise.resolve([
+        {
+          id: '1',
+          phone: '5521999999999',
+          name: 'Maria',
+          status: 'bot_active' as const,
+          entryPoint: 'menu' as const,
+          unread: false,
+          updatedAt: '2026-01-01T00:00:00Z',
+          categories: [{ id: 'cat1', name: 'Bingo', color: '#185928' }],
+        },
+        {
+          id: '2',
+          phone: '5521988888888',
+          name: 'João',
+          status: 'bot_active' as const,
+          entryPoint: 'menu' as const,
+          unread: false,
+          updatedAt: '2026-01-01T00:00:00Z',
+          categories: [],
+        },
+      ]);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversasPage />);
+    await screen.findByText('Maria');
+    expect(screen.getByText('João')).toBeInTheDocument();
+
+    await userEvent.selectOptions(await screen.findByLabelText('Filtrar por categoria'), 'cat1');
+
+    expect(screen.getByText('Maria')).toBeInTheDocument();
+    expect(screen.queryByText('João')).not.toBeInTheDocument();
   });
 });

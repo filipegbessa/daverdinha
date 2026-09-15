@@ -1,12 +1,13 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
+import { useApiClient } from '@/features/admin/lib/api-client';
 import { formatPhone } from '@/features/admin/lib/format-phone';
-import type { Conversation } from '@/features/admin/types/admin';
+import type { Category, Conversation } from '@/features/admin/types/admin';
 
 const STATUS_LABEL: Record<Conversation['status'], string> = {
   bot_active: 'Bot ativo',
@@ -27,19 +28,31 @@ function normalizeSearch(value: string) {
 
 export default function ConversasPage() {
   const { data, isLoading, error } = useApiResource<Conversation[]>('/conversations', { pollIntervalMs: 10000 });
+  const { apiFetch } = useApiClient();
   const [search, setSearch] = useState('');
   const [onlyUnread, setOnlyUnread] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const conversations = data ?? [];
+
+  useEffect(() => {
+    apiFetch<Category[]>('/categories')
+      .then(setCategories)
+      .catch(() => setCategories([]));
+  }, [apiFetch]);
 
   const filtered = useMemo(() => {
     const query = normalizeSearch(search.trim());
     return conversations.filter((conversation) => {
       if (onlyUnread && !conversation.unread) return false;
+      if (categoryFilter !== 'all' && !conversation.categories.some((c) => c.id === categoryFilter)) {
+        return false;
+      }
       if (!query) return true;
       const haystack = `${normalizeSearch(conversation.name ?? '')} ${conversation.phone}`;
       return haystack.includes(query);
     });
-  }, [conversations, search, onlyUnread]);
+  }, [conversations, search, onlyUnread, categoryFilter]);
 
   return (
     <div>
@@ -62,6 +75,19 @@ export default function ConversasPage() {
           >
             Não lidas
           </Button>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            aria-label="Filtrar por categoria"
+            className="rounded-md border border-sand-line bg-paper px-2 py-1.5 text-sm"
+          >
+            <option value="all">Todas as categorias</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       {isLoading && <p className="mt-6 text-ink-soft">Carregando...</p>}
@@ -74,6 +100,7 @@ export default function ConversasPage() {
               <TableHead>Telefone</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Origem</TableHead>
+              <TableHead>Categorias</TableHead>
               <TableHead>Atualizado em</TableHead>
             </TableRow>
           </TableHeader>
@@ -94,6 +121,18 @@ export default function ConversasPage() {
                 <TableCell>{formatPhone(conversation.phone)}</TableCell>
                 <TableCell>{STATUS_LABEL[conversation.status]}</TableCell>
                 <TableCell>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {conversation.categories.map((cat) => (
+                      <span
+                        key={cat.id}
+                        title={cat.name}
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                    ))}
+                  </div>
+                </TableCell>
                 <TableCell>{new Date(conversation.updatedAt).toLocaleString('pt-BR')}</TableCell>
               </TableRow>
             ))}
