@@ -17,6 +17,11 @@ export function usePushSubscription() {
         throw new Error('Este navegador não suporta notificações push.');
       }
 
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!vapidKey) {
+        throw new Error('Notificações não estão configuradas neste ambiente.');
+      }
+
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
         throw new Error('Permissão de notificação negada.');
@@ -25,7 +30,7 @@ export function usePushSubscription() {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
       });
 
       await apiFetch('/push-subscriptions', {

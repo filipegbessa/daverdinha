@@ -13,8 +13,36 @@ export function PushNotificationBanner() {
       setPermission('unsupported');
       return;
     }
-    setPermission(Notification.permission);
-  }, []);
+    const currentPermission = Notification.permission;
+    setPermission(currentPermission);
+
+    if (currentPermission !== 'granted' || !('serviceWorker' in navigator)) {
+      return;
+    }
+
+    // Permission was already granted in the past, but we may not actually have
+    // a live browser subscription (e.g. the very first subscribe attempt failed
+    // after permission was granted). Check quietly and, if it's missing, try to
+    // (re)establish it. This never calls requestPermission() again — it only
+    // reads existing state via getSubscription().
+    let cancelled = false;
+    (async () => {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const existingSubscription = await registration.pushManager.getSubscription();
+        if (!cancelled && !existingSubscription) {
+          await subscribe();
+        }
+      } catch {
+        // Best-effort background check; any failure surfaces via the error
+        // state returned from subscribe() and keeps the banner visible.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [subscribe]);
 
   async function handleClick() {
     await subscribe();
@@ -23,7 +51,7 @@ export function PushNotificationBanner() {
     }
   }
 
-  if (permission !== 'default') return null;
+  if (permission !== 'default' && !error) return null;
 
   return (
     <div className="flex flex-none flex-wrap items-center justify-between gap-3 border-b border-moss-line bg-sand px-4 py-2 text-sm">

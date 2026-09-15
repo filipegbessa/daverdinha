@@ -85,4 +85,29 @@ describe('usePushSubscription', () => {
 
     expect(result.current.error).toBe('Este navegador não suporta notificações push.');
   });
+
+  it('sets an error and never requests permission when the VAPID key is not configured', async () => {
+    delete process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+
+    const apiFetch = jest.fn();
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    const requestPermission = jest.fn().mockResolvedValue('granted');
+    Object.defineProperty(window, 'Notification', {
+      value: { requestPermission, permission: 'default' },
+      configurable: true,
+    });
+    Object.defineProperty(window.navigator, 'serviceWorker', { value: {}, configurable: true });
+    Object.defineProperty(window, 'PushManager', { value: function PushManager() {}, configurable: true });
+
+    const { result } = renderHook(() => usePushSubscription());
+
+    await act(async () => {
+      await result.current.subscribe();
+    });
+
+    expect(requestPermission).not.toHaveBeenCalled();
+    expect(apiFetch).not.toHaveBeenCalled();
+    expect(result.current.error).toBe('Notificações não estão configuradas neste ambiente.');
+  });
 });

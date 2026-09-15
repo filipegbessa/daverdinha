@@ -10,6 +10,7 @@ describe('PushNotificationBanner', () => {
 
   afterEach(() => {
     Object.defineProperty(window, 'Notification', { value: originalNotification, configurable: true });
+    delete (window.navigator as { serviceWorker?: unknown }).serviceWorker;
   });
 
   it('shows the opt-in button when permission has not been asked yet', () => {
@@ -62,5 +63,51 @@ describe('PushNotificationBanner', () => {
 
     expect(subscribe).toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent('Permissão de notificação negada.');
+  });
+
+  it('stays visible and keeps showing the error once permission is no longer "default"', () => {
+    Object.defineProperty(window, 'Notification', { value: { permission: 'denied' }, configurable: true });
+    (usePushSubscription as jest.Mock).mockReturnValue({
+      subscribe: jest.fn(),
+      subscribing: false,
+      error: 'Não foi possível ativar as notificações.',
+    });
+
+    render(<PushNotificationBanner />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível ativar as notificações.');
+  });
+
+  it('silently retries subscribe() on mount when permission is granted but no browser subscription exists', async () => {
+    Object.defineProperty(window, 'Notification', { value: { permission: 'granted' }, configurable: true });
+    const getSubscription = jest.fn().mockResolvedValue(null);
+    Object.defineProperty(window.navigator, 'serviceWorker', {
+      value: { ready: Promise.resolve({ pushManager: { getSubscription } }) },
+      configurable: true,
+    });
+    const subscribe = jest.fn().mockResolvedValue(undefined);
+    (usePushSubscription as jest.Mock).mockReturnValue({ subscribe, subscribing: false, error: null });
+
+    render(<PushNotificationBanner />);
+
+    await waitFor(() => expect(getSubscription).toHaveBeenCalled());
+    await waitFor(() => expect(subscribe).toHaveBeenCalled());
+  });
+
+  it('does not retry subscribe() on mount when a browser subscription already exists', async () => {
+    Object.defineProperty(window, 'Notification', { value: { permission: 'granted' }, configurable: true });
+    const existingSubscription = { endpoint: 'https://push.example/1' };
+    const getSubscription = jest.fn().mockResolvedValue(existingSubscription);
+    Object.defineProperty(window.navigator, 'serviceWorker', {
+      value: { ready: Promise.resolve({ pushManager: { getSubscription } }) },
+      configurable: true,
+    });
+    const subscribe = jest.fn().mockResolvedValue(undefined);
+    (usePushSubscription as jest.Mock).mockReturnValue({ subscribe, subscribing: false, error: null });
+
+    render(<PushNotificationBanner />);
+
+    await waitFor(() => expect(getSubscription).toHaveBeenCalled());
+    expect(subscribe).not.toHaveBeenCalled();
   });
 });
