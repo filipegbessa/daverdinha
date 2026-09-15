@@ -1,8 +1,8 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { usePushSubscription } from './use-push-subscription';
-import { useApiClient } from './api-client';
+import { useApiClient } from '@/features/admin/lib/api-client';
 
-jest.mock('./api-client');
+jest.mock('@/features/admin/lib/api-client');
 
 describe('usePushSubscription', () => {
   const originalNotification = window.Notification;
