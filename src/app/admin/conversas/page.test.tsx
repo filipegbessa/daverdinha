@@ -215,4 +215,26 @@ describe('ConversasPage', () => {
     expect(screen.getByText('Maria')).toBeInTheDocument();
     expect(screen.queryByText('João')).not.toBeInTheDocument();
   });
+
+  it('renders without crashing when a conversation is missing the categories field', async () => {
+    const conversationWithoutCategories = {
+      id: 'c1',
+      phone: '5521999999999',
+      name: 'Maria',
+      status: 'bot_active' as const,
+      entryPoint: 'menu' as const,
+      unread: false,
+      updatedAt: '2026-01-01T00:00:00Z',
+      // categories field is intentionally missing
+    } as unknown as typeof conversations[0];
+
+    const apiFetch = mockConversationsApi([conversationWithoutCategories]);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversasPage />);
+
+    // The page should render the conversation row without crashing
+    expect(await screen.findByText('Maria')).toBeInTheDocument();
+    expect(screen.getByText('+55 (21) 99999-9999')).toBeInTheDocument();
+  });
 });

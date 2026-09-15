@@ -45,7 +45,7 @@ export default function ConversasPage() {
     const query = normalizeSearch(search.trim());
     return conversations.filter((conversation) => {
       if (onlyUnread && !conversation.unread) return false;
-      if (categoryFilter !== 'all' && !conversation.categories.some((c) => c.id === categoryFilter)) {
+      if (categoryFilter !== 'all' && !(conversation.categories ?? []).some((c) => c.id === categoryFilter)) {
         return false;
       }
       if (!query) return true;
@@ -123,7 +123,7 @@ export default function ConversasPage() {
                 <TableCell>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {conversation.categories.map((cat) => (
+                    {(conversation.categories ?? []).map((cat) => (
                       <span
                         key={cat.id}
                         title={cat.name}
