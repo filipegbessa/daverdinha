@@ -6,6 +6,7 @@ import { usePushSubscription } from '@/features/admin/lib/use-push-subscription'
 
 export function PushNotificationBanner() {
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
+  const [dismissed, setDismissed] = useState(false);
   const { subscribe, subscribing, error } = usePushSubscription();
 
   useEffect(() => {
@@ -51,14 +52,25 @@ export function PushNotificationBanner() {
     }
   }
 
+  if (dismissed) return null;
   if (permission !== 'default' && !error) return null;
 
   return (
     <div className="flex flex-none flex-wrap items-center justify-between gap-3 border-b border-moss-line bg-sand px-4 py-2 text-sm">
       <p className="text-ink-soft">Ative as notificações pra saber na hora quando chegar uma mensagem nova.</p>
-      <Button type="button" onClick={handleClick} disabled={subscribing} size="sm">
-        {subscribing ? 'Ativando...' : 'Ativar notificações'}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button type="button" onClick={handleClick} disabled={subscribing} size="sm">
+          {subscribing ? 'Ativando...' : 'Ativar notificações'}
+        </Button>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          aria-label="Fechar aviso de notificações"
+          className="rounded-lg p-1 text-ink-soft hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
+        >
+          ✕
+        </button>
+      </div>
       {error && (
         <p role="alert" className="w-full text-red-600">
           {error}

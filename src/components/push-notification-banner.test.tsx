@@ -65,6 +65,16 @@ describe('PushNotificationBanner', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Permissão de notificação negada.');
   });
 
+  it('closes the banner when the close button is clicked', async () => {
+    Object.defineProperty(window, 'Notification', { value: { permission: 'default' }, configurable: true });
+    (usePushSubscription as jest.Mock).mockReturnValue({ subscribe: jest.fn(), subscribing: false, error: null });
+
+    const { container } = render(<PushNotificationBanner />);
+    await userEvent.click(screen.getByRole('button', { name: 'Fechar aviso de notificações' }));
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('stays visible and keeps showing the error once permission is no longer "default"', () => {
     Object.defineProperty(window, 'Notification', { value: { permission: 'denied' }, configurable: true });
     (usePushSubscription as jest.Mock).mockReturnValue({
