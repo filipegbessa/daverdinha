@@ -122,12 +122,9 @@ describe('AdminLayout', () => {
   });
 
   it('shows an unread-count badge next to "Conversas" when there are unread conversations', async () => {
-    const conversations = [
-      { id: 'c1', phone: '5521999999999', name: null, status: 'bot_active', unread: true, updatedAt: '' },
-      { id: 'c2', phone: '5521888888888', name: null, status: 'bot_active', unread: true, updatedAt: '' },
-      { id: 'c3', phone: '5521777777777', name: null, status: 'bot_active', unread: false, updatedAt: '' },
-    ];
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch: jest.fn().mockResolvedValue(conversations) });
+    (useApiClient as jest.Mock).mockReturnValue({
+      apiFetch: jest.fn().mockResolvedValue({ items: [], hasMore: true, unreadTotal: 2 }),
+    });
 
     render(
       <AdminLayout>
@@ -142,7 +139,7 @@ describe('AdminLayout', () => {
 
   it('shows no badge when there are no unread conversations', async () => {
     (useApiClient as jest.Mock).mockReturnValue({
-      apiFetch: jest.fn().mockResolvedValue([{ id: 'c1', phone: '5521999999999', name: null, status: 'bot_active', unread: false, updatedAt: '' }]),
+      apiFetch: jest.fn().mockResolvedValue({ items: [], hasMore: false, unreadTotal: 0 }),
     });
 
     render(
@@ -158,10 +155,9 @@ describe('AdminLayout', () => {
   it('sets the app icon badge (Badging API) to the unread count when the browser supports it', async () => {
     const setAppBadge = jest.fn().mockResolvedValue(undefined);
     Object.defineProperty(window.navigator, 'setAppBadge', { value: setAppBadge, configurable: true });
-    const conversations = [
-      { id: 'c1', phone: '5521999999999', name: null, status: 'bot_active', unread: true, updatedAt: '' },
-    ];
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch: jest.fn().mockResolvedValue(conversations) });
+    (useApiClient as jest.Mock).mockReturnValue({
+      apiFetch: jest.fn().mockResolvedValue({ items: [], hasMore: false, unreadTotal: 1 }),
+    });
 
     render(
       <AdminLayout>
@@ -175,10 +171,9 @@ describe('AdminLayout', () => {
 
   it('does nothing when the Badging API is unavailable', async () => {
     delete (window.navigator as { setAppBadge?: unknown }).setAppBadge;
-    const conversations = [
-      { id: 'c1', phone: '5521999999999', name: null, status: 'bot_active', unread: true, updatedAt: '' },
-    ];
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch: jest.fn().mockResolvedValue(conversations) });
+    (useApiClient as jest.Mock).mockReturnValue({
+      apiFetch: jest.fn().mockResolvedValue({ items: [], hasMore: false, unreadTotal: 1 }),
+    });
 
     render(
       <AdminLayout>

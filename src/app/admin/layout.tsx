@@ -7,7 +7,7 @@ import { UserButton } from '@clerk/nextjs';
 import { PushNotificationBanner } from '@/components/push-notification-banner';
 import { InstallAppNavItem } from '@/components/install-app-nav-item';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
-import type { Conversation } from '@/features/admin/types/admin';
+import type { ConversationList } from '@/features/admin/types/admin';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard' },
@@ -27,8 +27,11 @@ function isActiveRoute(pathname: string, href: string) {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
-  const { data: conversations } = useApiResource<Conversation[]>('/conversations', { pollIntervalMs: 15000 });
-  const unreadCount = conversations?.filter((c) => c.unread).length ?? 0;
+  // Asks for a single row and reads the count off the envelope: the badge
+  // needs the total, not the conversations, and this used to pull the whole
+  // table every 15 seconds just to run .filter() over it.
+  const { data } = useApiResource<ConversationList>('/conversations?perPage=1', { pollIntervalMs: 15000 });
+  const unreadCount = data?.unreadTotal ?? 0;
 
   useEffect(() => {
     // Chrome/Edge/Android PWAs support the Badging API; Safari/iOS and

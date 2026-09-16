@@ -5,9 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
-import { useApiClient } from '@/features/admin/lib/api-client';
+import { useDebouncedValue } from '@/features/admin/lib/use-debounced-value';
+import { usePagination } from '@/features/admin/lib/use-pagination';
+import { TablePagination } from '@/features/admin/components/TablePagination';
+import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { formatPhone } from '@/features/admin/lib/format-phone';
-import type { Category, Conversation } from '@/features/admin/types/admin';
+import type { Category, Conversation, ConversationList, Paginated } from '@/features/admin/types/admin';
 
 const STATUS_LABEL: Record<Conversation['status'], string> = {
   bot_active: 'Bot ativo',
@@ -19,40 +22,42 @@ const ENTRY_POINT_LABEL: Record<string, string> = {
   catalog: 'Catálogo',
 };
 
-function normalizeSearch(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-}
-
 export default function ConversasPage() {
-  const { data, isLoading, error } = useApiResource<Conversation[]>('/conversations', { pollIntervalMs: 10000 });
-  const { apiFetch } = useApiClient();
   const [search, setSearch] = useState('');
   const [onlyUnread, setOnlyUnread] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const conversations = data ?? [];
+
+  // The search now runs against the database, so it waits for a pause in
+  // typing rather than firing a query per character.
+  const debouncedSearch = useDebouncedValue(search.trim());
+
+  // Filtering moved to the server: applying it in the browser would only ever
+  // filter the window that happened to be loaded, silently hiding matches
+  // that sit outside it.
+  const filterKey = `${debouncedSearch}|${onlyUnread}|${categoryFilter}`;
+  const [totalPages, setTotalPages] = useState<number | undefined>(undefined);
+  const { page, setPage } = usePagination(filterKey, totalPages);
+
+  const path = useMemo(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set('q', debouncedSearch);
+    if (onlyUnread) params.set('unread', 'true');
+    if (categoryFilter !== 'all') params.set('categoryId', categoryFilter);
+    if (page > 1) params.set('page', String(page));
+    const queryString = params.toString();
+    return `/conversations${queryString ? `?${queryString}` : ''}`;
+  }, [debouncedSearch, onlyUnread, categoryFilter, page]);
+
+  const { data, isLoading, error } = useApiResource<ConversationList>(path, { pollIntervalMs: 10000 });
+  // The category dropdown wants every category, not the first page of them.
+  const { data: categoryData } = useApiResource<Paginated<Category>>('/categories?perPage=100');
+
+  const conversations = data?.items ?? [];
+  const categories = categoryData?.items ?? [];
 
   useEffect(() => {
-    apiFetch<Category[]>('/categories')
-      .then(setCategories)
-      .catch(() => setCategories([]));
-  }, [apiFetch]);
-
-  const filtered = useMemo(() => {
-    const query = normalizeSearch(search.trim());
-    return conversations.filter((conversation) => {
-      if (onlyUnread && !conversation.unread) return false;
-      if (categoryFilter !== 'all' && !(conversation.categories ?? []).some((c) => c.id === categoryFilter)) {
-        return false;
-      }
-      if (!query) return true;
-      const haystack = `${normalizeSearch(conversation.name ?? '')} ${conversation.phone}`;
-      return haystack.includes(query);
-    });
-  }, [conversations, search, onlyUnread, categoryFilter]);
+    if (data) setTotalPages(data.totalPages);
+  }, [data]);
 
   return (
     <div>
@@ -90,54 +95,66 @@ export default function ConversasPage() {
           </select>
         </div>
       </div>
-      {isLoading && <p className="mt-6 text-ink-soft">Carregando...</p>}
-      {!isLoading && error && <p className="mt-6 text-red-600">{error}</p>}
+      {isLoading && <LoadingState />}
+      {!isLoading && error && <ErrorAlert>{error}</ErrorAlert>}
       {!isLoading && !error && (
-        <Table className="mt-6">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Origem</TableHead>
-              <TableHead>Categorias</TableHead>
-              <TableHead>Atualizado em</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((conversation) => (
-              <TableRow key={conversation.id}>
-                <TableCell>
-                  <Link
-                    href={`/admin/conversas/${conversation.id}`}
-                    className="flex items-center gap-2 underline underline-offset-4"
-                  >
-                    {conversation.unread && (
-                      <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-berry" />
-                    )}
-                    {conversation.name ?? formatPhone(conversation.phone)}
-                  </Link>
-                </TableCell>
-                <TableCell>{formatPhone(conversation.phone)}</TableCell>
-                <TableCell>{STATUS_LABEL[conversation.status]}</TableCell>
-                <TableCell>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {(conversation.categories ?? []).map((cat) => (
-                      <span
-                        key={cat.id}
-                        title={cat.name}
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>{new Date(conversation.updatedAt).toLocaleString('pt-BR')}</TableCell>
+        <>
+          <Table className="mt-6">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Telefone</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Origem</TableHead>
+                <TableHead>Categorias</TableHead>
+                <TableHead>Atualizado em</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {conversations.map((conversation) => (
+                <TableRow key={conversation.id}>
+                  <TableCell>
+                    <Link
+                      href={`/admin/conversas/${conversation.id}`}
+                      className="flex items-center gap-2 underline underline-offset-4"
+                    >
+                      {conversation.unread && (
+                        <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-berry" />
+                      )}
+                      {conversation.name ?? formatPhone(conversation.phone)}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{formatPhone(conversation.phone)}</TableCell>
+                  <TableCell>{STATUS_LABEL[conversation.status]}</TableCell>
+                  <TableCell>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {(conversation.categories ?? []).map((cat) => (
+                        <span
+                          key={cat.id}
+                          title={cat.name}
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>{new Date(conversation.updatedAt).toLocaleString('pt-BR')}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {conversations.length === 0 && <p className="mt-6 text-ink-soft">Nenhuma conversa encontrada.</p>}
+          {data && (
+            <TablePagination
+              page={data.page}
+              totalPages={data.totalPages}
+              total={data.total}
+              itemLabel="conversas"
+              onPageChange={setPage}
+            />
+          )}
+        </>
       )}
     </div>
   );

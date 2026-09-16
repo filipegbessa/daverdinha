@@ -8,7 +8,15 @@ Frontend do projeto Daverdinha (Next.js + Tailwind + shadcn/ui + Clerk).
 2. `npm install`
 3. `npm run dev`
 
-Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/business.ts`, não em `.env` — edite ali pra atualizar.
+Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/business.ts`, não em `.env` — edite ali pra atualizar. As áreas de entrega **não** ficam ali: vêm da API (ver abaixo).
+
+### Áreas de entrega
+
+A seção "Onde entregamos" e o `areaServed` do JSON-LD leem `GET /delivery-locations/covered` da API, com `revalidate` de 60s. A fonte da verdade é o banco — os mesmos `covered` que o bot consulta pra responder um CEP no WhatsApp.
+
+Antes isso era uma lista escrita à mão em `delivery-zones.ts`, transcrita da forma como a dona descreveu a cobertura ("Zona Sul, Centro, Zona Portuária e parte da Zona Norte"). Isso trazia dois problemas: anunciava nomes informais que não são bairros oficiais (`Zona Portuária`, `Cruz Vermelha`, `Lapa`, `Bairro de Fátima`), e continuava anunciando tudo independente do que a dona ligava ou desligava em `/admin/entregas` — o site prometia e o bot negava.
+
+Se a API falhar ou nenhum bairro estiver marcado como atendido, **a seção some** e `areaServed` fica vazio. É proposital: sumir é melhor do que prometer uma área que ninguém confirmou.
 
 ## Estrutura
 
@@ -31,12 +39,20 @@ Página para gerenciar os itens de menu do bot:
 
 ### /admin/mensagens
 
-Página para configurar as 2 mensagens globais do bot:
+Página para configurar as 4 mensagens globais do bot:
 
 - **Mensagem de boas-vindas**: enviada assim que a conversa começa.
 - **Mensagem de escalonamento**: enviada quando o cliente erra a opção do menu 3 vezes seguidas.
+- **Mensagem de conteúdo inválido**: enviada quando o cliente manda áudio, figurinha ou vídeo.
+- **Mensagem de pedido pelo catálogo**: enviada quando chega um pedido pelo catálogo do WhatsApp.
 
-Todas as demais mensagens do bot vivem agora nos itens individuais de menu (um para cada item, e 4 para o item especial de localidades).
+Todas as demais mensagens do bot vivem nos itens individuais de menu (um para cada item, e 4 para o item especial de localidades).
+
+### /admin/categorias
+
+Rótulos coloridos que o operador anexa a conversas, pra filtrar a lista em `/admin/conversas`.
+
+A cor é livre: um color picker nativo, sem paleta fixa. O contraste do texto do chip é calculado a partir da cor escolhida (`readable-text-color.ts`), então um tom claro continua legível — antes o texto era branco fixo e sumia.
 
 ### /admin/entregas
 
@@ -56,6 +72,24 @@ Na página de detalhe:
 - **Pausar bot**: enquanto a conversa está `bot_active`, esse botão transfere o atendimento para um humano sob demanda.
 - **Responder e Reativar bot**: uma vez `paused_human` — seja pelo botão acima, seja pela lógica de escalonamento do próprio bot — a página passa a exibir um formulário de resposta (enviada pela mesma API do WhatsApp Cloud que o bot usa) e o botão "Reativar bot", que devolve a conversa ao bot.
 - A página é atualizada automaticamente a cada 5 segundos enquanto estiver aberta.
+
+## Listagens e polling
+
+- **`/admin/conversas` e `/admin/categorias`** são paginadas com `<TablePagination>` (setinhas, "Página X de Y" e o total de itens). O controle some quando só existe uma página.
+- **`/admin/conversas`** manda busca, "não lidas" e categoria como query params — a filtragem acontece no banco. A busca passa por `use-debounced-value` pra não disparar uma query por tecla.
+- **`use-pagination`** cuida dos dois jeitos de um número de página ficar obsoleto: mudar filtro volta pra página 1, e uma página que deixou de existir cai pra última válida.
+- **O badge de não-lidas** no menu pede `?perPage=1` e lê `unreadTotal` do envelope. Antes ele baixava a tabela inteira a cada 15s só pra rodar um `.filter()`.
+- ⚠️ A lista de conversas ordena por `updatedAt`, que muda a cada mensagem. Da página 2 em diante o poll pode reordenar as linhas sob o operador; a página 1 não sofre. Decisão consciente pra manter os números de página.
+- **A thread de mensagens** (`use-conversation-messages`) carrega as últimas 50 junto com a conversa e depois faz **poll delta** (`?since=`): uma conversa parada custa um array vazio, não centenas de mensagens a cada 5s. O botão "Carregar mensagens anteriores" pagina pra trás com `?before=`.
+  - O `since` é inclusivo no servidor, então a mensagem da borda volta a cada poll — o merge é por `id` justamente pra descartá-la.
+
+## Convenções do admin
+
+Três peças concentram o que antes cada página reimplementava:
+
+- **`use-api-resource.ts`** — leitura: faz o fetch autenticado e devolve `data` / `isLoading` / `error` / `refetch`, com poll opcional. Toda página de `/admin` lê por aqui.
+- **`use-api-mutation.ts`** — escrita: envolve um POST/PATCH/DELETE segurando `isPending` e capturando a falha em `error`. Resolve pra `true`/`false` em vez de lançar, então o chamador decide o que fazer (fechar o diálogo, limpar o form) sem try/catch próprio.
+- **`components/StatusMessage.tsx`** e **`components/ConfirmDialog.tsx`** — os estados de carregando/erro e a confirmação antes de excluir. Erro sempre em `text-berry` (da paleta), nunca num `text-red-600` solto.
 
 ## Testes
 

@@ -4,8 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/features/admin/lib/api-client';
-import { CATEGORY_COLORS } from '@/features/admin/lib/category-colors';
+import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
+import { ErrorText } from '@/features/admin/components/StatusMessage';
+import { readableTextColor } from '@/features/admin/lib/readable-text-color';
 import type { Category } from '@/features/admin/types/admin';
+
+// What a brand-new category starts on before the operator picks anything.
+const INITIAL_COLOR = '#185928';
 
 export function CategoryDialog({
   category,
@@ -17,30 +22,19 @@ export function CategoryDialog({
   onSaved: () => void;
 }) {
   const { apiFetch } = useApiClient();
+  const save = useApiMutation('Erro ao salvar categoria.');
   const [name, setName] = useState(category?.name ?? '');
-  const [color, setColor] = useState<string>(category?.color ?? CATEGORY_COLORS[0]);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [color, setColor] = useState(category?.color ?? INITIAL_COLOR);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setSaving(true);
-    try {
-      if (category) {
-        await apiFetch(`/categories/${category.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ name, color }),
-        });
-      } else {
-        await apiFetch('/categories', { method: 'POST', body: JSON.stringify({ name, color }) });
-      }
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar categoria.');
-    } finally {
-      setSaving(false);
-    }
+    const body = JSON.stringify({ name, color });
+    const ok = await save.run(() =>
+      category
+        ? apiFetch(`/categories/${category.id}`, { method: 'PATCH', body })
+        : apiFetch('/categories', { method: 'POST', body }),
+    );
+    if (ok) onSaved();
   }
 
   return (
@@ -57,37 +51,37 @@ export function CategoryDialog({
             <Input id="categoryName" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div>
-            <span className="mb-1 block font-medium">Cor</span>
-            <div role="radiogroup" aria-label="Cor da categoria" className="flex flex-wrap gap-2">
-              {CATEGORY_COLORS.map((swatch) => (
-                <button
-                  key={swatch}
-                  type="button"
-                  role="radio"
-                  aria-checked={color === swatch}
-                  aria-label={swatch}
-                  onClick={() => setColor(swatch)}
-                  className={`h-8 w-8 rounded-full border-2 ${
-                    color === swatch ? 'border-ink' : 'border-transparent'
-                  }`}
-                  style={{ backgroundColor: swatch }}
-                />
-              ))}
+            <label htmlFor="categoryColor" className="mb-1 block font-medium">
+              Cor
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                id="categoryColor"
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="h-10 w-14 cursor-pointer rounded border border-sand-line bg-paper p-1"
+              />
+              {/* A live preview of the chip, because the same colour reads very
+                  differently as a 40px swatch and as a label behind text. */}
+              <span
+                data-testid="category-color-preview"
+                className="rounded-full px-3 py-1 text-sm font-medium"
+                style={{ backgroundColor: color, color: readableTextColor(color) }}
+              >
+                {name || 'Prévia'}
+              </span>
             </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Salvando...' : 'Salvar'}
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
-          {error && (
-            <p role="alert" className="text-berry">
-              {error}
-            </p>
-          )}
+          {save.error && <ErrorText>{save.error}</ErrorText>}
         </form>
       </DialogContent>
     </Dialog>

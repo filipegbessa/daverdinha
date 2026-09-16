@@ -1,67 +1,49 @@
 'use client';
-import { useEffect, useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { useApiClient } from '@/features/admin/lib/api-client';
+import { useApiResource } from '@/features/admin/lib/use-api-resource';
+import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
+import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { BotSettings, MenuItem } from '@/features/admin/types/admin';
 
 export default function DashboardPage() {
   const { apiFetch } = useApiClient();
-  const [settings, setSettings] = useState<BotSettings | null>(null);
-  const [activeCount, setActiveCount] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: settings,
+    isLoading,
+    error,
+    refetch,
+  } = useApiResource<BotSettings>('/bot-settings');
+  const { data: menuItems } = useApiResource<MenuItem[]>('/menu-items');
+  const toggle = useApiMutation('Erro ao atualizar');
 
-  useEffect(() => {
-    Promise.all([apiFetch<BotSettings>('/bot-settings'), apiFetch<MenuItem[]>('/menu-items')])
-      .then(([settingsData, items]) => {
-        setSettings(settingsData);
-        setActiveCount(items.filter((item) => item.active).length);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Não foi possível carregar os dados do painel.');
-      });
-  }, [apiFetch]);
+  const activeCount = menuItems?.filter((item) => item.active).length ?? 0;
 
-  async function handleToggle(checked: boolean) {
-    setError(null);
-    try {
-      const updated = await apiFetch<BotSettings>('/bot-settings', {
-        method: 'PATCH',
-        body: JSON.stringify({ botEnabled: checked }),
-      });
-      setSettings(updated);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao atualizar');
-    }
-  }
-
-  if (!settings) {
-    return error ? (
-      <p role="alert" className="mt-4 rounded border border-berry bg-berry/10 p-3 text-berry">
-        {error}
-      </p>
-    ) : (
-      <p>Carregando...</p>
-    );
-  }
+  if (isLoading) return <LoadingState />;
+  if (!settings) return <ErrorAlert>{error ?? 'Não foi possível carregar os dados do painel.'}</ErrorAlert>;
 
   return (
     <div>
       <h1 className="text-2xl font-semibold">Dashboard</h1>
       {activeCount === 0 && (
-        <p role="alert" className="mt-4 rounded border border-berry bg-berry/10 p-3 text-berry">
+        <ErrorAlert>
           O bot está desativado porque não há nenhum item de menu ativo. Cadastre ou ative um item em &quot;Menu&quot;
           pra poder ligar o atendimento automático.
-        </p>
+        </ErrorAlert>
       )}
       <div className="mt-6 flex items-center gap-3">
-        <Switch checked={settings.botEnabled} disabled={activeCount === 0} onCheckedChange={handleToggle} />
+        <Switch
+          checked={settings.botEnabled}
+          disabled={activeCount === 0 || toggle.isPending}
+          onCheckedChange={(checked) =>
+            toggle
+              .run(() => apiFetch('/bot-settings', { method: 'PATCH', body: JSON.stringify({ botEnabled: checked }) }))
+              .then((ok) => ok && refetch())
+          }
+        />
         <span>{settings.botEnabled ? 'Bot ativo' : 'Bot desativado'}</span>
       </div>
-      {error && (
-        <p role="alert" className="mt-2 text-berry">
-          {error}
-        </p>
-      )}
+      {toggle.error && <ErrorText>{toggle.error}</ErrorText>}
     </div>
   );
 }

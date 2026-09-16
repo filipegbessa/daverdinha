@@ -6,24 +6,18 @@ export interface BotSettings {
   orderReceivedMessage: string;
 }
 
-export type MenuItemType = 'texto' | 'entrega' | 'atendente' | 'pergunta';
-
-export interface MenuItemAnswerOption {
-  id: string;
-  keywords: string[];
-  reply: string;
-}
-
+/**
+ * An option in the WhatsApp menu. Exactly one item has `isSystem` — the
+ * delivery-location flow, which answers from its own `delivery*` messages
+ * rather than the plain `reply` every other item uses, and which can be
+ * edited but never created or deleted.
+ */
 export interface MenuItem {
   id: string;
   order: number;
   topic: string;
-  type: MenuItemType;
   isSystem: boolean;
   reply: string | null;
-  question: string | null;
-  noMatchReply: string | null;
-  answerOptions: MenuItemAnswerOption[];
   deliveryPrompt: string | null;
   deliveryConfirmedMessage: string | null;
   deliveryNotCoveredMessage: string | null;
@@ -44,6 +38,7 @@ export type EntryPoint = 'menu' | 'catalog';
 export interface Category {
   id: string;
   name: string;
+  /** Free-form hex (#rrggbb) chosen by the operator from a colour input. */
   color: string;
   conversationCount?: number;
 }
@@ -87,21 +82,21 @@ export interface Message {
 }
 
 export interface ConversationWithMessages extends Conversation {
+  /** The tail of the transcript; older messages are fetched as the operator scrolls up. */
   messages: Message[];
+  hasMoreMessages: boolean;
 }
 
-export type HeroSlideLinkType = 'whatsapp' | 'url';
+/** The envelope every paginated admin listing returns. */
+export interface Paginated<T> {
+  items: T[];
+  page: number;
+  perPage: number;
+  total: number;
+  totalPages: number;
+}
 
-export interface HeroSlide {
-  id: string;
-  titulo: string;
-  subtitulo: string;
-  detalhes: string;
-  linkType: HeroSlideLinkType;
-  whatsappMessage: string | null;
-  linkUrl: string | null;
-  imageUrl: string | null;
-  enabled: boolean;
-  startsAt: string | null;
-  endsAt: string | null;
+export interface ConversationList extends Paginated<Conversation> {
+  /** Every conversation waiting on a human, regardless of the active filters. */
+  unreadTotal: number;
 }

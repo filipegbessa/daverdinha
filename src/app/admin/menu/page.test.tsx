@@ -141,7 +141,7 @@ describe('MenuPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao atualizar item de menu.');
   });
 
-  it('deleting an item calls DELETE', async () => {
+  it('deleting an item asks for confirmation first, then calls DELETE', async () => {
     const apiFetch = jest.fn().mockResolvedValue(items);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
@@ -149,8 +149,25 @@ describe('MenuPage', () => {
     await screen.findByText('Bingo de Plantas');
 
     await userEvent.click(screen.getByRole('button', { name: 'Excluir' }));
+    expect(apiFetch).not.toHaveBeenCalledWith('/menu-items/m2', { method: 'DELETE' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
 
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/menu-items/m2', { method: 'DELETE' }));
+  });
+
+  it('backing out of the confirmation leaves the item alone', async () => {
+    const apiFetch = jest.fn().mockResolvedValue(items);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<MenuPage />);
+    await screen.findByText('Bingo de Plantas');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Excluir' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(apiFetch).not.toHaveBeenCalledWith('/menu-items/m2', { method: 'DELETE' });
+    expect(screen.queryByRole('button', { name: 'Confirmar exclusão' })).not.toBeInTheDocument();
   });
 
   it('shows an inline error when deleting fails', async () => {
@@ -164,11 +181,42 @@ describe('MenuPage', () => {
     await screen.findByText('Bingo de Plantas');
 
     await userEvent.click(screen.getByRole('button', { name: 'Excluir' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao excluir item de menu.');
   });
 
-  it('disables every move button and row action while a delete is in flight', async () => {
+  it('locks every row control while a reorder is in flight, so a second click cannot race the first', async () => {
+    let resolveReorder!: () => void;
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path === '/menu-items/reorder') {
+        return new Promise<void>((resolve) => {
+          resolveReorder = resolve;
+        });
+      }
+      return Promise.resolve(items);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<MenuPage />);
+    await screen.findByText('Bingo de Plantas');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra cima' }));
+
+    expect(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra baixo' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Ativar Locais de entrega' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: 'Excluir' })).toBeDisabled();
+
+    resolveReorder();
+    await waitFor(() =>
+      expect(screen.getByRole('switch', { name: 'Ativar Locais de entrega' })).not.toHaveAttribute(
+        'aria-disabled',
+        'true',
+      ),
+    );
+  });
+
+  it('shows the pending label on the confirm button while the delete is in flight', async () => {
     let resolveDelete!: () => void;
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
       if (options?.method === 'DELETE') {
@@ -184,13 +232,12 @@ describe('MenuPage', () => {
     await screen.findByText('Bingo de Plantas');
 
     await userEvent.click(screen.getByRole('button', { name: 'Excluir' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
 
-    expect(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra cima' })).toBeDisabled();
-    expect(screen.getByRole('switch', { name: 'Ativar Locais de entrega' })).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByRole('button', { name: 'Excluir' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Excluindo...' })).toBeDisabled();
 
     resolveDelete();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra cima' })).not.toBeDisabled());
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
   it('does not show an Excluir button for the system item', async () => {

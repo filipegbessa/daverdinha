@@ -1,6 +1,8 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApiClient } from '@/features/admin/lib/api-client';
+import { useApiResource } from '@/features/admin/lib/use-api-resource';
+import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { DeliveryLocation } from '@/features/admin/types/admin';
 
 type CoverageFilter = 'all' | 'covered' | 'not-covered';
@@ -13,26 +15,19 @@ const FILTERS: { value: CoverageFilter; label: string }[] = [
 
 export default function EntregasPage() {
   const { apiFetch } = useApiClient();
-  const [locations, setLocations] = useState<DeliveryLocation[] | null>(null);
+  const {
+    data: locations,
+    isLoading,
+    error: loadError,
+    refetch: load,
+  } = useApiResource<DeliveryLocation[]>('/delivery-locations');
+  // Coverage toggles report their own failures; a load failure comes from
+  // the resource hook. They're kept apart so a failed toggle doesn't read
+  // like the whole page failed to load.
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<CoverageFilter>('all');
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [pendingZones, setPendingZones] = useState<Set<string>>(new Set());
-
-  const load = useCallback(() => {
-    return apiFetch<DeliveryLocation[]>('/delivery-locations')
-      .then((data) => {
-        setLocations(data);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Não foi possível carregar os locais de entrega.');
-      });
-  }, [apiFetch]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   async function toggleCovered(location: DeliveryLocation) {
     setError(null);
@@ -91,14 +86,9 @@ export default function EntregasPage() {
     }
   }
 
+  if (isLoading) return <LoadingState />;
   if (!locations) {
-    return error ? (
-      <p role="alert" className="mt-4 rounded border border-berry bg-berry/10 p-3 text-berry">
-        {error}
-      </p>
-    ) : (
-      <p>Carregando...</p>
-    );
+    return <ErrorAlert>{loadError ?? 'Não foi possível carregar os locais de entrega.'}</ErrorAlert>;
   }
 
   const byZone = locations.reduce<Record<string, DeliveryLocation[]>>((acc, loc) => {
@@ -129,11 +119,7 @@ export default function EntregasPage() {
           ))}
         </div>
       </div>
-      {error && (
-        <p role="alert" className="mt-4 rounded border border-berry bg-berry/10 p-3 text-berry">
-          {error}
-        </p>
-      )}
+      {error && <ErrorAlert>{error}</ErrorAlert>}
       <div className="mt-6 space-y-4">
         {Object.entries(byZone).map(([zone, zoneLocations]) => {
           const visible = zoneLocations.filter(matchesFilter);

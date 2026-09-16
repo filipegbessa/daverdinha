@@ -6,9 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
+import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
+import { useConversationMessages } from '@/features/admin/lib/use-conversation-messages';
+import { ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
+import { readableTextColor } from '@/features/admin/lib/readable-text-color';
 import { formatPhone } from '@/features/admin/lib/format-phone';
 import { formatCurrency } from '@/features/admin/lib/format-currency';
-import type { Category, ConversationWithMessages } from '@/features/admin/types/admin';
+import type { Category, ConversationWithMessages, Paginated } from '@/features/admin/types/admin';
 
 export default function ConversaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,18 +22,30 @@ export default function ConversaDetailPage() {
     isLoading,
     error,
     refetch,
-  } = useApiResource<ConversationWithMessages>(`/conversations/${id}`, { pollIntervalMs: 5000 });
-  const { data: allCategories } = useApiResource<Category[]>('/categories');
+    // The conversation row itself stays on a poll — it's one row, and it
+    // carries status, name and categories. Its transcript does not: messages
+    // arrive through a delta poll instead of being re-downloaded whole.
+  } = useApiResource<ConversationWithMessages>(`/conversations/${id}`, { pollIntervalMs: 15000 });
+  // Every category, not the first page — this is a tag picker.
+  const { data: categoryData } = useApiResource<Paginated<Category>>('/categories?perPage=100');
+  const allCategories = categoryData?.items;
+  const { messages, hasMore, isLoadingOlder, loadOlder } = useConversationMessages(
+    id,
+    conversation?.messages ?? [],
+    conversation?.hasMoreMessages ?? false,
+  );
+
+  // One mutation hook per control, so each button owns its own pending flag
+  // and a failure surfaces next to what the operator actually clicked.
+  const saveName = useApiMutation('Erro ao salvar o nome.');
+  const sendReply = useApiMutation('Erro ao enviar resposta.');
+  const botState = useApiMutation('Erro ao alterar o estado do bot.');
+  const categoryChange = useApiMutation('Erro ao atualizar categoria.');
 
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState('');
-  const [savingName, setSavingName] = useState(false);
   const [replyText, setReplyText] = useState('');
-  const [sending, setSending] = useState(false);
-  const [pausing, setPausing] = useState(false);
-  const [reactivating, setReactivating] = useState(false);
   const [pendingCategory, setPendingCategory] = useState<{ id: string; attach: boolean } | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
   const categoryMenuRef = useRef<HTMLDivElement>(null);
@@ -72,91 +88,56 @@ export default function ConversaDetailPage() {
     // Scroll to the latest message on load and whenever the message count
     // changes (a reply just sent, or a new one arriving via poll).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation?.messages.length]);
+  }, [messages.length]);
 
   async function handleSaveName(e: React.FormEvent) {
     e.preventDefault();
-    setActionError(null);
-    setSavingName(true);
-    try {
-      await apiFetch(`/conversations/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) });
+    const ok = await saveName.run(() =>
+      apiFetch(`/conversations/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) }),
+    );
+    if (ok) {
       setEditingName(false);
       refetch();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Erro ao salvar o nome.');
-    } finally {
-      setSavingName(false);
     }
   }
 
   async function handleReply(e: React.FormEvent) {
     e.preventDefault();
-    setActionError(null);
-    setSending(true);
-    try {
-      await apiFetch(`/conversations/${id}/reply`, {
-        method: 'POST',
-        body: JSON.stringify({ text: replyText }),
-      });
+    const ok = await sendReply.run(() =>
+      apiFetch(`/conversations/${id}/reply`, { method: 'POST', body: JSON.stringify({ text: replyText }) }),
+    );
+    if (ok) {
       setReplyText('');
       refetch();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Erro ao enviar resposta.');
-    } finally {
-      setSending(false);
     }
   }
 
-  async function handlePause() {
-    setActionError(null);
-    setPausing(true);
-    try {
-      await apiFetch(`/conversations/${id}/pause`, { method: 'POST' });
-      refetch();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Erro ao pausar o bot.');
-    } finally {
-      setPausing(false);
-    }
-  }
-
-  async function handleReactivate() {
-    setActionError(null);
-    setReactivating(true);
-    try {
-      await apiFetch(`/conversations/${id}/reactivate`, { method: 'POST' });
-      refetch();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Erro ao reativar o bot.');
-    } finally {
-      setReactivating(false);
-    }
+  async function handleBotState(action: 'pause' | 'reactivate') {
+    const ok = await botState.run(() => apiFetch(`/conversations/${id}/${action}`, { method: 'POST' }));
+    if (ok) refetch();
   }
 
   async function handleToggleCategory(categoryId: string, attached: boolean) {
-    setActionError(null);
     // Stays pending until the effect below sees the refetched conversation
     // actually reflect the change — clearing it as soon as the POST/DELETE
     // resolves (before the list refreshes) let the chip look re-enabled for
     // the gap between the request finishing and the refetch landing.
     setPendingCategory({ id: categoryId, attach: !attached });
-    try {
-      await apiFetch(`/conversations/${id}/categories/${categoryId}`, {
-        method: attached ? 'DELETE' : 'POST',
-      });
-      refetch();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Erro ao atualizar categoria.');
-      setPendingCategory(null);
-    }
+    const ok = await categoryChange.run(() =>
+      apiFetch(`/conversations/${id}/categories/${categoryId}`, { method: attached ? 'DELETE' : 'POST' }),
+    );
+    if (ok) refetch();
+    else setPendingCategory(null);
   }
 
+  const actionError = saveName.error ?? sendReply.error ?? botState.error ?? categoryChange.error;
+
   if (isLoading) {
-    return <p className="text-ink-soft">Carregando...</p>;
+    return <LoadingState />;
   }
 
   if (error && !conversation) {
-    return <p className="text-red-600">{error}</p>;
+    return <ErrorText>{error}</ErrorText>;
   }
 
   if (!conversation) {
@@ -192,7 +173,7 @@ export default function ConversaDetailPage() {
                 placeholder="Nome do cliente"
                 autoFocus
               />
-              <Button type="submit" disabled={savingName}>
+              <Button type="submit" disabled={saveName.isPending}>
                 Salvar nome
               </Button>
               <Button type="button" variant="outline" onClick={() => setEditingName(false)}>
@@ -202,21 +183,17 @@ export default function ConversaDetailPage() {
           )}
         </div>
         {conversation.status === 'paused_human' ? (
-          <Button variant="outline" onClick={handleReactivate} disabled={reactivating}>
+          <Button variant="outline" onClick={() => handleBotState('reactivate')} disabled={botState.isPending}>
             Reativar bot
           </Button>
         ) : (
-          <Button variant="outline" onClick={handlePause} disabled={pausing}>
+          <Button variant="outline" onClick={() => handleBotState('pause')} disabled={botState.isPending}>
             Pausar bot
           </Button>
         )}
       </div>
 
-      {error && (
-        <p role="alert" className="mt-2 flex-none text-red-600">
-          {error}
-        </p>
-      )}
+      {error && <ErrorText className="flex-none">{error}</ErrorText>}
 
       {allCategories && allCategories.length > 0 && (
         <div className="flex flex-none flex-wrap items-center gap-2 border-b border-sand-line py-3">
@@ -230,10 +207,10 @@ export default function ConversaDetailPage() {
                 disabled={isPending}
                 aria-busy={isPending}
                 title="Remover categoria"
-                className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium text-white ${
+                className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
                   isPending ? 'cursor-wait opacity-50' : ''
                 }`}
-                style={{ backgroundColor: cat.color }}
+                style={{ backgroundColor: cat.color, color: readableTextColor(cat.color) }}
               >
                 {cat.name}
                 <span aria-hidden="true">×</span>
@@ -294,7 +271,14 @@ export default function ConversaDetailPage() {
       )}
 
       <div ref={messagesRef} className="my-4 flex-1 space-y-2 overflow-y-auto">
-        {conversation.messages.map((message) => {
+        {hasMore && (
+          <div className="flex justify-center pb-2">
+            <Button type="button" variant="outline" size="sm" onClick={loadOlder} disabled={isLoadingOlder}>
+              {isLoadingOlder ? 'Carregando...' : 'Carregar mensagens anteriores'}
+            </Button>
+          </div>
+        )}
+        {messages.map((message) => {
           const kind = message.kind ?? 'text';
           return (
             <div
@@ -346,18 +330,14 @@ export default function ConversaDetailPage() {
               rows={2}
               className="flex-1"
             />
-            <Button type="submit" disabled={sending}>
+            <Button type="submit" disabled={sendReply.isPending}>
               Enviar
             </Button>
           </form>
         ) : (
           <p className="text-sm text-ink-soft">O bot está respondendo essa conversa automaticamente.</p>
         )}
-        {actionError && (
-          <p role="alert" className="mt-2 text-red-600">
-            {actionError}
-          </p>
-        )}
+        {actionError && <ErrorText>{actionError}</ErrorText>}
       </div>
     </div>
   );

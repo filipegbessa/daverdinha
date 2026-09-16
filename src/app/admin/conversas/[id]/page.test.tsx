@@ -4,6 +4,15 @@ import ConversaDetailPage from './page';
 import { useApiClient } from '@/features/admin/lib/api-client';
 
 jest.mock('@/features/admin/lib/api-client');
+
+/** The paginated envelope `GET /categories` returns. */
+const categoryList = (items: unknown[]) => ({
+  items,
+  page: 1,
+  perPage: 100,
+  total: items.length,
+  totalPages: 1,
+});
 jest.mock('next/navigation', () => ({ useParams: () => ({ id: 'c1' }) }));
 
 const conversation = {
@@ -78,7 +87,7 @@ describe('ConversaDetailPage', () => {
 
   it('lets the operator open the name editor, edit and save the contact name', async () => {
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve([]);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
       if (options?.method === 'PATCH') return Promise.resolve({ ...conversation, name: 'Maria Silva' });
       return Promise.resolve(conversation);
     });
@@ -129,7 +138,7 @@ describe('ConversaDetailPage', () => {
 
   it('pauses the bot on click', async () => {
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve([]);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
       if (options?.method === 'POST' && path === '/conversations/c1/pause') {
         return Promise.resolve({ id: 'c1', status: 'paused_human' });
       }
@@ -149,7 +158,7 @@ describe('ConversaDetailPage', () => {
   it('disables the Pausar bot button while the request is in flight', async () => {
     let resolvePause: (value: unknown) => void = () => {};
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve([]);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
       if (options?.method === 'POST' && path === '/conversations/c1/pause') {
         return new Promise((resolve) => {
           resolvePause = resolve;
@@ -171,7 +180,7 @@ describe('ConversaDetailPage', () => {
 
   it('shows an inline error when pausing fails', async () => {
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve([]);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
       if (options?.method === 'POST' && path === '/conversations/c1/pause') {
         return Promise.reject(new Error('Erro ao pausar o bot.'));
       }
@@ -209,7 +218,7 @@ describe('ConversaDetailPage', () => {
 
   it('sends a reply and clears the field on success', async () => {
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve([]);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
       if (options?.method === 'POST' && path === '/conversations/c1/reply') return Promise.resolve({ id: 'm1' });
       return Promise.resolve(conversation);
     });
@@ -231,7 +240,7 @@ describe('ConversaDetailPage', () => {
 
   it('shows an inline error when sending a reply fails', async () => {
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve([]);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
       if (options?.method === 'POST' && path === '/conversations/c1/reply') {
         return Promise.reject(new Error('Erro ao enviar resposta.'));
       }
@@ -249,7 +258,7 @@ describe('ConversaDetailPage', () => {
 
   it('reactivates the bot on click', async () => {
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve([]);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
       if (options?.method === 'POST' && path === '/conversations/c1/reactivate') {
         return Promise.resolve({ id: 'c1', status: 'bot_active' });
       }
@@ -269,7 +278,7 @@ describe('ConversaDetailPage', () => {
   it('disables the Reativar bot button while the request is in flight', async () => {
     let resolveReactivate: (value: unknown) => void = () => {};
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve([]);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
       if (options?.method === 'POST' && path === '/conversations/c1/reactivate') {
         return new Promise((resolve) => {
           resolveReactivate = resolve;
@@ -291,7 +300,7 @@ describe('ConversaDetailPage', () => {
 
   it('shows an inline error when reactivating fails', async () => {
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve([]);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
       if (options?.method === 'POST' && path === '/conversations/c1/reactivate') {
         return Promise.reject(new Error('Erro ao reativar o bot.'));
       }
@@ -310,7 +319,7 @@ describe('ConversaDetailPage', () => {
     jest.useFakeTimers();
     let conversationCalls = 0;
     const apiFetch = jest.fn((path: string) => {
-      if (path === '/categories') return Promise.resolve([]);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
       conversationCalls += 1;
       if (conversationCalls === 1) return Promise.resolve(conversation);
       return Promise.reject(new Error('Erro de rede'));
@@ -422,7 +431,7 @@ describe('ConversaDetailPage', () => {
       { id: 'cat2', name: 'Fechou compra', color: '#7a3247' },
     ];
     const apiFetch = jest.fn((path: string) => {
-      if (path === '/categories') return Promise.resolve(allCategories);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList(allCategories));
       return Promise.resolve({ ...conversation, categories: [allCategories[0]] });
     });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
@@ -440,7 +449,7 @@ describe('ConversaDetailPage', () => {
       { id: 'cat2', name: 'Fechou compra', color: '#7a3247' },
     ];
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve(allCategories);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList(allCategories));
       if (options?.method === 'POST' && path === '/conversations/c1/categories/cat2') {
         return Promise.resolve(undefined);
       }
@@ -463,7 +472,7 @@ describe('ConversaDetailPage', () => {
   it('detaches a category when its header chip is clicked', async () => {
     const allCategories = [{ id: 'cat1', name: 'Bingo', color: '#185928' }];
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve(allCategories);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList(allCategories));
       if (options?.method === 'DELETE' && path === '/conversations/c1/categories/cat1') {
         return Promise.resolve(undefined);
       }
@@ -483,7 +492,7 @@ describe('ConversaDetailPage', () => {
     let resolveRefetch!: (value: unknown) => void;
     let conversationFetchCount = 0;
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (path === '/categories') return Promise.resolve(allCategories);
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList(allCategories));
       if (options?.method === 'DELETE') return Promise.resolve(undefined);
       conversationFetchCount += 1;
       if (conversationFetchCount === 1) {

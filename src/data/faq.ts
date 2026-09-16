@@ -13,6 +13,6 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'Para quais regiões vocês entregam?',
     answer:
-      'Entregamos em toda a Zona Sul, Centro, Zona Portuária e parte da Zona Norte do Rio de Janeiro. Fora dessas áreas, ainda não conseguimos atender.',
+      'Atendemos vários bairros do Rio de Janeiro — a lista atualizada fica na seção "Onde entregamos" aqui do site. Se tiver dúvida sobre o seu, é só mandar seu CEP no WhatsApp que a gente confirma na hora.',
   },
 ];

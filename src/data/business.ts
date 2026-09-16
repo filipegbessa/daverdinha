@@ -8,8 +8,6 @@
  * técnica (chaves de API, URLs de serviço). Isso aqui é conteúdo do negócio,
  * hoje hardcoded, pensado pra um dia virar editável pelo admin.
  */
-import { DELIVERY_ZONES } from '@/features/site/lib/delivery-zones';
-
 export const businessInfo = {
   name: 'Daverdinha',
   description:
@@ -38,11 +36,14 @@ export const businessInfo = {
     cnpj: '66.371.530/0001-54',
     razaoSocial: '66.371.530 Alana Viana Moreno',
   },
-
-  areaServed: DELIVERY_ZONES.map((z) => z.zona),
 } as const;
 
-export function generateLocalBusinessJsonLd(): Record<string, unknown> {
+/**
+ * `areaServed` is passed in rather than read off `businessInfo`: the served
+ * area lives in the database and changes whenever the owner toggles a bairro,
+ * while everything else here is a fixed fact about the business.
+ */
+export function generateLocalBusinessJsonLd(areaServed: string[] = []): Record<string, unknown> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
   return {
@@ -52,7 +53,7 @@ export function generateLocalBusinessJsonLd(): Record<string, unknown> {
     description: businessInfo.description,
     ...(siteUrl ? { url: siteUrl } : {}),
     sameAs: [businessInfo.contact.instagram.url],
-    areaServed: businessInfo.areaServed,
+    areaServed,
     telephone: businessInfo.contact.phone.number,
     address: businessInfo.address.formatted,
     taxID: businessInfo.legal.cnpj,

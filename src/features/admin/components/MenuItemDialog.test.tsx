@@ -9,12 +9,8 @@ const regularItem = {
   id: 'm1',
   order: 0,
   topic: 'Bingo de Plantas',
-  type: 'texto' as const,
   isSystem: false,
   reply: 'Todo sábado às 16h!',
-  question: null,
-  noMatchReply: null,
-  answerOptions: [],
   deliveryPrompt: null,
   deliveryConfirmedMessage: null,
   deliveryNotCoveredMessage: null,
@@ -26,12 +22,8 @@ const systemItem = {
   id: 'm-sys',
   order: 0,
   topic: 'Locais de entrega',
-  type: 'entrega' as const,
   isSystem: true,
   reply: null,
-  question: null,
-  noMatchReply: null,
-  answerOptions: [],
   deliveryPrompt: 'Qual o bairro?',
   deliveryConfirmedMessage: 'Entregamos sim!',
   deliveryNotCoveredMessage: 'Não entregamos aí.',
@@ -63,7 +55,6 @@ describe('MenuItemDialog', () => {
     const [, options] = apiFetch.mock.calls[0];
     expect(JSON.parse(options.body)).toMatchObject({
       topic: 'Bingo de Plantas',
-      type: 'texto',
       reply: 'Todo sábado às 16h!',
     });
     await waitFor(() => expect(onSaved).toHaveBeenCalled());

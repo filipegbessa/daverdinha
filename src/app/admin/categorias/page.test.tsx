@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CategoriasPage from './page';
 import { useApiClient } from '@/features/admin/lib/api-client';
@@ -10,9 +10,19 @@ const categories = [
   { id: 'cat2', name: 'Fechou compra', color: '#7a3247', conversationCount: 0 },
 ];
 
+/** The paginated envelope `GET /categories` returns. */
+const listOf = (items: unknown[], overrides: Record<string, unknown> = {}) => ({
+  items,
+  page: 1,
+  perPage: 20,
+  total: items.length,
+  totalPages: 1,
+  ...overrides,
+});
+
 describe('CategoriasPage', () => {
   it('lists every category with its conversation count', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(categories);
+    const apiFetch = jest.fn().mockResolvedValue(listOf(categories));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<CategoriasPage />);
@@ -24,7 +34,7 @@ describe('CategoriasPage', () => {
   });
 
   it('opens the create dialog when "Nova categoria" is clicked', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(categories);
+    const apiFetch = jest.fn().mockResolvedValue(listOf(categories));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<CategoriasPage />);
@@ -35,7 +45,7 @@ describe('CategoriasPage', () => {
   });
 
   it('shows a delete-confirmation dialog stating the exact affected conversation count, and deletes on confirm', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(categories);
+    const apiFetch = jest.fn().mockResolvedValue(listOf(categories));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<CategoriasPage />);
@@ -44,7 +54,7 @@ describe('CategoriasPage', () => {
 
     expect(screen.getByText(/Essa categoria está em 3 conversa\(s\)/)).toBeInTheDocument();
 
-    apiFetch.mockResolvedValueOnce(undefined).mockResolvedValueOnce([categories[1]]);
+    apiFetch.mockResolvedValueOnce(undefined).mockResolvedValueOnce(listOf([categories[1]]));
     // The dialog's own confirm button is labeled distinctly from the row's
     // "Excluir" button (which is still on screen behind the dialog), so
     // this selector is unambiguous.
@@ -54,7 +64,7 @@ describe('CategoriasPage', () => {
   });
 
   it('shows the delete error inside the still-open dialog when the delete fails', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(categories);
+    const apiFetch = jest.fn().mockResolvedValue(listOf(categories));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<CategoriasPage />);
@@ -75,7 +85,7 @@ describe('CategoriasPage', () => {
   });
 
   it('cancelling the delete dialog does not call the API', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(categories);
+    const apiFetch = jest.fn().mockResolvedValue(listOf(categories));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<CategoriasPage />);
@@ -84,5 +94,40 @@ describe('CategoriasPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
     expect(apiFetch).toHaveBeenCalledTimes(1);
+  });
+
+  describe('pagination', () => {
+    it('shows the position and the total', async () => {
+      const apiFetch = jest.fn().mockResolvedValue(listOf(categories, { total: 45, totalPages: 3 }));
+      (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+      render(<CategoriasPage />);
+      await screen.findByText('Bingo');
+
+      expect(screen.getByText('Página 1 de 3')).toBeInTheDocument();
+      expect(screen.getByText('45 categorias')).toBeInTheDocument();
+    });
+
+    it('asks the API for the next page', async () => {
+      const apiFetch = jest.fn().mockResolvedValue(listOf(categories, { total: 45, totalPages: 3 }));
+      (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+      render(<CategoriasPage />);
+      await screen.findByText('Bingo');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Próxima página' }));
+
+      await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/categories?page=2'));
+    });
+
+    it('hides the control when everything fits on one page', async () => {
+      const apiFetch = jest.fn().mockResolvedValue(listOf(categories));
+      (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+      render(<CategoriasPage />);
+      await screen.findByText('Bingo');
+
+      expect(screen.queryByRole('button', { name: 'Próxima página' })).not.toBeInTheDocument();
+    });
   });
 });

@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/features/admin/lib/api-client';
+import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
+import { ErrorText } from '@/features/admin/components/StatusMessage';
 import type { MenuItem } from '@/features/admin/types/admin';
 
 // WhatsApp's interactive list message rejects the whole request if any row
@@ -35,38 +37,23 @@ export function MenuItemDialog({
   const [deliveryUnrecognizedMessage, setDeliveryUnrecognizedMessage] = useState(
     item?.deliveryUnrecognizedMessage ?? '',
   );
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const save = useApiMutation('Erro ao salvar item de menu.');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setSaving(true);
 
     const payload = isSystem
-      ? {
-          topic,
-          deliveryPrompt,
-          deliveryConfirmedMessage,
-          deliveryNotCoveredMessage,
-          deliveryUnrecognizedMessage,
-        }
-      : item
-        ? { topic, reply }
-        : { topic, type: 'texto' as const, reply };
+      ? { topic, deliveryPrompt, deliveryConfirmedMessage, deliveryNotCoveredMessage, deliveryUnrecognizedMessage }
+      : { topic, reply };
 
-    try {
-      if (item) {
-        await apiFetch(`/menu-items/${item.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
-      } else {
-        await apiFetch('/menu-items', { method: 'POST', body: JSON.stringify({ ...payload, order: 999 }) });
-      }
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar item de menu.');
-    } finally {
-      setSaving(false);
-    }
+    const ok = await save.run(() =>
+      item
+        ? apiFetch(`/menu-items/${item.id}`, { method: 'PATCH', body: JSON.stringify(payload) })
+        : // `order: 999` parks a new item at the end; the backend renumbers
+          // the whole list on the next reorder.
+          apiFetch('/menu-items', { method: 'POST', body: JSON.stringify({ ...payload, order: 999 }) }),
+    );
+    if (ok) onSaved();
   }
 
   return (
@@ -160,14 +147,10 @@ export function MenuItemDialog({
             </div>
           )}
 
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={save.isPending}>
             Salvar
           </Button>
-          {error && (
-            <p role="alert" className="mt-2 text-berry">
-              {error}
-            </p>
-          )}
+          {save.error && <ErrorText>{save.error}</ErrorText>}
         </form>
       </DialogContent>
     </Dialog>

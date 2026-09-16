@@ -7,19 +7,26 @@ import { Location } from '@/features/site/components/Location';
 import { Faq } from '@/features/site/components/Faq';
 import { Footer } from '@/features/site/components/Footer';
 import { generateLocalBusinessJsonLd } from '@/data/business';
+import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
 
-export default function Page() {
+export default async function Page() {
+  // Fetched once here and handed to both consumers, so the structured data
+  // Google reads and the section a visitor reads can never disagree.
+  const zones = await getCoveredDeliveryZones();
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(generateLocalBusinessJsonLd()) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(generateLocalBusinessJsonLd(zones.map((zone) => zone.zone))),
+        }}
       />
       <Header />
       <Hero />
       <About />
       <Products />
-      <DeliveryZones />
+      <DeliveryZones zones={zones} />
       <Location />
       <Faq />
       <Footer />

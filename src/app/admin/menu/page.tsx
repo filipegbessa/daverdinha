@@ -1,60 +1,43 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useApiClient } from '@/features/admin/lib/api-client';
+import { useApiResource } from '@/features/admin/lib/use-api-resource';
+import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { MenuItemDialog } from '@/features/admin/components/MenuItemDialog';
+import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
+import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { MenuItem } from '@/features/admin/types/admin';
 
 export default function MenuPage() {
   const { apiFetch } = useApiClient();
-  const [items, setItems] = useState<MenuItem[] | null>(null);
+  const { data: items, isLoading, error, refetch } = useApiResource<MenuItem[]>('/menu-items');
+  const mutation = useApiMutation('Erro ao atualizar item de menu.');
   const [editing, setEditing] = useState<MenuItem | 'new' | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState<MenuItem | null>(null);
 
-  const load = useCallback(() => {
-    return apiFetch<MenuItem[]>('/menu-items')
-      .then((data) => {
-        setItems(data);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Não foi possível carregar os itens de menu.');
-      });
-  }, [apiFetch]);
+  const busy = mutation.isPending;
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  async function toggleActive(item: MenuItem) {
-    setError(null);
-    setBusy(true);
-    try {
-      await apiFetch(`/menu-items/${item.id}`, { method: 'PATCH', body: JSON.stringify({ active: !item.active }) });
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao atualizar item de menu.');
-    } finally {
-      setBusy(false);
-    }
+  async function mutate(action: () => Promise<unknown>) {
+    const ok = await mutation.run(action);
+    if (ok) refetch();
+    return ok;
   }
 
-  async function remove(item: MenuItem) {
-    setError(null);
-    setBusy(true);
-    try {
-      await apiFetch(`/menu-items/${item.id}`, { method: 'DELETE' });
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao excluir item de menu.');
-    } finally {
-      setBusy(false);
-    }
+  function toggleActive(item: MenuItem) {
+    return mutate(() =>
+      apiFetch(`/menu-items/${item.id}`, { method: 'PATCH', body: JSON.stringify({ active: !item.active }) }),
+    );
   }
 
-  async function move(item: MenuItem, direction: 'up' | 'down') {
+  async function confirmDelete() {
+    if (!deleting) return;
+    const ok = await mutate(() => apiFetch(`/menu-items/${deleting.id}`, { method: 'DELETE' }));
+    if (ok) setDeleting(null);
+  }
+
+  function move(item: MenuItem, direction: 'up' | 'down') {
     if (!items) return;
     const index = items.findIndex((i) => i.id === item.id);
     const swapWith = direction === 'up' ? index - 1 : index + 1;
@@ -63,30 +46,16 @@ export default function MenuPage() {
     const reordered = [...items];
     [reordered[index], reordered[swapWith]] = [reordered[swapWith], reordered[index]];
 
-    setError(null);
-    setBusy(true);
-    try {
-      await apiFetch('/menu-items/reorder', {
+    return mutate(() =>
+      apiFetch('/menu-items/reorder', {
         method: 'PATCH',
         body: JSON.stringify({ orderedIds: reordered.map((i) => i.id) }),
-      });
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao reordenar itens de menu.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (!items) {
-    return error ? (
-      <p role="alert" className="mt-4 rounded border border-berry bg-berry/10 p-3 text-berry">
-        {error}
-      </p>
-    ) : (
-      <p>Carregando...</p>
+      }),
     );
   }
+
+  if (isLoading) return <LoadingState />;
+  if (!items) return <ErrorAlert>{error ?? 'Não foi possível carregar os itens de menu.'}</ErrorAlert>;
 
   return (
     <div>
@@ -94,11 +63,7 @@ export default function MenuPage() {
         <h1 className="text-2xl font-semibold">Menu</h1>
         <Button onClick={() => setEditing('new')}>Novo item</Button>
       </div>
-      {error && (
-        <p role="alert" className="mt-4 rounded border border-berry bg-berry/10 p-3 text-berry">
-          {error}
-        </p>
-      )}
+      {mutation.error && <ErrorAlert>{mutation.error}</ErrorAlert>}
       <ul className={`mt-6 space-y-2 ${busy ? 'cursor-wait opacity-50' : ''}`} aria-busy={busy}>
         {items.map((item, index) => (
           <li key={item.id} className="flex items-center gap-3 rounded border border-sand-line p-3">
@@ -131,7 +96,7 @@ export default function MenuPage() {
               Editar
             </Button>
             {!item.isSystem && (
-              <Button variant="destructive" disabled={busy} onClick={() => remove(item)}>
+              <Button variant="destructive" disabled={busy} onClick={() => setDeleting(item)}>
                 Excluir
               </Button>
             )}
@@ -144,9 +109,23 @@ export default function MenuPage() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
-            load();
+            refetch();
           }}
         />
+      )}
+      {deleting && (
+        <ConfirmDialog
+          title={`Excluir o item "${deleting.topic}"?`}
+          isPending={mutation.isPending}
+          error={mutation.error}
+          onConfirm={confirmDelete}
+          onCancel={() => {
+            setDeleting(null);
+            mutation.clearError();
+          }}
+        >
+          <p>Esse item some do menu que o cliente vê no WhatsApp. Não dá pra desfazer.</p>
+        </ConfirmDialog>
       )}
     </div>
   );
