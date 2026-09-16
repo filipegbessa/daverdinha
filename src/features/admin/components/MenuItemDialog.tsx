@@ -7,6 +7,11 @@ import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import type { MenuItem } from '@/features/admin/types/admin';
 
+// WhatsApp's interactive list message rejects the whole request if any row
+// title is longer than this (error #131009) — capping input here keeps a
+// too-long topic from silently breaking the bot's menu for every customer.
+const TOPIC_MAX_LENGTH = 24;
+
 export function MenuItemDialog({
   item,
   onClose,
@@ -75,7 +80,16 @@ export function MenuItemDialog({
             <label htmlFor="topic" className="block font-medium">
               Tema
             </label>
-            <Input id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} required />
+            <Input
+              id="topic"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              maxLength={TOPIC_MAX_LENGTH}
+              required
+            />
+            <p className="mt-1 text-right text-xs text-muted-foreground">
+              {topic.length}/{TOPIC_MAX_LENGTH}
+            </p>
           </div>
 
           {isSystem ? (

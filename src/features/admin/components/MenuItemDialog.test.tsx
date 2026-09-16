@@ -119,6 +119,16 @@ describe('MenuItemDialog', () => {
     expect(body).not.toHaveProperty('reply');
   });
 
+  it('caps the Tema field at 24 characters — WhatsApp rejects longer list row titles', async () => {
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch: jest.fn() });
+    render(<MenuItemDialog item={null} onClose={jest.fn()} onSaved={jest.fn()} />);
+
+    await userEvent.type(screen.getByLabelText('Tema'), 'Bingo de Plantas - Outubro completo');
+
+    expect(screen.getByLabelText('Tema')).toHaveValue('Bingo de Plantas - Outub');
+    expect(screen.getByText('24/24')).toBeInTheDocument();
+  });
+
   it('shows an inline error and does not close when saving fails', async () => {
     const apiFetch = jest.fn().mockRejectedValue(new Error('Erro ao salvar item de menu.'));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
