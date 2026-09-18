@@ -40,6 +40,9 @@ yarn-error.log*
 # git worktrees
 .worktrees/
 
+# superpowers subagent-driven-development scratch
+.superpowers/
+
 # local Claude Code skill/plugin cache
 .claude/
 
