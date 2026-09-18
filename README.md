@@ -10,6 +10,20 @@ Frontend do projeto Daverdinha (Next.js + Tailwind + shadcn/ui + Clerk).
 
 Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/business.ts`, não em `.env` — edite ali pra atualizar. As áreas de entrega **não** ficam ali: vêm da API (ver abaixo).
 
+### Site em construção (`SITE_MODE`)
+
+Hoje `/` serve uma landing **em construção** (`ComingSoon.tsx`). O site institucional completo — Hero, sobre, produtos, áreas de entrega, FAQ — continua inteiro no repositório, só que escondido atrás da flag `SITE_MODE`.
+
+Semântica exata: só `SITE_MODE=full` abre o site completo. Ausente, vazia ou com typo cai em `soon` (a falha segura é esconder, não publicar). A flag é server-only (sem prefixo `NEXT_PUBLIC_`) — ver `src/lib/site-mode.ts`.
+
+**Por que uma flag e não deletar/mover o código:** o site institucional ainda tem placeholder (`PRODUCT_CATEGORIES` está vazio esperando resposta da cliente). A flag mantém ele compilando e com testes passando, então dá pra evoluí-lo local com `SITE_MODE=full` sem nada disso vazar pra produção.
+
+⚠️ Trocar a chave em produção **exige um redeploy**: `/` é estática, então mexer na variável no painel da Vercel só vale a partir do próximo build ("Redeploy", sem push de código).
+
+A landing é **indexável de propósito**: `robots.ts` segue liberando `/` e o JSON-LD de `LocalBusiness` continua sendo emitido (com `areaServed: []`, já que nada foi confirmado pela API), pra quem buscar "Daverdinha" achar o negócio e os contatos. Ela também **não chama a API** — não depende da `daverdinha-api` estar de pé.
+
+Os canais de contato são WhatsApp e Instagram; não há e-mail porque o negócio não tem um.
+
 ### Áreas de entrega
 
 A seção "Onde entregamos" e o `areaServed` do JSON-LD leem `GET /delivery-locations/covered` da API, com `revalidate` de 60s. A fonte da verdade é o banco — os mesmos `covered` que o bot consulta pra responder um CEP no WhatsApp.
