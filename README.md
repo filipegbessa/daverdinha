@@ -20,7 +20,7 @@ Semântica exata: só `SITE_MODE=full` abre o site completo. Ausente, vazia ou c
 
 ⚠️ Trocar a chave em produção **exige um redeploy**: `/` é estática, então mexer na variável no painel da Vercel só vale a partir do próximo build ("Redeploy", sem push de código).
 
-A landing é **indexável de propósito**: `robots.ts` segue liberando `/` e o JSON-LD de `LocalBusiness` continua sendo emitido (com `areaServed: []`, já que nada foi confirmado pela API), pra quem buscar "Daverdinha" achar o negócio e os contatos. Ela também **não chama a API** — não depende da `daverdinha-api` estar de pé.
+A landing é **indexável de propósito**: `robots.ts` segue liberando `/`, `sitemap.ts` também não foi alterado — ele já lista a home — e o JSON-LD de `LocalBusiness` continua sendo emitido (com `areaServed: []`, já que nada foi confirmado pela API), pra quem buscar "Daverdinha" achar o negócio e os contatos. Ela também **não chama a API** — não depende da `daverdinha-api` estar de pé.
 
 Os canais de contato são WhatsApp e Instagram; não há e-mail porque o negócio não tem um.
 
