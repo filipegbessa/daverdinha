@@ -14,6 +14,12 @@ describe('sitemap', () => {
         changeFrequency: 'monthly',
         priority: 1,
       },
+      {
+        url: 'https://daverdinha.com.br/politica-de-privacidade',
+        lastModified: expect.any(Date),
+        changeFrequency: 'yearly',
+        priority: 0.3,
+      },
     ]);
   });
 });
