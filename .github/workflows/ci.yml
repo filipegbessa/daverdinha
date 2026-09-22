@@ -1,0 +1,41 @@
+# Portão antes do deploy. A Vercel publica sozinha a cada push na main, então
+# sem isto aqui não há nada entre um commit quebrado e a produção.
+#
+# Roda em pull request e também em push na main, porque hoje se commita direto
+# na main — um workflow só de PR nunca chegaria a rodar.
+#
+# Não há job de lint porque este projeto não tem ESLint: nem config, nem
+# dependência, nem script. O `next build` faz a checagem de tipos, que hoje é a
+# única análise estática que existe aqui.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Testes e build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          # O layout monta um <ClerkProvider> e existe um middleware do Clerk,
+          # então o build quebra sem chave — ele resolve o domínio a partir
+          # dela. Estas são de mentira e servem só pra compilar: o formato é
+          # 'pk_test_' + base64 do domínio com '$' no fim. Nada é publicado com
+          # elas; em produção quem manda são as variáveis do painel da Vercel.
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
+          CLERK_SECRET_KEY: sk_test_ci-build-only
+          # Sem SITE_MODE a home renderiza a landing "em breve", que é o
+          # caminho que está no ar hoje. Trocar pra 'full' faria o build tentar
+          # falar com a API.
+          NEXT_PUBLIC_SITE_URL: https://example.com
