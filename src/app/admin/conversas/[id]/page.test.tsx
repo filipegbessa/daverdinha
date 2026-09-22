@@ -484,6 +484,115 @@ describe('ConversaDetailPage', () => {
     }
   });
 
+  it('shows a "responder" button on a bubble whose message has a whatsappMessageId', async () => {
+    const messageWithWamid = {
+      id: 'msg3',
+      direction: 'inbound' as const,
+      body: 'Quero comprar um vaso',
+      createdAt: '2026-08-31T14:32:00Z',
+      whatsappMessageId: 'wamid.xyz789',
+    };
+    const apiFetch = jest.fn().mockResolvedValue({ ...conversation, messages: [messageWithWamid] });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubble = await screen.findByTestId('message-bubble');
+    expect(within(bubble).getByTestId('reply-to-button')).toBeInTheDocument();
+  });
+
+  it('does not show a "responder" button on a bubble whose message has no whatsappMessageId', async () => {
+    const apiFetch = jest.fn().mockResolvedValue(conversation);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubbles = await screen.findAllByTestId('message-bubble');
+    for (const bubble of bubbles) {
+      expect(within(bubble).queryByTestId('reply-to-button')).not.toBeInTheDocument();
+    }
+  });
+
+  it('shows a "respondendo a" banner with a truncated preview when "responder" is clicked, and clears it via the X', async () => {
+    const messageWithWamid = {
+      id: 'msg3',
+      direction: 'inbound' as const,
+      body: 'x'.repeat(100),
+      createdAt: '2026-08-31T14:32:00Z',
+      whatsappMessageId: 'wamid.xyz789',
+    };
+    const apiFetch = jest.fn().mockResolvedValue({ ...conversation, messages: [messageWithWamid] });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubble = await screen.findByTestId('message-bubble');
+    expect(screen.queryByTestId('replying-to-banner')).not.toBeInTheDocument();
+
+    await userEvent.click(within(bubble).getByTestId('reply-to-button'));
+
+    const banner = await screen.findByTestId('replying-to-banner');
+    expect(banner).toHaveTextContent(`Respondendo a: ${'x'.repeat(60)}…`);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar resposta citada' }));
+
+    expect(screen.queryByTestId('replying-to-banner')).not.toBeInTheDocument();
+  });
+
+  it('sends replyToMessageId in the reply body when a message was picked to reply to, and clears it on success', async () => {
+    const messageWithWamid = {
+      id: 'msg3',
+      direction: 'inbound' as const,
+      body: 'Quero comprar um vaso',
+      createdAt: '2026-08-31T14:32:00Z',
+      whatsappMessageId: 'wamid.xyz789',
+    };
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
+      if (options?.method === 'POST' && path === '/conversations/c1/reply') return Promise.resolve({ id: 'm1' });
+      return Promise.resolve({ ...conversation, messages: [messageWithWamid] });
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+    const bubble = await screen.findByTestId('message-bubble');
+    await userEvent.click(within(bubble).getByTestId('reply-to-button'));
+    await screen.findByTestId('replying-to-banner');
+
+    const field = screen.getByLabelText('Responder');
+    await userEvent.type(field, 'Já separo pra você!');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/reply', {
+        method: 'POST',
+        body: JSON.stringify({ text: 'Já separo pra você!', replyToMessageId: 'msg3' }),
+      }),
+    );
+    await waitFor(() => expect(screen.queryByTestId('replying-to-banner')).not.toBeInTheDocument());
+  });
+
+  it('sends a reply without replyToMessageId when no message was picked to reply to', async () => {
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
+      if (options?.method === 'POST' && path === '/conversations/c1/reply') return Promise.resolve({ id: 'm1' });
+      return Promise.resolve(conversation);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+    const field = await screen.findByLabelText('Responder');
+    await userEvent.type(field, 'Já te chamo!');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/reply', {
+        method: 'POST',
+        body: JSON.stringify({ text: 'Já te chamo!' }),
+      }),
+    );
+  });
+
   it('renders only attached categories as chips in the header', async () => {
     const allCategories = [
       { id: 'cat1', name: 'Bingo', color: '#185928' },

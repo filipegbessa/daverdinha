@@ -50,6 +50,7 @@ export default function ConversaDetailPage() {
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState('');
   const [replyText, setReplyText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<{ id: string; preview: string } | null>(null);
   const [pendingCategory, setPendingCategory] = useState<{ id: string; attach: boolean } | null>(null);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -109,10 +110,14 @@ export default function ConversaDetailPage() {
   async function handleReply(e: React.FormEvent) {
     e.preventDefault();
     const ok = await sendReply.run(() =>
-      apiFetch(`/conversations/${id}/reply`, { method: 'POST', body: JSON.stringify({ text: replyText }) }),
+      apiFetch(`/conversations/${id}/reply`, {
+        method: 'POST',
+        body: JSON.stringify({ text: replyText, replyToMessageId: replyingTo?.id }),
+      }),
     );
     if (ok) {
       setReplyText('');
+      setReplyingTo(null);
       refetch();
     }
   }
@@ -292,10 +297,10 @@ export default function ConversaDetailPage() {
               data-message-kind={kind}
               className={
                 kind === 'order'
-                  ? 'max-w-md rounded border-2 border-amber-400 bg-amber-50 p-3'
+                  ? 'max-w-md rounded border-2 border-amber-400 bg-amber-50 p-3 group'
                   : message.direction === 'inbound'
-                    ? `max-w-md rounded bg-sand p-3${kind === 'invalid_content' ? ' italic text-ink-soft' : ''}`
-                    : 'ml-auto max-w-md rounded bg-moss/10 p-3 text-right'
+                    ? `max-w-md rounded bg-sand p-3${kind === 'invalid_content' ? ' italic text-ink-soft' : ''} group`
+                    : 'ml-auto max-w-md rounded bg-moss/10 p-3 text-right group'
               }
             >
               {message.repliedTo ? (
@@ -334,7 +339,21 @@ export default function ConversaDetailPage() {
               ) : (
                 <p className={kind === 'order' ? 'mt-1 whitespace-pre-line' : undefined}>{message.body}</p>
               )}
-              <p className="mt-1 text-xs text-ink-soft">{new Date(message.createdAt).toLocaleString('pt-BR')}</p>
+              <div className="mt-1 flex items-center justify-between gap-2">
+                <p className="text-xs text-ink-soft">{new Date(message.createdAt).toLocaleString('pt-BR')}</p>
+                {message.whatsappMessageId && (
+                  <button
+                    type="button"
+                    data-testid="reply-to-button"
+                    onClick={() =>
+                      setReplyingTo({ id: message.id, preview: truncate(message.body ?? '', 60) })
+                    }
+                    className="text-xs text-ink-soft underline opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus:opacity-100"
+                  >
+                    ↩ responder
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
@@ -342,21 +361,34 @@ export default function ConversaDetailPage() {
 
       <div className="flex-none border-t border-sand-line pt-3">
         {conversation.status === 'paused_human' ? (
-          <form onSubmit={handleReply} className="flex items-end gap-2">
-            <label htmlFor="replyText" className="sr-only">
-              Responder
-            </label>
-            <Textarea
-              id="replyText"
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              required
-              rows={2}
-              className="flex-1"
-            />
-            <Button type="submit" disabled={sendReply.isPending}>
-              Enviar
-            </Button>
+          <form onSubmit={handleReply}>
+            {replyingTo && (
+              <div
+                data-testid="replying-to-banner"
+                className="mb-2 flex items-center justify-between gap-2 border-l-2 border-moss pl-2 text-xs text-ink-soft"
+              >
+                <span>Respondendo a: {replyingTo.preview}</span>
+                <button type="button" onClick={() => setReplyingTo(null)} aria-label="Cancelar resposta citada">
+                  ✕
+                </button>
+              </div>
+            )}
+            <div className="flex items-end gap-2">
+              <label htmlFor="replyText" className="sr-only">
+                Responder
+              </label>
+              <Textarea
+                id="replyText"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                required
+                rows={2}
+                className="flex-1"
+              />
+              <Button type="submit" disabled={sendReply.isPending}>
+                Enviar
+              </Button>
+            </div>
           </form>
         ) : (
           <p className="text-sm text-ink-soft">O bot está respondendo essa conversa automaticamente.</p>
