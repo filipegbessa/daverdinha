@@ -4,7 +4,7 @@
 
 **Goal:** Trocar o que `/` mostra em produção por uma landing "em construção" com logo, frase do negócio, WhatsApp, Instagram e endereço — mantendo o site institucional inteiro no repositório, compilando e testado, atrás de uma flag de ambiente que devolve o site completo ao ar sem alterar uma linha de código.
 
-**Architecture:** Uma função server-only `getSiteMode()` lê `process.env.SITE_MODE` e devolve `'soon' | 'full'`. `src/app/page.tsx` passa a bifurcar nela: em `soon` renderiza um único componente novo `<ComingSoon />` e **não chama a API** de áreas de entrega; em `full` renderiza exatamente as 8 seções de hoje. O JSON-LD de `LocalBusiness` continua saindo nos dois modos (com `areaServed: []` em `soon`, que é o comportamento já previsto quando nada é confirmado pela API). Um `generateMetadata()` na página ajusta título/descrição por modo e — nos dois modos — passa a anunciar `/logo.jpeg` como imagem OpenGraph, que hoje não existe. Nenhum componente do site é movido ou apagado.
+**Architecture:** Uma função server-only `getSiteMode()` lê `process.env.SITE_MODE` e devolve `'soon' | 'full'`. `src/app/page.tsx` passa a bifurcar nela: em `soon` renderiza um único componente novo `<ComingSoon />` e **não chama a API** de áreas de entrega; em `full` renderiza exatamente as 8 seções de hoje. O JSON-LD de `LocalBusiness` continua saindo nos dois modos (com `areaServed: []` em `soon`, que é o comportamento já previsto quando nada é confirmado pela API). Um `generateMetadata()` na página ajusta título/descrição por modo e — nos dois modos — passa a anunciar `/logo.png` como imagem OpenGraph, que hoje não existe. Nenhum componente do site é movido ou apagado.
 
 **Tech Stack:** Next.js 16.3.4 (App Router), React 19, TypeScript, Tailwind v4, Jest + React Testing Library.
 
@@ -145,7 +145,7 @@ git commit -m "feat: add a server-only SITE_MODE flag defaulting to the coming-s
 **Interfaces:**
 - Produces: `export function ComingSoon(): JSX.Element` — sem props, Server Component (sem `'use client'`), consumido pela Task 3.
 - Consumes: `businessInfo` (`@/data/business`), `getWhatsAppUrl` (`@/features/site/lib/whatsapp`), `buttonVariants` (`@/components/ui/button`), `cn` (`@/lib/utils`), `Eyebrow` (`@/features/site/components/Eyebrow`) — tudo já existente, nada novo é criado.
-- Asset: `public/logo.jpeg` (1280×1280, já no repositório).
+- Asset: `public/logo.png` (1280×1280, já no repositório).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -234,7 +234,7 @@ export function ComingSoon() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6 py-16 text-center">
       <Image
-        src="/logo.jpeg"
+        src="/logo.png"
         alt="Daverdinha — Ateliê de Plantas"
         width={176}
         height={176}
@@ -405,7 +405,7 @@ describe('Home page — full site (SITE_MODE=full)', () => {
 
     expect(metadata.title).toBe('Daverdinha — Ateliê de plantas no Rio de Janeiro');
     expect(metadata.openGraph?.images).toEqual([
-      { url: '/logo.jpeg', width: 1280, height: 1280, alt: 'Daverdinha — Ateliê de Plantas' },
+      { url: '/logo.png', width: 1280, height: 1280, alt: 'Daverdinha — Ateliê de Plantas' },
     ]);
   });
 });
@@ -458,7 +458,7 @@ describe('Home page — coming soon (SITE_MODE unset)', () => {
     expect(metadata.openGraph?.description).toBe(metadata.description);
     expect(metadata.openGraph).toHaveProperty('type', 'website');
     expect(metadata.openGraph?.images).toEqual([
-      { url: '/logo.jpeg', width: 1280, height: 1280, alt: 'Daverdinha — Ateliê de Plantas' },
+      { url: '/logo.png', width: 1280, height: 1280, alt: 'Daverdinha — Ateliê de Plantas' },
     ]);
   });
 });
@@ -487,7 +487,7 @@ import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
 import { getSiteMode } from '@/lib/site-mode';
 
 const OG_IMAGE = {
-  url: '/logo.jpeg',
+  url: '/logo.png',
   width: 1280,
   height: 1280,
   alt: 'Daverdinha — Ateliê de Plantas',

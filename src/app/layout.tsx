@@ -13,8 +13,16 @@ const raleway = Raleway({ subsets: ['latin'], variable: '--font-raleway', displa
 export const metadata: Metadata = {
   title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
   description: businessInfo.description,
+  // O .ico existe porque o navegador pede `/favicon.ico` sozinho, com ou sem
+  // link tag, e traz 16/32/48 — os tamanhos que a aba realmente usa. Antes o
+  // único ícone declarado era o de 192px, que a aba baixava inteiro só pra
+  // reduzir a 16px na hora de desenhar.
   icons: {
-    icon: [{ url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
+    icon: [
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
+      { url: '/icons/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   appleWebApp: {
