@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DashboardPage from './page';
 import { useApiClient } from '@/features/admin/lib/api-client';
@@ -34,6 +34,60 @@ describe('DashboardPage', () => {
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     expect(screen.getByRole('switch')).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  // Regressão do PWA: no primeiro acesso, /bot-settings respondia antes de
+  // /menu-items e a página já renderizava. Como a lista ainda era null, a
+  // contagem caía em 0 e o operador era acusado de não ter item de menu
+  // nenhum — a mensagem sumia sozinha quando a lista chegava.
+  it('does not accuse the shop of having no menu items while the list is still loading', async () => {
+    let releaseMenuItems: (items: unknown) => void = () => {};
+    const apiFetch = jest.fn((path: string) => {
+      if (path === '/menu-items') {
+        return new Promise((resolve) => {
+          releaseMenuItems = resolve;
+        });
+      }
+      return Promise.resolve(emptySettings);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<DashboardPage />);
+
+    // Drena as microtasks pra garantir que /bot-settings já resolveu de fato —
+    // sem isso a asserção passaria só porque nada tinha resolvido ainda, que é
+    // acidente de timing e não o comportamento em teste.
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/menu-items'));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Configurações carregadas, lista pendente: a página espera em vez de
+    // concluir que não há item nenhum.
+    expect(screen.queryByText(/não há nenhum item de menu ativo/)).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
+
+    await act(async () => {
+      releaseMenuItems([{ id: '1', active: true }]);
+    });
+
+    await waitFor(() => expect(screen.getByRole('switch')).toBeInTheDocument());
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('reports a failure to load the menu items instead of claiming there are none', async () => {
+    const apiFetch = jest.fn((path: string) => {
+      if (path === '/menu-items') return Promise.reject(new Error('API fora do ar'));
+      return Promise.resolve(emptySettings);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    expect(screen.getByRole('alert')).toHaveTextContent('API fora do ar');
+    // O texto que acusa ausência de item não pode aparecer: não sabemos.
+    expect(screen.queryByText(/não há nenhum item de menu ativo/)).not.toBeInTheDocument();
   });
 
   it('lets the operator toggle the bot on when at least one menu item is active', async () => {
