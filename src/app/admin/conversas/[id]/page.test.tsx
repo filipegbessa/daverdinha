@@ -425,6 +425,65 @@ describe('ConversaDetailPage', () => {
     expect(bubble).toHaveTextContent('[Conteúdo inválido]');
   });
 
+  it('shows a truncated preview of the quoted message when repliedTo is present', async () => {
+    const replyMessage = {
+      id: 'msg3',
+      direction: 'inbound' as const,
+      body: 'Sim, confirmo!',
+      createdAt: '2026-08-31T14:32:00Z',
+      repliedToWamid: 'wamid.abc123',
+      repliedTo: {
+        id: 'msg2',
+        kind: 'text' as const,
+        direction: 'outbound' as const,
+        body: 'x'.repeat(100),
+      },
+    };
+    const apiFetch = jest.fn().mockResolvedValue({ ...conversation, messages: [replyMessage] });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubble = await screen.findByTestId('message-bubble');
+    const quote = within(bubble).getByTestId('reply-quote');
+    expect(quote).toHaveTextContent(`${'x'.repeat(80)}…`);
+    expect(bubble).toHaveTextContent('Sim, confirmo!');
+  });
+
+  it('shows a generic "replying to an earlier message" banner when repliedToWamid is present but repliedTo could not be resolved', async () => {
+    const replyMessage = {
+      id: 'msg3',
+      direction: 'inbound' as const,
+      body: 'Sim, confirmo!',
+      createdAt: '2026-08-31T14:32:00Z',
+      repliedToWamid: 'wamid.abc123',
+      repliedTo: null,
+    };
+    const apiFetch = jest.fn().mockResolvedValue({ ...conversation, messages: [replyMessage] });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubble = await screen.findByTestId('message-bubble');
+    expect(within(bubble).getByTestId('reply-quote-generic')).toHaveTextContent(
+      '↩ Respondendo a uma mensagem anterior',
+    );
+    expect(within(bubble).queryByTestId('reply-quote')).not.toBeInTheDocument();
+  });
+
+  it('shows neither a quote block nor the generic banner for a message without repliedTo/repliedToWamid', async () => {
+    const apiFetch = jest.fn().mockResolvedValue(conversation);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubbles = await screen.findAllByTestId('message-bubble');
+    for (const bubble of bubbles) {
+      expect(within(bubble).queryByTestId('reply-quote')).not.toBeInTheDocument();
+      expect(within(bubble).queryByTestId('reply-quote-generic')).not.toBeInTheDocument();
+    }
+  });
+
   it('renders only attached categories as chips in the header', async () => {
     const allCategories = [
       { id: 'cat1', name: 'Bingo', color: '#185928' },

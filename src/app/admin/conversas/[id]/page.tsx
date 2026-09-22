@@ -14,6 +14,11 @@ import { formatPhone } from '@/features/admin/lib/format-phone';
 import { formatCurrency } from '@/features/admin/lib/format-currency';
 import type { Category, ConversationWithMessages, Paginated } from '@/features/admin/types/admin';
 
+/** Truncates a quoted message preview to `max` characters, appending an ellipsis when it cuts. */
+function truncate(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
 export default function ConversaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { apiFetch } = useApiClient();
@@ -293,6 +298,25 @@ export default function ConversaDetailPage() {
                     : 'ml-auto max-w-md rounded bg-moss/10 p-3 text-right'
               }
             >
+              {message.repliedTo ? (
+                <p
+                  data-testid="reply-quote"
+                  className="mb-1 border-l-2 border-ink-soft/40 pl-2 text-xs text-ink-soft"
+                >
+                  {message.repliedTo.body
+                    ? truncate(message.repliedTo.body, 80)
+                    : '(mensagem sem texto)'}
+                </p>
+              ) : (
+                message.repliedToWamid && (
+                  <p
+                    data-testid="reply-quote-generic"
+                    className="mb-1 border-l-2 border-ink-soft/40 pl-2 text-xs text-ink-soft"
+                  >
+                    ↩ Respondendo a uma mensagem anterior
+                  </p>
+                )
+              )}
               {kind === 'order' && (
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
                   🛒 Pedido pelo catálogo

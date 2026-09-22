@@ -79,6 +79,9 @@ export interface Message {
   body: string | null;
   order?: Order | null;
   createdAt: string;
+  whatsappMessageId?: string | null;
+  repliedToWamid?: string | null;
+  repliedTo?: Pick<Message, 'id' | 'kind' | 'body' | 'direction'> | null;
 }
 
 export interface ConversationWithMessages extends Conversation {
