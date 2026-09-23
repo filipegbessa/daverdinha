@@ -715,4 +715,137 @@ describe('ConversaDetailPage', () => {
 
     await waitFor(() => expect(screen.queryByRole('button', { name: /Bingo/ })).not.toBeInTheDocument());
   });
+
+  describe('enviar imagem', () => {
+    const pausedConversation = {
+      id: 'c1',
+      phone: '5521999999999',
+      name: null,
+      status: 'paused_human' as const,
+      unread: false,
+      updatedAt: '2026-08-31T14:00:00Z',
+      categories: [],
+      messages: [],
+      hasMoreMessages: false,
+    };
+
+    function pngFile(name = 'foto.png', type = 'image/png', size = 1024) {
+      const file = new File(['x'], name, { type });
+      Object.defineProperty(file, 'size', { value: size });
+      return file;
+    }
+
+    function renderPaused() {
+      const apiFetch = jest.fn().mockResolvedValue(pausedConversation);
+      (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+      render(<ConversaDetailPage />);
+      return apiFetch;
+    }
+
+    it('posts multipart to reply-image, with the text as the caption', async () => {
+      const apiFetch = renderPaused();
+      await screen.findByLabelText('Responder');
+
+      await userEvent.upload(screen.getByLabelText(/Anexar imagem/), pngFile());
+      await userEvent.type(screen.getByLabelText('Responder'), 'o vaso novo');
+      await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+      await waitFor(() =>
+        expect(apiFetch).toHaveBeenCalledWith(
+          '/conversations/c1/reply-image',
+          expect.objectContaining({ method: 'POST' }),
+        ),
+      );
+      const [, init] = apiFetch.mock.calls.find(
+        ([path]: [string]) => path === '/conversations/c1/reply-image',
+      );
+      // Uma mensagem só: a legenda viaja com a imagem, não como reply à parte.
+      expect(init.body).toBeInstanceOf(FormData);
+      expect(init.body.get('caption')).toBe('o vaso novo');
+      expect(init.body.get('file')).toBeInstanceOf(File);
+    });
+
+    it('sends the image with no caption at all', async () => {
+      const apiFetch = renderPaused();
+      await screen.findByLabelText('Responder');
+
+      await userEvent.upload(screen.getByLabelText(/Anexar imagem/), pngFile());
+      // Sem digitar nada: a imagem já é a mensagem.
+      await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+      await waitFor(() =>
+        expect(apiFetch).toHaveBeenCalledWith(
+          '/conversations/c1/reply-image',
+          expect.anything(),
+        ),
+      );
+    });
+
+    it('still posts plain text when nothing is attached', async () => {
+      const apiFetch = renderPaused();
+      await screen.findByLabelText('Responder');
+
+      await userEvent.type(screen.getByLabelText('Responder'), 'só texto');
+      await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+      await waitFor(() =>
+        expect(apiFetch).toHaveBeenCalledWith(
+          '/conversations/c1/reply',
+          expect.objectContaining({
+            // `JSON.stringify` descarta o `undefined`, então a citação some.
+            body: JSON.stringify({ text: 'só texto' }),
+          }),
+        ),
+      );
+    });
+
+    // Rejeitar no navegador poupa subir 5 MB para ouvir um não — mas quem
+    // decide continua sendo o backend.
+    it('refuses a type the backend would refuse, without uploading', async () => {
+      const apiFetch = renderPaused();
+      await screen.findByLabelText('Responder');
+
+      // `applyAccept: false` porque o `accept` do input já barraria o PDF no
+      // seletor — e é justamente o caso em que ele não barra (arrastar e
+      // soltar, "todos os arquivos") que a checagem em JS cobre.
+      await userEvent.upload(
+        screen.getByLabelText(/Anexar imagem/),
+        pngFile('doc.pdf', 'application/pdf'),
+        { applyAccept: false },
+      );
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Só JPEG, PNG ou WebP.',
+      );
+      expect(screen.queryByTestId('attachment-preview')).not.toBeInTheDocument();
+      expect(apiFetch).not.toHaveBeenCalledWith(
+        '/conversations/c1/reply-image',
+        expect.anything(),
+      );
+    });
+
+    it('refuses a file past the size ceiling', async () => {
+      renderPaused();
+      await screen.findByLabelText('Responder');
+
+      await userEvent.upload(
+        screen.getByLabelText(/Anexar imagem/),
+        pngFile('grande.png', 'image/png', 6 * 1024 * 1024),
+      );
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('5 MB');
+    });
+
+    it('lets the operator drop the attachment before sending', async () => {
+      renderPaused();
+      await screen.findByLabelText('Responder');
+
+      await userEvent.upload(screen.getByLabelText(/Anexar imagem/), pngFile());
+      expect(await screen.findByTestId('attachment-preview')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Remover anexo' }));
+
+      expect(screen.queryByTestId('attachment-preview')).not.toBeInTheDocument();
+    });
+  });
 });

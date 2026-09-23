@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useApiClient } from '@/features/admin/lib/api-client';
@@ -19,6 +19,14 @@ import type { Category, ConversationWithMessages, Paginated } from '@/features/a
 function truncate(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
+
+/**
+ * Espelham os limites do backend, que continua sendo quem decide. Aqui é só
+ * para o operador descobrir o problema antes de subir 5 MB e só então ouvir
+ * um não.
+ */
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 export default function ConversaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +60,8 @@ export default function ConversaDetailPage() {
   const [name, setName] = useState('');
   const [replyText, setReplyText] = useState('');
   const [replyingTo, setReplyingTo] = useState<{ id: string; preview: string } | null>(null);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const [pendingCategory, setPendingCategory] = useState<{ id: string; attach: boolean } | null>(null);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -108,17 +118,54 @@ export default function ConversaDetailPage() {
     }
   }
 
+  function handleAttach(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Limpa o input para o mesmo arquivo poder ser escolhido de novo depois
+    // de um erro — sem isso o `change` não dispara na segunda vez.
+    e.target.value = '';
+    if (!file) return;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setAttachment(null);
+      setAttachmentError('Só JPEG, PNG ou WebP.');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setAttachment(null);
+      setAttachmentError('A imagem excede o limite de 5 MB.');
+      return;
+    }
+    setAttachmentError(null);
+    setAttachment(file);
+  }
+
   async function handleReply(e: React.FormEvent) {
     e.preventDefault();
-    const ok = await sendReply.run(() =>
-      apiFetch(`/conversations/${id}/reply`, {
-        method: 'POST',
-        body: JSON.stringify({ text: replyText, replyToMessageId: replyingTo?.id }),
-      }),
-    );
+
+    // Com anexo, o texto vira legenda da imagem — é uma mensagem só, não duas.
+    const request = attachment
+      ? () => {
+          const form = new FormData();
+          form.append('file', attachment);
+          if (replyText) form.append('caption', replyText);
+          if (replyingTo) form.append('replyToMessageId', replyingTo.id);
+          return apiFetch(`/conversations/${id}/reply-image`, {
+            method: 'POST',
+            body: form,
+          });
+        }
+      : () =>
+          apiFetch(`/conversations/${id}/reply`, {
+            method: 'POST',
+            body: JSON.stringify({ text: replyText, replyToMessageId: replyingTo?.id }),
+          });
+
+    const ok = await sendReply.run(request);
     if (ok) {
       setReplyText('');
       setReplyingTo(null);
+      setAttachment(null);
+      setAttachmentError(null);
       refetch();
     }
   }
@@ -380,7 +427,36 @@ export default function ConversaDetailPage() {
                 </button>
               </div>
             )}
+            {attachment && (
+              <div
+                data-testid="attachment-preview"
+                className="mb-2 flex items-center justify-between gap-2 rounded border border-sand-line p-2 text-xs text-ink-soft"
+              >
+                <span>📎 {attachment.name}</span>
+                <button type="button" onClick={() => setAttachment(null)} aria-label="Remover anexo">
+                  ✕
+                </button>
+              </div>
+            )}
+            {attachmentError && (
+              <p role="alert" className="mb-2 text-xs text-berry">
+                {attachmentError}
+              </p>
+            )}
             <div className="flex items-end gap-2">
+              {/* O próprio label é o gatilho: abre o seletor nativamente,
+                  sem JS, e evita ter dois controles anunciando a mesma coisa
+                  para leitor de tela. */}
+              <label htmlFor="replyImage" className={buttonVariants({ variant: 'outline' })}>
+                📎<span className="sr-only">Anexar imagem</span>
+              </label>
+              <input
+                id="replyImage"
+                type="file"
+                accept={ALLOWED_IMAGE_TYPES.join(',')}
+                onChange={handleAttach}
+                className="hidden"
+              />
               <label htmlFor="replyText" className="sr-only">
                 Responder
               </label>
@@ -388,7 +464,9 @@ export default function ConversaDetailPage() {
                 id="replyText"
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                required
+                // Com anexo, a legenda é opcional: a imagem já é a mensagem.
+                required={!attachment}
+                placeholder={attachment ? 'Legenda (opcional)' : undefined}
                 rows={2}
                 className="flex-1"
               />
