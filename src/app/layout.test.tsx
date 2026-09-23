@@ -15,4 +15,16 @@ describe('RootLayout metadata', () => {
     expect(openGraph?.type).toBe('website');
     expect(twitter?.card).toBe('summary_large_image');
   });
+
+  it('carries the Facebook domain verification token', () => {
+    // `verification.other` é o que o Next traduz para
+    // `<meta name="facebook-domain-verification" content="...">`. Fica no
+    // layout raiz porque a verificação olha o domínio, não uma página.
+    const verification = metadata.verification as {
+      other?: Record<string, string>;
+    } | null;
+    expect(verification?.other?.['facebook-domain-verification']).toBe(
+      'i3ox0yxj3vbn6jc6m4bzm2smhb700s',
+    );
+  });
 });

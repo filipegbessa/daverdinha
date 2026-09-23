@@ -25,6 +25,14 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
+  // Verificação de domínio do Facebook/Meta Business. `other` é o que o Next
+  // traduz em `<meta name="...">` cru; fica no layout raiz porque o que é
+  // verificado é o domínio, não uma página.
+  verification: {
+    other: {
+      'facebook-domain-verification': 'i3ox0yxj3vbn6jc6m4bzm2smhb700s',
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
