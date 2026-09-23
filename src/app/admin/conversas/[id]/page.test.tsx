@@ -47,6 +47,16 @@ describe('ConversaDetailPage', () => {
     expect(messages[1]).toHaveTextContent('Oi! Como posso ajudar?');
   });
 
+  it('shows a link back to the conversation list', async () => {
+    const apiFetch = jest.fn().mockResolvedValue(conversation);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const backLink = await screen.findByRole('link', { name: /voltar para conversas/i });
+    expect(backLink).toHaveAttribute('href', '/admin/conversas');
+  });
+
   it('shows the formatted phone as the heading when the conversation has no name', async () => {
     const apiFetch = jest.fn().mockResolvedValue(unnamedConversation);
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });

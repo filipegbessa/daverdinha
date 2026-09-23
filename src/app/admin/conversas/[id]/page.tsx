@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -204,6 +205,12 @@ export default function ConversaDetailPage() {
 
   return (
     <div className="flex h-full flex-col">
+      <Link
+        href="/admin/conversas"
+        className="mb-2 inline-flex w-fit items-center gap-1 text-sm text-ink-soft underline underline-offset-4 hover:text-ink"
+      >
+        ← Voltar para conversas
+      </Link>
       <div className="flex flex-none flex-wrap items-start justify-between gap-4 border-b border-sand-line pb-4">
         <div>
           <h1 className="text-2xl font-semibold">{conversation.name || formatPhone(conversation.phone)}</h1>

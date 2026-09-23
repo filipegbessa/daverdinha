@@ -1,13 +1,13 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useDebouncedValue } from '@/features/admin/lib/use-debounced-value';
 import { usePagination } from '@/features/admin/lib/use-pagination';
 import { TablePagination } from '@/features/admin/components/TablePagination';
+import { DataTable, type DataTableColumn } from '@/features/admin/components/DataTable';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { formatPhone } from '@/features/admin/lib/format-phone';
 import type { Category, Conversation, ConversationList, Paginated } from '@/features/admin/types/admin';
@@ -59,6 +59,63 @@ export default function ConversasPage() {
     if (data) setTotalPages(data.totalPages);
   }, [data]);
 
+  const columns: DataTableColumn<Conversation>[] = [
+    {
+      key: 'name',
+      header: 'Nome',
+      sortable: true,
+      sortValue: (conversation) => conversation.name ?? formatPhone(conversation.phone),
+      cell: (conversation) => (
+        <Link
+          href={`/admin/conversas/${conversation.id}`}
+          className="flex items-center gap-2 underline underline-offset-4"
+        >
+          {conversation.unread && <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-berry" />}
+          {conversation.name ?? formatPhone(conversation.phone)}
+        </Link>
+      ),
+    },
+    { key: 'phone', header: 'Telefone', cell: (conversation) => formatPhone(conversation.phone) },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      sortValue: (conversation) => STATUS_LABEL[conversation.status],
+      cell: (conversation) => STATUS_LABEL[conversation.status],
+    },
+    {
+      key: 'entryPoint',
+      header: 'Origem',
+      sortable: true,
+      sortValue: (conversation) => (conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : null),
+      cell: (conversation) => (conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'),
+    },
+    {
+      key: 'categories',
+      header: 'Categorias',
+      cell: (conversation) => (
+        <div className="flex flex-wrap gap-1">
+          {(conversation.categories ?? []).map((cat) => (
+            <span
+              key={cat.id}
+              title={cat.name}
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: cat.color }}
+            />
+          ))}
+        </div>
+      ),
+    },
+    {
+      key: 'updatedAt',
+      header: 'Atualizado em',
+      sortable: true,
+      sortValue: (conversation) => new Date(conversation.updatedAt).getTime(),
+      defaultSortDirection: 'desc',
+      cell: (conversation) => new Date(conversation.updatedAt).toLocaleString('pt-BR'),
+    },
+  ];
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -99,36 +156,30 @@ export default function ConversasPage() {
       {!isLoading && error && <ErrorAlert>{error}</ErrorAlert>}
       {!isLoading && !error && (
         <>
-          <Table className="mt-6">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Origem</TableHead>
-                <TableHead>Categorias</TableHead>
-                <TableHead>Atualizado em</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {conversations.map((conversation) => (
-                <TableRow key={conversation.id}>
-                  <TableCell>
-                    <Link
-                      href={`/admin/conversas/${conversation.id}`}
-                      className="flex items-center gap-2 underline underline-offset-4"
-                    >
-                      {conversation.unread && (
-                        <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-berry" />
-                      )}
-                      {conversation.name ?? formatPhone(conversation.phone)}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{formatPhone(conversation.phone)}</TableCell>
-                  <TableCell>{STATUS_LABEL[conversation.status]}</TableCell>
-                  <TableCell>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
+          <div className="mt-6">
+            <DataTable
+              columns={columns}
+              rows={conversations}
+              rowKey={(conversation) => conversation.id}
+              renderMobileCard={(conversation) => (
+                <div className="rounded-md border border-sand-line p-3">
+                  <Link
+                    href={`/admin/conversas/${conversation.id}`}
+                    className="flex items-center gap-2 font-medium underline underline-offset-4"
+                  >
+                    {conversation.unread && (
+                      <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-berry" />
+                    )}
+                    {conversation.name ?? formatPhone(conversation.phone)}
+                  </Link>
+                  <p className="mt-1 text-sm text-ink-soft">{formatPhone(conversation.phone)}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-soft">
+                    <span>{STATUS_LABEL[conversation.status]}</span>
+                    <span>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</span>
+                    <span>{new Date(conversation.updatedAt).toLocaleString('pt-BR')}</span>
+                  </div>
+                  {(conversation.categories ?? []).length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
                       {(conversation.categories ?? []).map((cat) => (
                         <span
                           key={cat.id}
@@ -138,12 +189,11 @@ export default function ConversasPage() {
                         />
                       ))}
                     </div>
-                  </TableCell>
-                  <TableCell>{new Date(conversation.updatedAt).toLocaleString('pt-BR')}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  )}
+                </div>
+              )}
+            />
+          </div>
           {conversations.length === 0 && <p className="mt-6 text-ink-soft">Nenhuma conversa encontrada.</p>}
           {data && (
             <TablePagination

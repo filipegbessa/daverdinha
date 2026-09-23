@@ -58,34 +58,44 @@ function mockApi(
 const conversationCalls = (apiFetch: jest.Mock) =>
   apiFetch.mock.calls.map(([path]) => path as string).filter((path) => path.startsWith('/conversations'));
 
+/**
+ * The desktop table and the mobile card list both render every conversation
+ * at once (only CSS hides one of them, and jsdom doesn't apply that) — so
+ * any assertion on row content has to scope to one of them, or it'll trip
+ * over "found multiple elements". The desktop table is the one with the
+ * sortable headers under test, so it's the one most of this file scopes to.
+ */
+const table = () => screen.getByRole('table');
+
 describe('ConversasPage', () => {
   it('lists every conversation with name first, formatted phone, status and entry point', async () => {
     mockApi();
 
     render(<ConversasPage />);
+    await screen.findAllByText('Maria');
 
-    expect(await screen.findByText('Maria')).toBeInTheDocument();
-    expect(screen.getByText('+55 (21) 99999-9999')).toBeInTheDocument();
-    expect(screen.getByText('Transferida')).toBeInTheDocument();
-    expect(screen.getByText('Bot ativo')).toBeInTheDocument();
+    expect(within(table()).getByText('Maria')).toBeInTheDocument();
+    expect(within(table()).getByText('+55 (21) 99999-9999')).toBeInTheDocument();
+    expect(within(table()).getByText('Transferida')).toBeInTheDocument();
+    expect(within(table()).getByText('Bot ativo')).toBeInTheDocument();
   });
 
   it('links the name to its conversation detail page', async () => {
     mockApi();
 
     render(<ConversasPage />);
-    await screen.findByText('Maria');
+    await screen.findAllByText('Maria');
 
-    expect(screen.getByRole('link', { name: /Maria/ })).toHaveAttribute('href', '/admin/conversas/c1');
+    expect(within(table()).getByRole('link', { name: /Maria/ })).toHaveAttribute('href', '/admin/conversas/c1');
   });
 
   it('links the formatted phone when the conversation has no name', async () => {
     mockApi();
 
     render(<ConversasPage />);
-    await screen.findByText('Maria');
+    await screen.findAllByText('Maria');
 
-    expect(screen.getByRole('link', { name: /\+55 \(21\) 98888-8888/ })).toHaveAttribute(
+    expect(within(table()).getByRole('link', { name: /\+55 \(21\) 98888-8888/ })).toHaveAttribute(
       'href',
       '/admin/conversas/c2',
     );
@@ -95,9 +105,9 @@ describe('ConversasPage', () => {
     mockApi();
 
     render(<ConversasPage />);
-    await screen.findByText('Maria');
+    await screen.findAllByText('Maria');
 
-    expect(screen.getAllByTitle('Não lida')).toHaveLength(1);
+    expect(within(table()).getAllByTitle('Não lida')).toHaveLength(1);
   });
 
   it('shows a loading state while the request is in flight', () => {
@@ -115,8 +125,9 @@ describe('ConversasPage', () => {
     });
 
     render(<ConversasPage />);
+    await screen.findAllByText('Maria');
 
-    expect(await screen.findByTitle('Bingo')).toHaveStyle({ backgroundColor: '#185928' });
+    expect(within(table()).getByTitle('Bingo')).toHaveStyle({ backgroundColor: '#185928' });
   });
 
   it('renders without crashing when a conversation is missing the categories field', async () => {
@@ -125,7 +136,7 @@ describe('ConversasPage', () => {
 
     render(<ConversasPage />);
 
-    expect(await screen.findByText('Maria')).toBeInTheDocument();
+    expect((await screen.findAllByText('Maria'))[0]).toBeInTheDocument();
   });
 
   describe('filtering happens on the server, not in the browser', () => {
@@ -133,7 +144,7 @@ describe('ConversasPage', () => {
       const apiFetch = mockApi();
 
       render(<ConversasPage />);
-      await screen.findByText('Maria');
+      await screen.findAllByText('Maria');
 
       await userEvent.click(screen.getByRole('button', { name: 'Não lidas' }));
 
@@ -144,7 +155,7 @@ describe('ConversasPage', () => {
       const apiFetch = mockApi();
 
       render(<ConversasPage />);
-      await screen.findByText('Maria');
+      await screen.findAllByText('Maria');
 
       await userEvent.type(screen.getByLabelText('Buscar conversas'), 'maria');
 
@@ -155,7 +166,7 @@ describe('ConversasPage', () => {
       const apiFetch = mockApi();
 
       render(<ConversasPage />);
-      await screen.findByText('Maria');
+      await screen.findAllByText('Maria');
       const before = conversationCalls(apiFetch).length;
 
       await userEvent.type(screen.getByLabelText('Buscar conversas'), 'maria');
@@ -169,7 +180,7 @@ describe('ConversasPage', () => {
       const apiFetch = mockApi({ categories: [{ id: 'cat1', name: 'Bingo', color: '#185928' }] });
 
       render(<ConversasPage />);
-      await screen.findByText('Maria');
+      await screen.findAllByText('Maria');
 
       await userEvent.selectOptions(screen.getByLabelText('Filtrar por categoria'), 'cat1');
 
@@ -180,7 +191,7 @@ describe('ConversasPage', () => {
       const apiFetch = mockApi({ categories: [{ id: 'cat1', name: 'Bingo', color: '#185928' }] });
 
       render(<ConversasPage />);
-      await screen.findByText('Maria');
+      await screen.findAllByText('Maria');
 
       await userEvent.click(screen.getByRole('button', { name: 'Não lidas' }));
       await userEvent.selectOptions(screen.getByLabelText('Filtrar por categoria'), 'cat1');
@@ -197,7 +208,7 @@ describe('ConversasPage', () => {
       mockApi({ total: 137, totalPages: 7 });
 
       render(<ConversasPage />);
-      await screen.findByText('Maria');
+      await screen.findAllByText('Maria');
 
       expect(screen.getByText('Página 1 de 7')).toBeInTheDocument();
       expect(screen.getByText('137 conversas')).toBeInTheDocument();
@@ -207,7 +218,7 @@ describe('ConversasPage', () => {
       const apiFetch = mockApi({ total: 137, totalPages: 7 });
 
       render(<ConversasPage />);
-      await screen.findByText('Maria');
+      await screen.findAllByText('Maria');
 
       await userEvent.click(screen.getByRole('button', { name: 'Próxima página' }));
 
@@ -218,7 +229,7 @@ describe('ConversasPage', () => {
       const apiFetch = mockApi({ total: 137, totalPages: 7 });
 
       render(<ConversasPage />);
-      await screen.findByText('Maria');
+      await screen.findAllByText('Maria');
       await userEvent.click(screen.getByRole('button', { name: 'Próxima página' }));
       await waitFor(() => expect(conversationCalls(apiFetch)).toContain('/conversations?page=2'));
 
@@ -231,7 +242,7 @@ describe('ConversasPage', () => {
       mockApi({ total: 2, totalPages: 1 });
 
       render(<ConversasPage />);
-      await screen.findByText('Maria');
+      await screen.findAllByText('Maria');
 
       expect(screen.queryByRole('button', { name: 'Próxima página' })).not.toBeInTheDocument();
     });
@@ -248,12 +259,46 @@ describe('ConversasPage', () => {
   it('renders the row cells in the expected column order', async () => {
     mockApi();
     render(<ConversasPage />);
-    await screen.findByText('Maria');
+    await screen.findAllByText('Maria');
 
-    const row = screen.getByRole('link', { name: /Maria/ }).closest('tr')!;
+    const row = within(table()).getByRole('link', { name: /Maria/ }).closest('tr')!;
     const cells = within(row).getAllByRole('cell');
     expect(cells[1]).toHaveTextContent('+55 (21) 99999-9999');
     expect(cells[2]).toHaveTextContent('Transferida');
     expect(cells[3]).toHaveTextContent('Menu');
+  });
+
+  describe('column sorting (desktop only)', () => {
+    it('sorts by name ascending on first click of the Nome header, and descending on the second', async () => {
+      mockApi();
+      render(<ConversasPage />);
+      await screen.findAllByText('Maria');
+
+      const nameOrder = () =>
+        within(table())
+          .getAllByRole('row')
+          .slice(1)
+          .map((row) => within(row).getAllByRole('cell')[0].textContent);
+
+      await userEvent.click(within(table()).getByRole('button', { name: 'Nome' }));
+      // '+55 (21) 98888-8888' (c2's fallback display) sorts before 'Maria'.
+      expect(nameOrder()[0]).toContain('98888-8888');
+
+      await userEvent.click(within(table()).getByRole('button', { name: 'Nome' }));
+      expect(nameOrder()[0]).toContain('Maria');
+    });
+
+    it('defaults "Atualizado em" to descending (most recent first) on first click', async () => {
+      mockApi();
+      render(<ConversasPage />);
+      await screen.findAllByText('Maria');
+
+      await userEvent.click(within(table()).getByRole('button', { name: 'Atualizado em' }));
+
+      expect(within(table()).getByRole('columnheader', { name: 'Atualizado em' })).toHaveAttribute(
+        'aria-sort',
+        'descending',
+      );
+    });
   });
 });
