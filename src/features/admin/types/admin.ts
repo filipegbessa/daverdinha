@@ -55,7 +55,7 @@ export interface Conversation {
 }
 
 export type MessageDirection = 'inbound' | 'outbound';
-export type MessageKind = 'text' | 'invalid_content' | 'order';
+export type MessageKind = 'text' | 'invalid_content' | 'order' | 'image';
 
 export interface OrderItem {
   id: string;

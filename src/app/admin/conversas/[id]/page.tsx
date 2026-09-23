@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useApiClient } from '@/features/admin/lib/api-client';
+import { MessageImage } from '@/features/admin/components/MessageImage';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { useConversationMessages } from '@/features/admin/lib/use-conversation-messages';
@@ -327,7 +328,13 @@ export default function ConversaDetailPage() {
                   🛒 Pedido pelo catálogo
                 </p>
               )}
-              {kind === 'order' && message.order && message.order.items.length > 0 ? (
+              {kind === 'image' ? (
+                <MessageImage
+                  conversationId={id}
+                  messageId={message.id}
+                  caption={message.body}
+                />
+              ) : kind === 'order' && message.order && message.order.items.length > 0 ? (
                 <ul className="mt-1 space-y-0.5">
                   {message.order.items.map((item) => (
                     <li key={item.id}>

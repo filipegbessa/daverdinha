@@ -407,6 +407,33 @@ describe('ConversaDetailPage', () => {
     expect(bubble).toHaveTextContent('Produto vaso-01');
   });
 
+  it('renders an image message as a photo, with the caption in the body', async () => {
+    const imageMessage = {
+      id: 'msg4',
+      direction: 'inbound' as const,
+      kind: 'image' as const,
+      body: 'segue o comprovante',
+      createdAt: '2026-08-31T14:32:00Z',
+    };
+    // Duas chamadas diferentes: a thread e, depois, a URL assinada da imagem.
+    const apiFetch = jest.fn((path: string) =>
+      path.endsWith('/media')
+        ? Promise.resolve({ url: 'https://r2.example/signed' })
+        : Promise.resolve({ ...conversation, messages: [imageMessage] }),
+    );
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubble = await screen.findByTestId('message-bubble');
+    expect(bubble).toHaveAttribute('data-message-kind', 'image');
+    expect(await screen.findByTestId('message-image')).toHaveAttribute(
+      'src',
+      'https://r2.example/signed',
+    );
+    expect(bubble).toHaveTextContent('segue o comprovante');
+  });
+
   it('renders an invalid-content message distinctly from a normal text bubble', async () => {
     const invalidMessage = {
       id: 'msg3',
