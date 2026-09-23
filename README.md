@@ -85,7 +85,19 @@ Na página de detalhe:
 - **Nome do contato**: pode ser editado a qualquer momento, independente do status da conversa.
 - **Pausar bot**: enquanto a conversa está `bot_active`, esse botão transfere o atendimento para um humano sob demanda.
 - **Responder e Reativar bot**: uma vez `paused_human` — seja pelo botão acima, seja pela lógica de escalonamento do próprio bot — a página passa a exibir um formulário de resposta (enviada pela mesma API do WhatsApp Cloud que o bot usa) e o botão "Reativar bot", que devolve a conversa ao bot.
+- **Fotos**: uma mensagem de imagem (`kind: 'image'`) renderiza a foto (com a legenda, quando o cliente escreveu uma), não o corpo vazio. Ver "Imagens" abaixo. O anexo (📎) no formulário de resposta permite mandar uma foto de volta — com ou sem legenda — na mesma caixa de resposta de texto.
 - A página é atualizada automaticamente a cada 5 segundos enquanto estiver aberta.
+
+## Imagens (`MessageImage`, anexo de resposta, aviso de armazenamento)
+
+O cliente manda foto pelo WhatsApp e ela aparece na thread como uma mensagem comum; o operador também pode mandar foto de volta.
+
+- **`MessageImage`** (`src/features/admin/components/`) busca a URL assinada sob demanda (`GET /conversations/:id/messages/:messageId/media`) em vez de recebê-la no payload da thread — ela expira em 5 minutos, e a thread fica em cache no cliente. O `src` do `<img>` aponta pro R2 direto, nunca pra API: uma tag `<img>` não manda header de `Authorization`, então a rota da API devolve `{ url }` em JSON, e quem busca esse JSON é o `apiFetch` (que leva o token) — a URL em si dispensa autenticação.
+  - **Expiração**: `onError` no `<img>` refaz a busca **uma vez**. Se a segunda URL também falhar, o problema não é expiração — mostra "Não foi possível carregar a imagem" em vez de insistir num laço.
+  - **Baixar**: um `<a>` criado e clicado (não `location.assign`, que navegaria a SPA pra fora), apontando pra URL assinada com `?download=1` — o `Content-Disposition: attachment` que a API devolve é quem decide o download, não o atributo `download` do link (ignorado em URL de outra origem).
+  - **Compartilhar**: `navigator.share({ files: [file] })` abre a folha nativa do aparelho (Drive, WhatsApp, Fotos, etc.), sem OAuth nem backend próprio. Busca os bytes via `fetch` cross-origin contra o R2 — **depende de CORS no bucket**, configurado restrito à origem do admin. Escondido onde `navigator.canShare` não existe (desktop, Firefox).
+- **Anexo na resposta** (`/admin/conversas/[id]`): escolher um arquivo troca o POST de `/conversations/:id/reply` (JSON) para `/conversations/:id/reply-image` (multipart) — a legenda vira o `caption` da imagem, uma mensagem só, não duas. Tipo e tamanho são checados no navegador antes do upload (mesmos limites do backend: JPEG/PNG/WebP, 5 MB), só pra avisar o operador mais cedo — a API decide de verdade. Com anexo, a legenda deixa de ser obrigatória: a imagem já é a mensagem.
+- **`StorageUsageNotice`** (Dashboard): acima de 80% do teto de 8 GB de armazenamento (`BotSettings.mediaBytesUsed`, que a API já converte de `bigint` pra `number`), um aviso neutro aparece; no teto, o mesmo tom vermelho do aviso já existente de "bot desativado por falta de item de menu" — mesma classe de problema, um recurso parou. Abaixo de 80%, nada aparece.
 
 ## Listagens e polling
 

@@ -1,5 +1,10 @@
 # Push Notifications (Admin) Implementation Plan
 
+> **Status: implementado e em produção.** Os checkboxes abaixo nunca foram
+> marcados durante a implementação, mas a inscrição/desinscrição de push,
+> o service worker e a contraparte em `daverdinha-api` estão no ar. Mantido
+> como registro da decisão de design original.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let the attendant opt into browser/phone notifications from the admin PWA, so a phone buzzes when a conversation needs them, without having to keep the tab open.

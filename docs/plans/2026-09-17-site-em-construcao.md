@@ -1,5 +1,13 @@
 # Landing "Em Construção" (Site Público) Implementation Plan
 
+> **Status: implementado e em produção.** Os checkboxes abaixo nunca foram
+> marcados durante a implementação, mas `getSiteMode()`/`SITE_MODE` e o
+> componente `ComingSoon` estão no ar — `SITE_MODE` não configurado ou
+> diferente de `"full"` cai em `"soon"`, que é o padrão atual em produção.
+> O site institucional inteiro continua no repositório, atrás da flag,
+> pronto pra voltar ao ar sem mudar código. Mantido como registro da
+> decisão de design original.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Trocar o que `/` mostra em produção por uma landing "em construção" com logo, frase do negócio, WhatsApp, Instagram e endereço — mantendo o site institucional inteiro no repositório, compilando e testado, atrás de uma flag de ambiente que devolve o site completo ao ar sem alterar uma linha de código.

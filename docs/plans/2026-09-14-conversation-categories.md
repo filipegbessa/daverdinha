@@ -1,5 +1,12 @@
 # Conversation Categories (Admin) Implementation Plan
 
+> **Status: implementado e em produção.** Os checkboxes abaixo nunca foram
+> marcados durante a implementação, mas o CRUD de categorias, o color
+> picker e a tag/filtro em conversas estão no ar — ver
+> `src/features/admin/components` e a contraparte em
+> `docs/plans/2026-09-14-conversation-categories.md` do `daverdinha-api`.
+> Mantido como registro da decisão de design original.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give the attendant a full CRUD screen for categories, a way to tag/untag a conversation with any number of them, and a filter to find conversations by category — all with a curated color per category.
