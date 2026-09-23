@@ -4,6 +4,8 @@ export interface BotSettings {
   invalidAttemptsExceededMessage: string;
   mediaReceivedMessage: string;
   orderReceivedMessage: string;
+  /** Bytes de mídia em uso no R2. A API já converte de bigint para number. */
+  mediaBytesUsed: number;
 }
 
 /**

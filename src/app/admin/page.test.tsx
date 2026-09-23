@@ -126,6 +126,29 @@ describe('DashboardPage', () => {
     );
   });
 
+  it('shows the storage notice once mediaBytesUsed is close to the cap', async () => {
+    const GB = 1024 * 1024 * 1024;
+    mockApi({
+      menuItems: () => [{ id: '1', active: true }],
+      settings: () => ({ ...emptySettings, mediaBytesUsed: 7.2 * GB }),
+    });
+
+    render(<DashboardPage />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/Armazenamento de imagens: 7\.2 GB de 8\.0 GB/)).toBeInTheDocument(),
+    );
+  });
+
+  it('does not show the storage notice for a plain settings fixture without mediaBytesUsed', async () => {
+    mockApi({ menuItems: () => [{ id: '1', active: true }] });
+
+    render(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByRole('switch')).toBeInTheDocument());
+    expect(screen.queryByText(/Armazenamento de imagens/)).not.toBeInTheDocument();
+  });
+
   it('shows an error and stops loading when the initial data fetch fails', async () => {
     const apiFetch = jest.fn().mockRejectedValue(new Error('Não foi possível carregar os dados do painel.'));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });

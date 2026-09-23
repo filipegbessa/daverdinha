@@ -4,6 +4,7 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
+import { StorageUsageNotice } from '@/features/admin/components/StorageUsageNotice';
 import type { BotSettings, MenuItem } from '@/features/admin/types/admin';
 
 export default function DashboardPage() {
@@ -45,6 +46,7 @@ export default function DashboardPage() {
           </ErrorAlert>
         )
       )}
+      <StorageUsageNotice mediaBytesUsed={settings.mediaBytesUsed} />
       <div className="mt-6 flex items-center gap-3">
         <Switch
           checked={settings.botEnabled}
