@@ -16,6 +16,7 @@ describe('generateLocalBusinessJsonLd', () => {
     const json = generateLocalBusinessJsonLd();
     expect(json['@type']).toBe('LocalBusiness');
     expect(json.name).toBe('Daverdinha');
+    expect(json.legalName).toBe('66.371.530 Alana Viana Moreno');
     expect(json.telephone).toBe('5521986509259');
     expect(json.address).toBe('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030');
     expect(json.sameAs).toEqual(['https://www.instagram.com/daverdinha_/']);

@@ -78,7 +78,7 @@ export function ComingSoon() {
           Política de Privacidade
         </Link>
         <p>
-          © {new Date().getFullYear()} Daverdinha · CNPJ{" "}
+          © {new Date().getFullYear()} Daverdinha · {businessInfo.legal.razaoSocial} · CNPJ{" "}
           {businessInfo.legal.cnpj}
         </p>
       </div>

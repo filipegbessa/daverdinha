@@ -43,6 +43,15 @@ describe('ComingSoon', () => {
     expect(screen.getByText(/66\.371\.530\/0001-54/)).toBeInTheDocument();
   });
 
+  // A Meta exige que a razão social apareça no site pra verificar a
+  // empresa — sem isso, a verificação de negócio falha. Essa é a página
+  // que fica no ar em produção (SITE_MODE=soon), então o texto precisa
+  // estar aqui, não só no Footer do site completo.
+  it('shows the razão social, for Meta business verification', () => {
+    render(<ComingSoon />);
+    expect(screen.getByText(/Alana Viana Moreno/)).toBeInTheDocument();
+  });
+
   it('offers no e-mail contact — the business does not have one', () => {
     const { container } = render(<ComingSoon />);
     expect(container.querySelector('a[href^="mailto:"]')).toBeNull();

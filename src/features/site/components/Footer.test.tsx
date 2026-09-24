@@ -24,6 +24,13 @@ describe('Footer', () => {
 
   it('shows the real CNPJ', () => {
     render(<Footer />);
-    expect(screen.getByText('CNPJ 66.371.530/0001-54')).toBeInTheDocument();
+    expect(screen.getByText(/CNPJ 66\.371\.530\/0001-54/)).toBeInTheDocument();
+  });
+
+  // A Meta exige que a razão social apareça no site pra verificar a
+  // empresa — sem isso, a verificação de negócio falha.
+  it('shows the razão social, for Meta business verification', () => {
+    render(<Footer />);
+    expect(screen.getByText(/Alana Viana Moreno/)).toBeInTheDocument();
   });
 });

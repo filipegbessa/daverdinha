@@ -28,7 +28,9 @@ export function Footer() {
         </Link>
       </div>
       <p>© {new Date().getFullYear()} Daverdinha</p>
-      <p className="text-xs">CNPJ {businessInfo.legal.cnpj}</p>
+      <p className="text-xs">
+        {businessInfo.legal.razaoSocial} · CNPJ {businessInfo.legal.cnpj}
+      </p>
     </footer>
   );
 }

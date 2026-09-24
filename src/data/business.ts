@@ -50,6 +50,7 @@ export function generateLocalBusinessJsonLd(areaServed: string[] = []): Record<s
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: businessInfo.name,
+    legalName: businessInfo.legal.razaoSocial,
     description: businessInfo.description,
     ...(siteUrl ? { url: siteUrl } : {}),
     sameAs: [businessInfo.contact.instagram.url],
