@@ -9,7 +9,6 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { MessageImage } from '@/features/admin/components/MessageImage';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { isWindowExpired } from '@/features/admin/lib/whatsapp-window';
 import { useConversationMessages } from '@/features/admin/lib/use-conversation-messages';
 import { ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import { readableTextColor } from '@/features/admin/lib/readable-text-color';
@@ -57,7 +56,6 @@ export default function ConversaDetailPage() {
   const sendReply = useApiMutation('Erro ao enviar resposta.');
   const botState = useApiMutation('Erro ao alterar o estado do bot.');
   const categoryChange = useApiMutation('Erro ao atualizar categoria.');
-  const resumeConversation = useApiMutation('Erro ao retomar a conversa.');
 
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState('');
@@ -178,13 +176,6 @@ export default function ConversaDetailPage() {
     if (ok) refetch();
   }
 
-  async function handleResume() {
-    const ok = await resumeConversation.run(() =>
-      apiFetch(`/conversations/${id}/resume`, { method: 'POST' }),
-    );
-    if (ok) refetch();
-  }
-
   async function handleToggleCategory(categoryId: string, attached: boolean) {
     // Stays pending until the effect below sees the refetched conversation
     // actually reflect the change — clearing it as soon as the POST/DELETE
@@ -198,8 +189,7 @@ export default function ConversaDetailPage() {
     else setPendingCategory(null);
   }
 
-  const actionError =
-    saveName.error ?? sendReply.error ?? botState.error ?? categoryChange.error ?? resumeConversation.error;
+  const actionError = saveName.error ?? sendReply.error ?? botState.error ?? categoryChange.error;
 
   if (isLoading) {
     return <LoadingState />;
@@ -212,8 +202,6 @@ export default function ConversaDetailPage() {
   if (!conversation) {
     return null;
   }
-
-  const windowExpired = isWindowExpired(conversation.lastInboundAt);
 
   return (
     <div className="flex h-full flex-col">
@@ -433,16 +421,7 @@ export default function ConversaDetailPage() {
       </div>
 
       <div className="flex-none border-t border-sand-line pt-3">
-        {windowExpired ? (
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-ink-soft">
-              Mais de 24h desde a última mensagem do cliente — envie o template de retomada antes de responder.
-            </p>
-            <Button type="button" onClick={handleResume} disabled={resumeConversation.isPending}>
-              Retomar conversa
-            </Button>
-          </div>
-        ) : conversation.status === 'paused_human' ? (
+        {conversation.status === 'paused_human' ? (
           <form onSubmit={handleReply}>
             {replyingTo && (
               <div

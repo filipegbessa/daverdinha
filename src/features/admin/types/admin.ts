@@ -53,10 +53,6 @@ export interface Conversation {
   entryPoint: EntryPoint | null;
   unread: boolean;
   updatedAt: string;
-  /** Timestamp of the customer's last inbound message, or null if none has
-   *  ever arrived. Backs isWindowExpired() — mirrors the backend's own
-   *  Conversation.lastInboundAt. */
-  lastInboundAt: string | null;
   categories: Category[];
 }
 
