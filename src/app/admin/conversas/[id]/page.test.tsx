@@ -22,6 +22,7 @@ const conversation = {
   status: 'paused_human' as const,
   entryPoint: 'menu' as const,
   updatedAt: '2026-08-31T14:32:00Z',
+  lastInboundAt: new Date().toISOString(),
   categories: [] as { id: string; name: string; color: string }[],
   messages: [
     { id: 'msg1', direction: 'inbound' as const, body: 'Oi, boa tarde!', createdAt: '2026-08-31T14:31:00Z' },
@@ -30,6 +31,11 @@ const conversation = {
 };
 
 const unnamedConversation = { ...conversation, name: null };
+
+const expiredConversation = {
+  ...conversation,
+  lastInboundAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+};
 
 describe('ConversaDetailPage', () => {
   it('shows the contact name as the heading, the formatted phone as a subtitle, and every message in order', async () => {
@@ -224,6 +230,96 @@ describe('ConversaDetailPage', () => {
     await screen.findByRole('heading', { name: 'Maria' });
     expect(screen.queryByLabelText('Responder')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Reativar bot' })).not.toBeInTheDocument();
+  });
+
+  it('shows a "Retomar conversa" button instead of the reply form when the 24h window has expired (paused_human)', async () => {
+    const apiFetch = jest.fn().mockResolvedValue(expiredConversation);
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    expect(await screen.findByRole('button', { name: 'Retomar conversa' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Responder')).not.toBeInTheDocument();
+  });
+
+  it('shows a "Retomar conversa" button instead of the static bot message when the 24h window has expired (bot_active)', async () => {
+    const apiFetch = jest
+      .fn()
+      .mockResolvedValue({ ...expiredConversation, status: 'bot_active' as const });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    expect(await screen.findByRole('button', { name: 'Retomar conversa' })).toBeInTheDocument();
+    expect(screen.queryByText('O bot está respondendo essa conversa automaticamente.')).not.toBeInTheDocument();
+  });
+
+  it('shows a "Retomar conversa" button when lastInboundAt is null (no inbound message ever arrived)', async () => {
+    const apiFetch = jest.fn().mockResolvedValue({ ...conversation, lastInboundAt: null });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    expect(await screen.findByRole('button', { name: 'Retomar conversa' })).toBeInTheDocument();
+  });
+
+  it('sends the resume request and refetches on success', async () => {
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
+      if (options?.method === 'POST' && path === '/conversations/c1/resume') {
+        return Promise.resolve({ id: 'c1', status: 'paused_human' });
+      }
+      return Promise.resolve(expiredConversation);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+    await screen.findByRole('button', { name: 'Retomar conversa' });
+    await userEvent.click(screen.getByRole('button', { name: 'Retomar conversa' }));
+
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/resume', { method: 'POST' }),
+    );
+  });
+
+  it('disables the "Retomar conversa" button while the request is in flight', async () => {
+    let resolveResume: (value: unknown) => void = () => {};
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
+      if (options?.method === 'POST' && path === '/conversations/c1/resume') {
+        return new Promise((resolve) => {
+          resolveResume = resolve;
+        });
+      }
+      return Promise.resolve(expiredConversation);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+    await screen.findByRole('button', { name: 'Retomar conversa' });
+    await userEvent.click(screen.getByRole('button', { name: 'Retomar conversa' }));
+
+    expect(screen.getByRole('button', { name: 'Retomar conversa' })).toBeDisabled();
+
+    resolveResume({ id: 'c1', status: 'paused_human' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retomar conversa' })).not.toBeDisabled());
+  });
+
+  it('shows an inline error when resuming fails', async () => {
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (path.startsWith('/categories')) return Promise.resolve(categoryList([]));
+      if (options?.method === 'POST' && path === '/conversations/c1/resume') {
+        return Promise.reject(new Error('Erro ao retomar a conversa.'));
+      }
+      return Promise.resolve(expiredConversation);
+    });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+    await screen.findByRole('button', { name: 'Retomar conversa' });
+    await userEvent.click(screen.getByRole('button', { name: 'Retomar conversa' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao retomar a conversa.');
   });
 
   it('sends a reply and clears the field on success', async () => {
@@ -734,6 +830,7 @@ describe('ConversaDetailPage', () => {
       status: 'paused_human' as const,
       unread: false,
       updatedAt: '2026-08-31T14:00:00Z',
+      lastInboundAt: new Date().toISOString(),
       categories: [],
       messages: [],
       hasMoreMessages: false,
