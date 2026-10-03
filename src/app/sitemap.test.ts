@@ -2,7 +2,7 @@ import sitemap from './sitemap';
 
 describe('sitemap', () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_SITE_URL = 'https://daverdinha.com.br';
+    process.env.SITE_URL = 'https://daverdinha.com.br';
   });
 
   it('lists the homepage with a high priority', () => {
