@@ -44,7 +44,7 @@ export const businessInfo = {
  * while everything else here is a fixed fact about the business.
  */
 export function generateLocalBusinessJsonLd(areaServed: string[] = []): Record<string, unknown> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const siteUrl = process.env.SITE_URL;
 
   return {
     '@context': 'https://schema.org',

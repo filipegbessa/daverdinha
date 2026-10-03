@@ -23,14 +23,14 @@ describe('generateLocalBusinessJsonLd', () => {
     expect(json.taxID).toBe('66.371.530/0001-54');
   });
 
-  it('includes url only when NEXT_PUBLIC_SITE_URL is set', () => {
-    const original = process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_SITE_URL;
+  it('includes url only when SITE_URL is set', () => {
+    const original = process.env.SITE_URL;
+    delete process.env.SITE_URL;
     expect(generateLocalBusinessJsonLd().url).toBeUndefined();
-    process.env.NEXT_PUBLIC_SITE_URL = 'https://daverdinha.com.br';
+    process.env.SITE_URL = 'https://daverdinha.com.br';
     expect(generateLocalBusinessJsonLd().url).toBe('https://daverdinha.com.br');
-    if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
-    else process.env.NEXT_PUBLIC_SITE_URL = original;
+    if (original === undefined) delete process.env.SITE_URL;
+    else process.env.SITE_URL = original;
   });
 
   it('takes the served area as an argument, since it comes from the database', () => {

@@ -39,7 +39,7 @@ export function generateMetadata(): Metadata {
       title,
       description,
       type: "website",
-      url: process.env.NEXT_PUBLIC_SITE_URL,
+      url: process.env.SITE_URL,
       images: [OG_IMAGE],
     },
   };

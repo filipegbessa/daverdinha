@@ -38,4 +38,4 @@ jobs:
           # Sem SITE_MODE a home renderiza a landing "em breve", que é o
           # caminho que está no ar hoje. Trocar pra 'full' faria o build tentar
           # falar com a API.
-          NEXT_PUBLIC_SITE_URL: https://example.com
+          SITE_URL: https://example.com

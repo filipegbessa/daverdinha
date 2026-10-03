@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
     description: businessInfo.description,
     type: 'website',
-    url: process.env.NEXT_PUBLIC_SITE_URL,
+    url: process.env.SITE_URL,
   },
   twitter: {
     card: 'summary_large_image',
