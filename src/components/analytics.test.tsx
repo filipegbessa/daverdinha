@@ -32,4 +32,22 @@ describe('Analytics', () => {
 
     expect(container).toBeEmptyDOMElement();
   });
+
+  // gtag loaded on a public page (e.g. /login) survives a client-side move to
+  // /admin; only its own disable flag stops the history-driven page views.
+  it('switches gtag off on /admin and back on when leaving it', () => {
+    const flag = () => (window as unknown as Record<string, boolean>)['ga-disable-G-GYGTB5HZKF'];
+
+    mockUsePathname.mockReturnValue('/login');
+    const { rerender } = render(<Analytics gaId="G-GYGTB5HZKF" />);
+    expect(flag()).toBe(false);
+
+    mockUsePathname.mockReturnValue('/admin/docs');
+    rerender(<Analytics gaId="G-GYGTB5HZKF" />);
+    expect(flag()).toBe(true);
+
+    mockUsePathname.mockReturnValue('/');
+    rerender(<Analytics gaId="G-GYGTB5HZKF" />);
+    expect(flag()).toBe(false);
+  });
 });
