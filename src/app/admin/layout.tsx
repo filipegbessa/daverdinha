@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: '/admin/destaques', label: 'Destaques' },
   { href: '/admin/categorias', label: 'Categorias' },
   { href: '/admin/conversas', label: 'Conversas' },
+  { href: '/admin/docs', label: 'API' },
 ];
 
 function isActiveRoute(pathname: string, href: string) {
