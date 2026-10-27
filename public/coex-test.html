@@ -22,7 +22,7 @@
       appId: '1334903282048146',
       autoLogAppEvents: true,
       xfbml: true,
-      version: 'v21.0'
+      version: 'v26.0'
     });
   };
 
@@ -32,7 +32,7 @@
 
   document.getElementById('launch').addEventListener('click', function () {
     FB.login(function (response) {
-      log(JSON.stringify(response, null, 2));
+      log('LOGIN CALLBACK:\n' + JSON.stringify(response, null, 2));
     }, {
       config_id: '1420571823020155',
       response_type: 'code',
@@ -46,11 +46,13 @@
   });
 
   window.addEventListener('message', function (event) {
-    if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') return;
+    if (!event.origin.endsWith('facebook.com')) return;
     try {
       var data = JSON.parse(event.data);
-      log('EVENTO DO SIGNUP:\n' + JSON.stringify(data, null, 2));
-      console.log('WA_EMBEDDED_SIGNUP', data);
+      if (data.type === 'WA_EMBEDDED_SIGNUP') {
+        log('EVENTO DO SIGNUP:\n' + JSON.stringify(data, null, 2));
+        console.log('WA_EMBEDDED_SIGNUP', data);
+      }
     } catch (e) {
       // mensagem não é JSON, ignora
     }
