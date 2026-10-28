@@ -42,4 +42,24 @@ describe('MessageAudio', () => {
 
     expect(await screen.findByTestId('audio-failed')).toBeInTheDocument();
   });
+
+  it('pauses the other message\'s audio when this one starts playing', async () => {
+    const apiFetch = jest.fn().mockResolvedValue({ url: 'https://r2.example/voice' });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(
+      <>
+        <MessageAudio conversationId="c1" messageId="m1" />
+        <MessageAudio conversationId="c1" messageId="m2" />
+      </>,
+    );
+
+    const [first, second] = await screen.findAllByTestId('message-audio');
+    const firstPause = jest.spyOn(first as HTMLAudioElement, 'pause');
+
+    fireEvent.play(first);
+    fireEvent.play(second);
+
+    expect(firstPause).toHaveBeenCalled();
+  });
 });

@@ -1,5 +1,6 @@
 'use client';
 import { useMessageMedia } from '@/features/admin/lib/use-message-media';
+import { pauseOtherAudio } from '@/features/admin/lib/exclusive-audio-playback';
 
 interface MessageAudioProps {
   conversationId: string;
@@ -31,6 +32,7 @@ export function MessageAudio({ conversationId, messageId }: MessageAudioProps) {
           preload="metadata"
           data-testid="message-audio"
           onError={handleError}
+          onPlay={(e) => pauseOtherAudio(e.currentTarget)}
           className="max-w-full"
         >
           <a href={url} target="_blank" rel="noreferrer">

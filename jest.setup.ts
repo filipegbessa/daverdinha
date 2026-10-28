@@ -20,6 +20,14 @@ if (typeof window !== 'undefined') {
       } as MediaQueryList;
     };
 
+  // jsdom doesn't implement media playback — tests that fire 'play'/'pause'
+  // on an <audio>/<video> element would otherwise log a "not implemented"
+  // error for every call.
+  if (typeof HTMLMediaElement !== 'undefined') {
+    HTMLMediaElement.prototype.play = () => Promise.resolve();
+    HTMLMediaElement.prototype.pause = () => {};
+  }
+
   // Polyfill PointerEvent for jsdom (needed by Switch component)
   if (typeof PointerEvent === 'undefined') {
     (global as any).PointerEvent = class PointerEvent extends MouseEvent {

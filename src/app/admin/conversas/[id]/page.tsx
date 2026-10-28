@@ -14,6 +14,7 @@ import {
   type ReplyAttachment,
 } from '@/features/admin/lib/reply-media';
 import { useVoiceRecorder } from '@/features/admin/lib/use-voice-recorder';
+import { pauseOtherAudio } from '@/features/admin/lib/exclusive-audio-playback';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { useConversationMessages } from '@/features/admin/lib/use-conversation-messages';
@@ -59,7 +60,9 @@ function AttachmentAudioPreview({ file }: { file: File }) {
     setSrc(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [file]);
-  return src ? <audio src={src} controls className="mt-1 max-w-full" /> : null;
+  return src ? (
+    <audio src={src} controls className="mt-1 max-w-full" onPlay={(e) => pauseOtherAudio(e.currentTarget)} />
+  ) : null;
 }
 
 export default function ConversaDetailPage() {
