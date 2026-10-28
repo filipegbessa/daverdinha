@@ -7,6 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { MessageImage } from '@/features/admin/components/MessageImage';
+import { MessageAudio } from '@/features/admin/components/MessageAudio';
+import {
+  ACCEPTED_REPLY_TYPES,
+  classifyReplyFile,
+  type ReplyAttachment,
+} from '@/features/admin/lib/reply-media';
+import { useVoiceRecorder } from '@/features/admin/lib/use-voice-recorder';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { useConversationMessages } from '@/features/admin/lib/use-conversation-messages';
@@ -22,12 +29,38 @@ function truncate(text: string, max: number): string {
 }
 
 /**
- * Espelham os limites do backend, que continua sendo quem decide. Aqui é só
- * para o operador descobrir o problema antes de subir 5 MB e só então ouvir
- * um não.
+ * What stands in for a message with no text when it's quoted — a photo without
+ * a caption or an audio has nothing else to show.
  */
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+function quotePreview(message: { kind?: string; body: string | null }, max: number): string {
+  if (message.body) return truncate(message.body, max);
+  if (message.kind === 'audio') return '🎤 Áudio';
+  if (message.kind === 'image') return '📷 Foto';
+  return '(mensagem sem texto)';
+}
+
+function formatDuration(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+/**
+ * Lets the operator listen to what they're about to send. The object URL is
+ * revoked when the attachment changes — otherwise every recording discarded
+ * would stay pinned in memory until the tab closes.
+ */
+function AttachmentAudioPreview({ file }: { file: File }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    // jsdom (and very old browsers) have no object URLs; the name alone is enough there.
+    if (typeof URL.createObjectURL !== 'function') return;
+    const objectUrl = URL.createObjectURL(file);
+    setSrc(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+  return src ? <audio src={src} controls className="mt-1 max-w-full" /> : null;
+}
 
 export default function ConversaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -61,8 +94,12 @@ export default function ConversaDetailPage() {
   const [name, setName] = useState('');
   const [replyText, setReplyText] = useState('');
   const [replyingTo, setReplyingTo] = useState<{ id: string; preview: string } | null>(null);
-  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachment, setAttachment] = useState<ReplyAttachment | null>(null);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const recorder = useVoiceRecorder((file) => {
+    setAttachmentError(null);
+    setAttachment({ kind: 'audio', file });
+  });
   const [pendingCategory, setPendingCategory] = useState<{ id: string; attach: boolean } | null>(null);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -126,31 +163,29 @@ export default function ConversaDetailPage() {
     e.target.value = '';
     if (!file) return;
 
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    const result = classifyReplyFile(file);
+    if ('error' in result) {
       setAttachment(null);
-      setAttachmentError('Só JPEG, PNG ou WebP.');
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      setAttachment(null);
-      setAttachmentError('A imagem excede o limite de 5 MB.');
+      setAttachmentError(result.error);
       return;
     }
     setAttachmentError(null);
-    setAttachment(file);
+    setAttachment(result);
   }
 
   async function handleReply(e: React.FormEvent) {
     e.preventDefault();
 
-    // Com anexo, o texto vira legenda da imagem — é uma mensagem só, não duas.
+    // Com imagem, o texto vira legenda — é uma mensagem só, não duas. Áudio
+    // não aceita legenda no WhatsApp, então o texto digitado fica no campo
+    // para ser enviado depois, em vez de sumir.
     const request = attachment
       ? () => {
           const form = new FormData();
-          form.append('file', attachment);
-          if (replyText) form.append('caption', replyText);
+          form.append('file', attachment.file);
+          if (attachment.kind === 'image' && replyText) form.append('caption', replyText);
           if (replyingTo) form.append('replyToMessageId', replyingTo.id);
-          return apiFetch(`/conversations/${id}/reply-image`, {
+          return apiFetch(`/conversations/${id}/reply-${attachment.kind}`, {
             method: 'POST',
             body: form,
           });
@@ -163,7 +198,7 @@ export default function ConversaDetailPage() {
 
     const ok = await sendReply.run(request);
     if (ok) {
-      setReplyText('');
+      if (attachment?.kind !== 'audio') setReplyText('');
       setReplyingTo(null);
       setAttachment(null);
       setAttachmentError(null);
@@ -363,9 +398,7 @@ export default function ConversaDetailPage() {
                   data-testid="reply-quote"
                   className="mb-1 border-l-2 border-ink-soft/40 pl-2 text-xs text-ink-soft"
                 >
-                  {message.repliedTo.body
-                    ? truncate(message.repliedTo.body, 80)
-                    : '(mensagem sem texto)'}
+                  {quotePreview(message.repliedTo, 80)}
                 </p>
               ) : (
                 message.repliedToWamid && (
@@ -388,6 +421,8 @@ export default function ConversaDetailPage() {
                   messageId={message.id}
                   caption={message.body}
                 />
+              ) : kind === 'audio' ? (
+                <MessageAudio conversationId={id} messageId={message.id} />
               ) : kind === 'order' && message.order && message.order.items.length > 0 ? (
                 <ul className="mt-1 space-y-0.5">
                   {message.order.items.map((item) => (
@@ -407,7 +442,7 @@ export default function ConversaDetailPage() {
                     type="button"
                     data-testid="reply-to-button"
                     onClick={() =>
-                      setReplyingTo({ id: message.id, preview: truncate(message.body ?? '', 60) })
+                      setReplyingTo({ id: message.id, preview: quotePreview(message, 60) })
                     }
                     className="text-xs text-ink-soft underline opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus:opacity-100"
                   >
@@ -439,15 +474,36 @@ export default function ConversaDetailPage() {
                 data-testid="attachment-preview"
                 className="mb-2 flex items-center justify-between gap-2 rounded border border-sand-line p-2 text-xs text-ink-soft"
               >
-                <span>📎 {attachment.name}</span>
+                <div className="min-w-0 flex-1">
+                  <span>
+                    {attachment.kind === 'audio' ? '🎤' : '📎'} {attachment.file.name}
+                  </span>
+                  {attachment.kind === 'audio' && <AttachmentAudioPreview file={attachment.file} />}
+                </div>
                 <button type="button" onClick={() => setAttachment(null)} aria-label="Remover anexo">
                   ✕
                 </button>
               </div>
             )}
-            {attachmentError && (
+            {recorder.state === 'recording' && (
+              <div
+                data-testid="recording-banner"
+                className="mb-2 flex items-center justify-between gap-2 rounded border border-berry/40 p-2 text-xs text-berry"
+              >
+                <span aria-live="polite">● Gravando {formatDuration(recorder.elapsedSeconds)}</span>
+                <span className="flex gap-3">
+                  <button type="button" onClick={recorder.cancel} className="underline">
+                    Descartar
+                  </button>
+                  <button type="button" onClick={recorder.stop} className="font-semibold underline">
+                    Parar
+                  </button>
+                </span>
+              </div>
+            )}
+            {(attachmentError ?? recorder.error) && (
               <p role="alert" className="mb-2 text-xs text-berry">
-                {attachmentError}
+                {attachmentError ?? recorder.error}
               </p>
             )}
             <div className="flex items-end gap-2">
@@ -455,15 +511,28 @@ export default function ConversaDetailPage() {
                   sem JS, e evita ter dois controles anunciando a mesma coisa
                   para leitor de tela. */}
               <label htmlFor="replyImage" className={buttonVariants({ variant: 'outline' })}>
-                📎<span className="sr-only">Anexar imagem</span>
+                📎<span className="sr-only">Anexar imagem ou áudio</span>
               </label>
               <input
                 id="replyImage"
                 type="file"
-                accept={ALLOWED_IMAGE_TYPES.join(',')}
+                accept={ACCEPTED_REPLY_TYPES}
                 onChange={handleAttach}
                 className="hidden"
               />
+              {/* Só aparece onde o navegador grava num formato que o WhatsApp
+                  aceita — no Chrome antigo, que só grava webm, o operador
+                  ainda pode anexar um arquivo de áudio pelo 📎. */}
+              {recorder.supported && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void recorder.start()}
+                  disabled={recorder.state === 'recording' || sendReply.isPending}
+                >
+                  🎤<span className="sr-only">Gravar áudio</span>
+                </Button>
+              )}
               <label htmlFor="replyText" className="sr-only">
                 Responder
               </label>
@@ -471,13 +540,21 @@ export default function ConversaDetailPage() {
                 id="replyText"
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                // Com anexo, a legenda é opcional: a imagem já é a mensagem.
+                // Com anexo, o texto é opcional: a mídia já é a mensagem. Com
+                // áudio ele nem vai junto — o WhatsApp não aceita legenda.
                 required={!attachment}
-                placeholder={attachment ? 'Legenda (opcional)' : undefined}
+                disabled={attachment?.kind === 'audio'}
+                placeholder={
+                  attachment?.kind === 'audio'
+                    ? 'Áudio não leva legenda'
+                    : attachment
+                      ? 'Legenda (opcional)'
+                      : undefined
+                }
                 rows={2}
                 className="flex-1"
               />
-              <Button type="submit" disabled={sendReply.isPending}>
+              <Button type="submit" disabled={sendReply.isPending || recorder.state === 'recording'}>
                 Enviar
               </Button>
             </div>

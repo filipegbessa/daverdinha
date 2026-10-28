@@ -444,6 +444,45 @@ describe('ConversaDetailPage', () => {
     expect(bubble).toHaveTextContent('segue o comprovante');
   });
 
+  it('renders an audio message as a player pointed at the signed url', async () => {
+    const audioMessage = {
+      id: 'msg5',
+      direction: 'inbound' as const,
+      kind: 'audio' as const,
+      body: null,
+      createdAt: '2026-08-31T14:32:00Z',
+    };
+    const apiFetch = jest.fn((path: string) =>
+      path.endsWith('/media')
+        ? Promise.resolve({ url: 'https://r2.example/voice' })
+        : Promise.resolve({ ...conversation, messages: [audioMessage] }),
+    );
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    const bubble = await screen.findByTestId('message-bubble');
+    expect(bubble).toHaveAttribute('data-message-kind', 'audio');
+    expect(await screen.findByTestId('message-audio')).toHaveAttribute('src', 'https://r2.example/voice');
+    expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/messages/msg5/media');
+  });
+
+  it('labels a quoted audio instead of "(mensagem sem texto)"', async () => {
+    const reply = {
+      id: 'msg6',
+      direction: 'outbound' as const,
+      body: 'recebi seu áudio',
+      createdAt: '2026-08-31T14:33:00Z',
+      repliedTo: { id: 'msg5', kind: 'audio' as const, body: null, direction: 'inbound' as const },
+    };
+    const apiFetch = jest.fn().mockResolvedValue({ ...conversation, messages: [reply] });
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    render(<ConversaDetailPage />);
+
+    expect(await screen.findByTestId('reply-quote')).toHaveTextContent('🎤 Áudio');
+  });
+
   it('renders an invalid-content message distinctly from a normal text bubble', async () => {
     const invalidMessage = {
       id: 'msg3',
@@ -825,7 +864,7 @@ describe('ConversaDetailPage', () => {
       );
 
       expect(await screen.findByRole('alert')).toHaveTextContent(
-        'Só JPEG, PNG ou WebP.',
+        'Só imagem (JPEG, PNG ou WebP) ou áudio',
       );
       expect(screen.queryByTestId('attachment-preview')).not.toBeInTheDocument();
       expect(apiFetch).not.toHaveBeenCalledWith(
@@ -856,6 +895,118 @@ describe('ConversaDetailPage', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Remover anexo' }));
 
       expect(screen.queryByTestId('attachment-preview')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('enviar áudio', () => {
+    const pausedConversation = {
+      id: 'c1',
+      phone: '5521999999999',
+      name: null,
+      status: 'paused_human' as const,
+      unread: false,
+      updatedAt: '2026-08-31T14:00:00Z',
+      categories: [],
+      messages: [],
+      hasMoreMessages: false,
+    };
+
+    function audioFile(name = 'voz.ogg', type = 'audio/ogg', size = 1024) {
+      const file = new File(['x'], name, { type });
+      Object.defineProperty(file, 'size', { value: size });
+      return file;
+    }
+
+    function renderPaused() {
+      const apiFetch = jest.fn().mockResolvedValue(pausedConversation);
+      (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+      render(<ConversaDetailPage />);
+      return apiFetch;
+    }
+
+    function postedTo(apiFetch: jest.Mock, path: string) {
+      return apiFetch.mock.calls.find(([p]: [string]) => p === path);
+    }
+
+    it('posts an attached audio to reply-audio, never with a caption', async () => {
+      const apiFetch = renderPaused();
+      await screen.findByLabelText('Responder');
+
+      await userEvent.type(screen.getByLabelText('Responder'), 'texto pra depois');
+      await userEvent.upload(screen.getByLabelText(/Anexar imagem ou áudio/), audioFile());
+      await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+      await waitFor(() => expect(postedTo(apiFetch, '/conversations/c1/reply-audio')).toBeDefined());
+      const [, init] = postedTo(apiFetch, '/conversations/c1/reply-audio');
+      expect(init.body.get('file')).toBeInstanceOf(File);
+      expect(init.body.get('caption')).toBeNull();
+      // WhatsApp não aceita legenda em áudio: o texto fica no campo para depois.
+      await waitFor(() => expect(screen.getByLabelText('Responder')).toHaveValue('texto pra depois'));
+    });
+
+    it('disables the text field while an audio is attached', async () => {
+      renderPaused();
+      await screen.findByLabelText('Responder');
+
+      await userEvent.upload(screen.getByLabelText(/Anexar imagem ou áudio/), audioFile());
+
+      expect(screen.getByLabelText('Responder')).toBeDisabled();
+      expect(screen.getByTestId('attachment-preview')).toHaveTextContent('voz.ogg');
+    });
+
+    it('translates the non-standard type the OS picker gives an .m4a', async () => {
+      const apiFetch = renderPaused();
+      await screen.findByLabelText('Responder');
+
+      await userEvent.upload(
+        screen.getByLabelText(/Anexar imagem ou áudio/),
+        audioFile('nota.m4a', 'audio/x-m4a'),
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+      await waitFor(() => expect(postedTo(apiFetch, '/conversations/c1/reply-audio')).toBeDefined());
+      const [, init] = postedTo(apiFetch, '/conversations/c1/reply-audio');
+      expect((init.body.get('file') as File).type).toBe('audio/mp4');
+    });
+
+    // Chrome grava em webm, e a Meta recusa webm.
+    it('refuses audio/webm, which WhatsApp would refuse', async () => {
+      const apiFetch = renderPaused();
+      await screen.findByLabelText('Responder');
+
+      await userEvent.upload(
+        screen.getByLabelText(/Anexar imagem ou áudio/),
+        audioFile('voz.webm', 'audio/webm'),
+        { applyAccept: false },
+      );
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Só imagem');
+      expect(postedTo(apiFetch, '/conversations/c1/reply-audio')).toBeUndefined();
+    });
+
+    it('accepts an audio past the image ceiling, and refuses one past 16 MB', async () => {
+      renderPaused();
+      await screen.findByLabelText('Responder');
+
+      await userEvent.upload(
+        screen.getByLabelText(/Anexar imagem ou áudio/),
+        audioFile('longo.mp3', 'audio/mpeg', 10 * 1024 * 1024),
+      );
+      expect(await screen.findByTestId('attachment-preview')).toBeInTheDocument();
+
+      await userEvent.upload(
+        screen.getByLabelText(/Anexar imagem ou áudio/),
+        audioFile('enorme.mp3', 'audio/mpeg', 17 * 1024 * 1024),
+      );
+      expect(await screen.findByRole('alert')).toHaveTextContent('16 MB');
+    });
+
+    it('hides the record button where the browser cannot record a WhatsApp format', async () => {
+      // jsdom não tem MediaRecorder — o mesmo caso de um navegador sem suporte.
+      renderPaused();
+      await screen.findByLabelText('Responder');
+
+      expect(screen.queryByRole('button', { name: /Gravar áudio/ })).not.toBeInTheDocument();
     });
   });
 });
