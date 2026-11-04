@@ -1,7 +1,7 @@
 import { Header } from "@/features/site/components/Header";
 import { Hero } from "@/features/site/components/Hero";
 import { About } from "@/features/site/components/About";
-import { Products } from "@/features/site/components/Products";
+import { ProductsCarouselSpike } from "@/features/site/components/ProductsCarouselSpike";
 import { DeliveryZones } from "@/features/site/components/DeliveryZones";
 import { Location } from "@/features/site/components/Location";
 import { Faq } from "@/features/site/components/Faq";
@@ -19,7 +19,8 @@ export function FullSite({ zones }: { zones: DeliveryZone[] }) {
       <Header />
       <Hero />
       <About />
-      <Products />
+      {/* SPIKE: troca pro <Products /> real assim que o desenho do catálogo fechar */}
+      <ProductsCarouselSpike />
       <DeliveryZones zones={zones} />
       <Location />
       <Faq />
