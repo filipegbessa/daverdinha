@@ -14,11 +14,18 @@ describe('businessInfo', () => {
 describe('generateLocalBusinessJsonLd', () => {
   it('always includes name, telephone, and address (all now hardcoded, never conditional)', () => {
     const json = generateLocalBusinessJsonLd();
-    expect(json['@type']).toBe('LocalBusiness');
+    expect(json['@type']).toBe('GardenStore');
     expect(json.name).toBe('Daverdinha');
     expect(json.legalName).toBe('66.371.530 Alana Viana Moreno');
-    expect(json.telephone).toBe('5521986509259');
-    expect(json.address).toBe('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030');
+    expect(json.telephone).toBe('+5521986509259');
+    expect(json.address).toEqual({
+      '@type': 'PostalAddress',
+      streetAddress: 'R. Capiberibe, 32',
+      addressLocality: 'Rio de Janeiro',
+      addressRegion: 'RJ',
+      postalCode: '20220-030',
+      addressCountry: 'BR',
+    });
     expect(json.sameAs).toEqual(['https://www.instagram.com/daverdinha_/']);
     expect(json.taxID).toBe('66.371.530/0001-54');
   });
@@ -36,6 +43,10 @@ describe('generateLocalBusinessJsonLd', () => {
   it('takes the served area as an argument, since it comes from the database', () => {
     const json = generateLocalBusinessJsonLd(['Centro', 'Zona Sul']);
     expect(json.areaServed).toEqual(['Centro', 'Zona Sul']);
+  });
+
+  it('leaves opening hours out until the client confirms them', () => {
+    expect(generateLocalBusinessJsonLd().openingHoursSpecification).toBeUndefined();
   });
 
   it('advertises no area at all when nothing is covered', () => {

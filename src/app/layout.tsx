@@ -11,6 +11,9 @@ const lora = Lora({ subsets: ['latin'], variable: '--font-lora', display: 'swap'
 const raleway = Raleway({ subsets: ['latin'], variable: '--font-raleway', display: 'swap' });
 
 export const metadata: Metadata = {
+  // Base das URLs relativas de canonical e Open Graph das páginas internas
+  // (`/produtos/...`, `/agenda/...`). Sem ela o Next resolve contra localhost.
+  ...(process.env.SITE_URL ? { metadataBase: new URL(process.env.SITE_URL) } : {}),
   title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
   description: businessInfo.description,
   // O .ico existe porque o navegador pede `/favicon.ico` sozinho, com ou sem

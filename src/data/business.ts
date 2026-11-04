@@ -16,6 +16,7 @@ export const businessInfo = {
   contact: {
     phone: {
       number: '5521986509259',
+      display: '(21) 98650-9259',
     },
     instagram: {
       url: 'https://www.instagram.com/daverdinha_/',
@@ -36,7 +37,26 @@ export const businessInfo = {
     cnpj: '66.371.530/0001-54',
     razaoSocial: '66.371.530 Alana Viana Moreno',
   },
+
+  /**
+   * Vazio até a cliente confirmar. Com a lista vazia, o horário some do site
+   * e dos dados estruturados — inventar um horário é pior do que não ter,
+   * porque o Google mostra e o cliente aparece com a loja fechada. Precisa
+   * bater com o perfil da empresa no Google Maps.
+   */
+  hours: [] as OpeningHours[],
 } as const;
+
+export interface OpeningHours {
+  /** Como aparece no site: "Ter a sex". */
+  label: string;
+  /** Dias no formato do schema.org: 'Tuesday', 'Wednesday'… */
+  days: string[];
+  /** "10:00" */
+  opens: string;
+  /** "18:00" */
+  closes: string;
+}
 
 /**
  * `areaServed` is passed in rather than read off `businessInfo`: the served
@@ -46,17 +66,38 @@ export const businessInfo = {
 export function generateLocalBusinessJsonLd(areaServed: string[] = []): Record<string, unknown> {
   const siteUrl = process.env.SITE_URL;
 
+  const { address } = businessInfo;
+
   return {
     '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
+    // Subtipo de LocalBusiness pra loja de jardinagem: diz ao Google o ramo,
+    // não só que é "um negócio local".
+    '@type': 'GardenStore',
     name: businessInfo.name,
     legalName: businessInfo.legal.razaoSocial,
     description: businessInfo.description,
-    ...(siteUrl ? { url: siteUrl } : {}),
+    ...(siteUrl ? { url: siteUrl, image: `${siteUrl}/logo.png` } : {}),
     sameAs: [businessInfo.contact.instagram.url],
     areaServed,
-    telephone: businessInfo.contact.phone.number,
-    address: businessInfo.address.formatted,
+    telephone: `+${businessInfo.contact.phone.number}`,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: address.street,
+      addressLocality: address.city,
+      addressRegion: address.state,
+      postalCode: address.zipCode,
+      addressCountry: 'BR',
+    },
+    ...(businessInfo.hours.length > 0
+      ? {
+          openingHoursSpecification: businessInfo.hours.map((h) => ({
+            '@type': 'OpeningHoursSpecification',
+            dayOfWeek: h.days,
+            opens: h.opens,
+            closes: h.closes,
+          })),
+        }
+      : {}),
     taxID: businessInfo.legal.cnpj,
   };
 }

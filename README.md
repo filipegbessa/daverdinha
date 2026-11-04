@@ -12,11 +12,13 @@ Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/busin
 
 ### Site em construção (`SITE_MODE`)
 
-Hoje `/` serve uma landing **em construção** (`ComingSoon.tsx`). O site institucional completo — Hero, sobre, produtos, áreas de entrega, FAQ — continua inteiro no repositório, só que escondido atrás da flag `SITE_MODE`.
+Hoje `/` serve uma landing **em construção** (`ComingSoon.tsx`). O site institucional completo — home, catálogo (`/produtos`), agenda (`/agenda`), entregas, FAQ — continua inteiro no repositório, só que escondido atrás da flag `SITE_MODE`.
+
+**Validação com a cliente:** a home completa fica em **`/site`**, e dali se navega pro catálogo e pra agenda. Enquanto a API de catálogo e agenda não existir, essas telas mostram produtos e eventos **de exemplo**, com uma faixa "Prévia do site" no topo. Antes do lançamento, todas essas páginas são `noindex` e ficam fora do sitemap. Com `SITE_MODE=full`, exemplo nunca aparece: lista vazia esconde a seção.
 
 Semântica exata: só `SITE_MODE=full` abre o site completo. Ausente, vazia ou com typo cai em `soon` (a falha segura é esconder, não publicar). A flag é server-only (sem prefixo `NEXT_PUBLIC_`) — ver `src/lib/site-mode.ts`.
 
-**Por que uma flag e não deletar/mover o código:** o site institucional ainda tem placeholder (`PRODUCT_CATEGORIES` está vazio esperando resposta da cliente). A flag mantém ele compilando e com testes passando, então dá pra evoluí-lo local com `SITE_MODE=full` sem nada disso vazar pra produção.
+**Por que uma flag e não deletar/mover o código:** o catálogo e a agenda ainda não têm API nem conteúdo real. A flag mantém ele compilando e com testes passando, então dá pra evoluí-lo local com `SITE_MODE=full` sem nada disso vazar pra produção.
 
 ⚠️ Trocar a chave em produção **exige um redeploy**: `/` é estática, então mexer na variável no painel da Vercel só vale a partir do próximo build ("Redeploy", sem push de código).
 
@@ -121,4 +123,4 @@ Três peças concentram o que antes cada página reimplementava:
 
 `npm test`
 
-Ver os 3 planos em `docs/superpowers/plans/` (site institucional, admin, e o backend em `daverdinha-api`) pro desenho completo.
+Planos das features em andamento ficam em `docs/plans/` (o do backend, no `daverdinha-api`).

@@ -6,10 +6,12 @@ export default function robots(): MetadataRoute.Robots {
     throw new Error('SITE_URL must be set to build robots.txt');
   }
   return {
-    // `/site` é a pré-visualização do site completo pra cliente validar
-    // enquanto `/` mostra "em breve" — não é secreta, só não deve aparecer
-    // no Google antes do lançamento (ver src/app/site/page.tsx).
-    rules: { userAgent: '*', allow: '/', disallow: '/site' },
+    // Sem Disallow pra `/site` nem pras páginas de prévia (`/produtos`,
+    // `/agenda`): elas dizem noindex na própria página, e um Disallow
+    // impediria o Google de ler esse noindex — uma URL bloqueada ainda pode
+    // ser indexada a partir de um link. Mesmo motivo de `/admin` usar header
+    // em `next.config.ts`.
+    rules: { userAgent: '*', allow: '/' },
     sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

@@ -2,13 +2,6 @@ import { render, screen } from "@testing-library/react";
 import Page, { generateMetadata } from "./page";
 import { getCoveredDeliveryZones } from "@/features/site/lib/delivery-zones";
 
-// Hero is an async Server Component (fetches active hero slides) — RTL can't
-// resolve a nested async component synchronously, so it's mocked here. Hero has
-// its own dedicated tests (Hero.test.tsx) covering the fetch/fallback/carousel logic.
-jest.mock("@/features/site/components/Hero", () => ({
-  Hero: () => <h1>Um cantinho verde pra chamar de seu</h1>,
-}));
-
 jest.mock("@/features/site/lib/delivery-zones", () => ({
   getCoveredDeliveryZones: jest.fn(),
 }));
@@ -21,8 +14,7 @@ describe("/site preview — always renders the full institutional site", () => {
   const originalMode = process.env.SITE_MODE;
 
   beforeEach(() => {
-    // Nenhuma seção aqui lê SITE_MODE, mas a trava fica explícita: /site
-    // precisa mostrar o site completo mesmo com `/` em "em breve".
+    // /site precisa mostrar o site completo mesmo com `/` em "em breve".
     delete process.env.SITE_MODE;
     mockZones.mockClear();
     mockZones.mockResolvedValue([{ zone: "Centro", bairros: ["Gamboa"] }]);
@@ -37,11 +29,31 @@ describe("/site preview — always renders the full institutional site", () => {
     await renderPage();
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Um cantinho verde pra chamar de seu",
+      "Ateliê de plantas, vasos e oficinas no Rio de Janeiro",
     );
     expect(screen.getByText("Onde entregamos")).toBeInTheDocument();
     expect(screen.getByText("Onde estamos")).toBeInTheDocument();
     expect(screen.getByText("Perguntas frequentes")).toBeInTheDocument();
+  });
+
+  // Sem API de catálogo e agenda ainda, a cliente valida o layout com
+  // exemplos — e a página avisa que são exemplos.
+  it("shows labelled sample products and events while the API has none", async () => {
+    await renderPage();
+
+    expect(screen.getByText(/Prévia do site/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Vaso Terracota M/ })).toHaveAttribute(
+      "href",
+      "/produtos/vasos/vaso-terracota-m",
+    );
+    expect(screen.getByText("Próximos eventos")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /Oficina de terrário/ }).length).toBeGreaterThan(0);
+  });
+
+  it("points the logo back to /site, not to the coming-soon page", async () => {
+    await renderPage();
+
+    expect(screen.getByRole("link", { name: "Daverdinha" })).toHaveAttribute("href", "/site");
   });
 
   it("renders the LocalBusiness JSON-LD script tag", async () => {

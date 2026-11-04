@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { FullSite } from "@/features/site/components/FullSite";
 import { ComingSoon } from "@/features/site/components/ComingSoon";
 import { businessInfo, generateLocalBusinessJsonLd } from "@/data/business";
-import { getCoveredDeliveryZones } from "@/features/site/lib/delivery-zones";
+import { JsonLd } from "@/features/site/components/JsonLd";
+import { loadFullSite } from "@/features/site/lib/load-full-site";
 import { getSiteMode } from "@/lib/site-mode";
 
 const OG_IMAGE = {
@@ -43,21 +44,15 @@ export default async function Page() {
 
   // A API só é consultada no modo 'full'. Uma página que só diz "em breve" não
   // tem por que cair junto com o backend do bot.
-  const zones = mode === "full" ? await getCoveredDeliveryZones() : [];
+  const data = mode === "full" ? await loadFullSite() : null;
+  const zones = data?.zones ?? [];
 
   return (
     <>
       {/* Fetched once here and handed to both consumers, so the structured data
           Google reads and the section a visitor reads can never disagree. */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
-            generateLocalBusinessJsonLd(zones.map((zone) => zone.zone)),
-          ),
-        }}
-      />
-      {mode === "soon" ? <ComingSoon /> : <FullSite zones={zones} />}
+      <JsonLd data={generateLocalBusinessJsonLd(zones.map((zone) => zone.zone))} />
+      {data ? <FullSite {...data} /> : <ComingSoon />}
     </>
   );
 }

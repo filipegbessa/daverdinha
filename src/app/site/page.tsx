@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { FullSite } from "@/features/site/components/FullSite";
+import { JsonLd } from "@/features/site/components/JsonLd";
 import { businessInfo, generateLocalBusinessJsonLd } from "@/data/business";
-import { getCoveredDeliveryZones } from "@/features/site/lib/delivery-zones";
+import { loadFullSite } from "@/features/site/lib/load-full-site";
 
 const OG_IMAGE = {
   url: "/logo.png",
@@ -13,8 +14,9 @@ const OG_IMAGE = {
 /**
  * Pré-visualização do site institucional completo pra cliente validar
  * enquanto `/` continua em "em breve" (ver `src/lib/site-mode.ts`). Fica fora
- * do sitemap e sinaliza noindex tanto aqui quanto em `robots.ts` — não é
- * secreto, só não é pra aparecer no Google antes do lançamento.
+ * do sitemap e sinaliza noindex na própria página. Não é secreto, só não é
+ * pra aparecer no Google antes do lançamento. Sem Disallow no robots.txt de
+ * propósito: com ele o Google não leria este noindex.
  */
 export function generateMetadata(): Metadata {
   const title = "Daverdinha — Ateliê de plantas no Rio de Janeiro";
@@ -35,19 +37,12 @@ export function generateMetadata(): Metadata {
 }
 
 export default async function SitePreviewPage() {
-  const zones = await getCoveredDeliveryZones();
+  const data = await loadFullSite();
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
-            generateLocalBusinessJsonLd(zones.map((zone) => zone.zone)),
-          ),
-        }}
-      />
-      <FullSite zones={zones} />
+      <JsonLd data={generateLocalBusinessJsonLd(data.zones.map((zone) => zone.zone))} />
+      <FullSite {...data} />
     </>
   );
 }

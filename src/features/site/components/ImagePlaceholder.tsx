@@ -7,13 +7,22 @@ type ImagePlaceholderProps = {
   src?: string;
   alt: string;
   className?: string;
+  /** Largura que a imagem ocupa na tela — um card de grade é bem menor que meia tela. */
+  sizes?: string;
+  priority?: boolean;
 };
 
-export function ImagePlaceholder({ src, alt, className }: ImagePlaceholderProps) {
+export function ImagePlaceholder({
+  src,
+  alt,
+  className,
+  sizes = '(min-width: 768px) 50vw, 100vw',
+  priority,
+}: ImagePlaceholderProps) {
   if (src) {
     return (
       <div className={cn('relative overflow-hidden', className)}>
-        <Image src={src} alt={alt} fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
+        <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
       </div>
     );
   }
