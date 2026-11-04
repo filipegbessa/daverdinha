@@ -3,8 +3,11 @@ import {
   getActiveProductBySlug,
   getActiveProducts,
   getEventBySlug,
+  getFeaturedProducts,
+  getHeroSlides,
   getUpcomingEvents,
 } from './public-api';
+import { DEFAULT_HERO_SLIDE } from '@/features/site/data/hero';
 import { isSample } from '@/features/site/data/samples';
 
 const product = {
@@ -60,6 +63,22 @@ describe('public API reads', () => {
 
       await expect(getActiveProductBySlug('vaso-terracota-m')).resolves.toBeNull();
       await expect(getEventBySlug('oficina-de-terrario')).resolves.toBeNull();
+    });
+
+    it('asks the API for featured products only', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [product] });
+
+      await expect(getFeaturedProducts()).resolves.toEqual([product]);
+      expect(global.fetch).toHaveBeenCalledWith('https://api.test/products/active?featured=true', {
+        next: { revalidate: 60 },
+      });
+    });
+
+    // A rota de slides ainda não existe na API: a home não pode ficar sem topo.
+    it('falls back to the single default hero slide, so there is no slideshow', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
+
+      await expect(getHeroSlides()).resolves.toEqual([DEFAULT_HERO_SLIDE]);
     });
   });
 

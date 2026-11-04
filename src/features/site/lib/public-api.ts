@@ -1,7 +1,15 @@
 import { getSiteMode } from '@/lib/site-mode';
-import { SAMPLE_CATEGORIES, SAMPLE_PRODUCTS, sampleEvents } from '@/features/site/data/samples';
+import {
+  SAMPLE_CATEGORIES,
+  SAMPLE_FEATURED_PRODUCTS,
+  SAMPLE_HERO_SLIDES,
+  SAMPLE_PRODUCTS,
+  sampleEvents,
+} from '@/features/site/data/samples';
+import { DEFAULT_HERO_SLIDE } from '@/features/site/data/hero';
 import type { Product, ProductCategory } from '@/features/site/types/catalog';
 import type { SiteEvent } from '@/features/site/types/event';
+import type { HeroSlide } from '@/features/site/types/hero-slide';
 
 /**
  * Leitura das rotas públicas da API pro site. Mesmo contrato de
@@ -42,6 +50,22 @@ export async function getActiveProducts(categorySlug?: string): Promise<Product[
   return withPreviewFallback(products, () =>
     categorySlug ? SAMPLE_PRODUCTS.filter((p) => p.category.slug === categorySlug) : SAMPLE_PRODUCTS,
   );
+}
+
+/** Os produtos marcados como destaque no admin: a vitrine da home e as listas das páginas internas. */
+export async function getFeaturedProducts(): Promise<Product[]> {
+  const products = await fetchPublic<Product[]>('/products/active?featured=true');
+  return withPreviewFallback(products, () => SAMPLE_FEATURED_PRODUCTS);
+}
+
+/**
+ * Nunca vazio: sem slide cadastrado (ou com a rota ainda inexistente na API),
+ * a home mostra o slide padrão, e com um slide só não há slideshow.
+ */
+export async function getHeroSlides(): Promise<HeroSlide[]> {
+  const slides = await fetchPublic<HeroSlide[]>('/hero-slides/active');
+  if (slides && slides.length > 0) return slides;
+  return getSiteMode() === 'full' ? [DEFAULT_HERO_SLIDE] : SAMPLE_HERO_SLIDES;
 }
 
 export async function getActiveProductBySlug(slug: string): Promise<Product | null> {

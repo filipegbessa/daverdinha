@@ -8,10 +8,14 @@ import { ContactLink } from '@/features/site/components/ContactLink';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import { JsonLd } from '@/features/site/components/JsonLd';
 import { eventPlace } from '@/features/site/components/EventCard';
+import { EventsSection } from '@/features/site/components/EventsSection';
+import { Eyebrow } from '@/features/site/components/Eyebrow';
+import { DirectionsButton, MapEmbed } from '@/features/site/components/MapEmbed';
+import { ProductsSection } from '@/features/site/components/ProductsSection';
 import { isSample } from '@/features/site/data/samples';
 import { formatEventPrice, formatEventShort, formatEventWhen } from '@/features/site/lib/format';
 import { AGENDA_HREF, eventHref, homeHref } from '@/features/site/lib/paths';
-import { getEventBySlug, getUpcomingEvents } from '@/features/site/lib/public-api';
+import { getEventBySlug, getFeaturedProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
 import { eventJsonLd } from '@/features/site/lib/structured-data';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
@@ -35,15 +39,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 /**
  * Evento que já passou continua no ar, com aviso: um link antigo
  * compartilhado no Instagram cai numa página que explica, não num 404.
+ *
+ * Abaixo do evento: onde vai ser (com mapa), os outros eventos da agenda e
+ * os produtos em destaque — quem chegou por um evento continua navegando.
  */
 export default async function EventPage({ params }: Props) {
   const { slug } = await params;
-  const [event, upcoming] = await Promise.all([getEventBySlug(slug), getUpcomingEvents()]);
+  const [event, upcoming, featured] = await Promise.all([
+    getEventBySlug(slug),
+    getUpcomingEvents(),
+    getFeaturedProducts(),
+  ]);
   if (!event) notFound();
 
   const past = new Date(event.endsAt).getTime() < Date.now();
   const home = homeHref();
-  const address = event.locationName === null ? businessInfo.address.formatted : event.locationAddress;
+  const atAtelier = event.locationName === null;
+  const address = atAtelier ? businessInfo.address.formatted : event.locationAddress;
+  const others = upcoming.filter((e) => e.id !== event.id);
   const facts = [
     { icon: CalendarDays, text: formatEventWhen(event.startsAt, event.endsAt) },
     { icon: MapPin, text: address ? `${eventPlace(event)} · ${address}` : eventPlace(event) },
@@ -51,7 +64,7 @@ export default async function EventPage({ params }: Props) {
   ];
 
   return (
-    <SiteShell home={home} events={upcoming} showPreviewNotice={isSample(event)}>
+    <SiteShell home={home} preview={isSample(event) || featured.some(isSample)}>
       <JsonLd data={eventJsonLd(event)} />
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
@@ -112,6 +125,27 @@ export default async function EventPage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      {address && (
+        <section className="bg-sand px-6 py-14 md:py-20">
+          <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-[1fr_1.4fr] md:gap-16">
+            <div>
+              <Eyebrow>Localização</Eyebrow>
+              <h2 className="mt-3 font-serif text-2xl font-semibold text-ink md:text-3xl">Onde vai ser</h2>
+              <p className="mt-3 font-medium text-ink">{atAtelier ? 'No ateliê da Daverdinha' : event.locationName}</p>
+              <address className="mt-1 text-ink-soft not-italic">{address}</address>
+              <DirectionsButton
+                destination={atAtelier ? `${businessInfo.name}, ${address}` : address}
+                className="mt-6"
+              />
+            </div>
+            <MapEmbed address={address} title={`Mapa: ${atAtelier ? 'ateliê da Daverdinha' : event.locationName}`} />
+          </div>
+        </section>
+      )}
+
+      <EventsSection events={others} title="Outros eventos" />
+      <ProductsSection products={featured} />
     </SiteShell>
   );
 }

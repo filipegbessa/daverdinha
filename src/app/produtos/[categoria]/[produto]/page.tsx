@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { SiteShell } from '@/features/site/components/SiteShell';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
+import { Carousel } from '@/features/site/components/Carousel';
 import { CepChecker } from '@/features/site/components/CepChecker';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { JsonLd } from '@/features/site/components/JsonLd';
@@ -13,7 +14,7 @@ import { isSample } from '@/features/site/data/samples';
 import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
 import { formatPrice } from '@/features/site/lib/format';
 import { categoryHref, homeHref, PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
-import { getActiveProductBySlug, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
+import { getActiveProductBySlug, getActiveProducts } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
 import { productJsonLd } from '@/features/site/lib/structured-data';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
@@ -21,7 +22,7 @@ import { orderMessage } from '@/features/site/lib/whatsapp-messages';
 
 type Props = { params: Promise<{ categoria: string; produto: string }> };
 
-const RELATED_LIMIT = 4;
+const RELATED_LIMIT = 8;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { produto } = await params;
@@ -46,16 +47,15 @@ export default async function ProductPage({ params }: Props) {
   // redireciona (308) em vez de virar 404 — e não perde a posição no Google.
   if (product.category.slug !== categoria) permanentRedirect(productHref(product));
 
-  const [siblings, events, zones] = await Promise.all([
+  const [siblings, zones] = await Promise.all([
     getActiveProducts(product.category.slug),
-    getUpcomingEvents(),
     getCoveredDeliveryZones(),
   ]);
   const related = siblings.filter((p) => p.id !== product.id).slice(0, RELATED_LIMIT);
   const home = homeHref();
 
   return (
-    <SiteShell home={home} events={events} showPreviewNotice={isSample(product)}>
+    <SiteShell home={home} preview={isSample(product)}>
       <JsonLd data={productJsonLd(product)} />
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
@@ -116,13 +116,13 @@ export default async function ProductPage({ params }: Props) {
                 Ver todos
               </Link>
             </div>
-            <ul className="mt-6 grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
-              {related.map((p) => (
-                <li key={p.id}>
-                  <ProductCard product={p} />
-                </li>
-              ))}
-            </ul>
+            <div className="mt-6">
+              <Carousel label={`Mais ${product.category.name.toLowerCase()}`}>
+                {related.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </Carousel>
+            </div>
           </div>
         </section>
       )}

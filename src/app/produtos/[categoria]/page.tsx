@@ -8,7 +8,7 @@ import { ContactLink } from '@/features/site/components/ContactLink';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { isSample } from '@/features/site/data/samples';
 import { categoryHref, homeHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
-import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
+import { getActiveCategories, getActiveProducts } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 
@@ -39,17 +39,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function CategoryPage({ params }: Props) {
   const { categoria } = await params;
-  const [{ categories, category }, products, events] = await Promise.all([
+  const [{ categories, category }, products] = await Promise.all([
     findCategory(categoria),
     getActiveProducts(categoria),
-    getUpcomingEvents(),
   ]);
   if (!category || products.length === 0) notFound();
 
   const home = homeHref();
 
   return (
-    <SiteShell home={home} events={events} showPreviewNotice={products.some(isSample)}>
+    <SiteShell home={home} preview={products.some(isSample)}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

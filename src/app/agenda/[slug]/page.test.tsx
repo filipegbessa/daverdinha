@@ -20,7 +20,6 @@ const pastEvent = {
   spots: null,
   imageUrl: null,
   ctaUrl: null,
-  highlight: false,
 };
 
 const renderPage = async (slug: string) => render(await Page({ params: Promise.resolve({ slug }) }));
@@ -61,6 +60,26 @@ describe('/agenda/[slug]', () => {
 
     expect(screen.getByText('Este evento já aconteceu')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Quero me inscrever' })).not.toBeInTheDocument();
+  });
+
+  it('shows where it happens, with a map and directions', async () => {
+    await renderPage('feirinha-verde-do-santo-cristo');
+
+    expect(screen.getByRole('heading', { name: 'Onde vai ser' })).toBeInTheDocument();
+    expect(screen.getByTitle('Mapa: Praça da Harmonia')).toHaveAttribute(
+      'src',
+      expect.stringContaining(encodeURIComponent('Praça da Harmonia, Gamboa, Rio de Janeiro')),
+    );
+    expect(screen.getByRole('link', { name: 'Como chegar' })).toBeInTheDocument();
+  });
+
+  it('keeps visitors browsing: other events (not this one) and featured products', async () => {
+    await renderPage('oficina-de-terrario');
+
+    const others = screen.getByRole('region', { name: 'Outros eventos' });
+    expect(others).not.toHaveTextContent('Oficina de terrário');
+    expect(others).toHaveTextContent('Feirinha verde do Santo Cristo');
+    expect(screen.getByRole('region', { name: 'Produtos em destaque' })).toHaveTextContent('Vaso Terracota M');
   });
 
   it('is a 404 for an unknown event', async () => {

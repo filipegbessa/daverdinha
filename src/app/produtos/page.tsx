@@ -6,7 +6,7 @@ import { Eyebrow } from '@/features/site/components/Eyebrow';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { isSample } from '@/features/site/data/samples';
 import { homeHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
-import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
+import { getActiveCategories, getActiveProducts } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
 
 export function generateMetadata(): Metadata {
@@ -18,15 +18,11 @@ export function generateMetadata(): Metadata {
 }
 
 export default async function ProductsPage() {
-  const [categories, products, events] = await Promise.all([
-    getActiveCategories(),
-    getActiveProducts(),
-    getUpcomingEvents(),
-  ]);
+  const [categories, products] = await Promise.all([getActiveCategories(), getActiveProducts()]);
   const home = homeHref();
 
   return (
-    <SiteShell home={home} events={events} showPreviewNotice={products.some(isSample)}>
+    <SiteShell home={home} preview={products.some(isSample)}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

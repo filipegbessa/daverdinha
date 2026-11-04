@@ -21,6 +21,4 @@ export interface SiteEvent {
   imageUrl: string | null;
   /** `null` = inscrição pelo WhatsApp, com mensagem pronta montada pelo site. */
   ctaUrl: string | null;
-  /** Aparece na faixa acima do cabeçalho. */
-  highlight: boolean;
 }

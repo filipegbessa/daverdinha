@@ -1,5 +1,7 @@
 import type { Product, ProductCategory } from '@/features/site/types/catalog';
 import type { SiteEvent } from '@/features/site/types/event';
+import type { HeroSlide } from '@/features/site/types/hero-slide';
+import { DEFAULT_HERO_SLIDE } from '@/features/site/data/hero';
 
 /**
  * Conteúdo de exemplo pra cliente validar o layout em `/site` antes de a API
@@ -126,6 +128,41 @@ export const SAMPLE_PRODUCTS: Product[] = [
   },
 ];
 
+/**
+ * Os exemplos "em destaque" (o `featured` do admin). São 6 de propósito:
+ * mais do que cabe numa linha no desktop, pra cliente ver a vitrine virar
+ * carrossel.
+ */
+const SAMPLE_FEATURED_IDS = new Set(['sample-p1', 'sample-p2', 'sample-p3', 'sample-p5', 'sample-p6', 'sample-p7']);
+
+export const SAMPLE_FEATURED_PRODUCTS = SAMPLE_PRODUCTS.filter((p) => SAMPLE_FEATURED_IDS.has(p.id));
+
+/**
+ * O primeiro é o slide padrão de verdade (o que a home mostra sem API); os
+ * outros dois existem só pra cliente ver o slideshow funcionando.
+ */
+export const SAMPLE_HERO_SLIDES: HeroSlide[] = [
+  DEFAULT_HERO_SLIDE,
+  {
+    id: 'sample-h2',
+    eyebrow: 'Oficina no ateliê',
+    title: 'Monte seu terrário com a gente',
+    description: 'Duas horas, todo o material incluso, e o terrário vai pra casa com você.',
+    imageUrl: null,
+    linkLabel: 'Ver agenda',
+    linkUrl: '/agenda',
+  },
+  {
+    id: 'sample-h3',
+    eyebrow: 'Presentes',
+    title: 'Kits prontos pra presentear',
+    description: 'Vaso, planta e o passo a passo numa caixa só.',
+    imageUrl: null,
+    linkLabel: 'Ver kits',
+    linkUrl: '/produtos/kits',
+  },
+];
+
 /** Próximo sábado (ou o de daqui a `weeks` semanas), no formato YYYY-MM-DD. */
 function saturday(now: Date, weeks: number): string {
   const days = ((6 - now.getUTCDay() + 7) % 7 || 7) + weeks * 7;
@@ -153,7 +190,6 @@ export function sampleEvents(now: Date = new Date()): SiteEvent[] {
       spots: 8,
       imageUrl: null,
       ctaUrl: null,
-      highlight: true,
     },
     {
       id: 'sample-e2',
@@ -168,7 +204,6 @@ export function sampleEvents(now: Date = new Date()): SiteEvent[] {
       spots: null,
       imageUrl: null,
       ctaUrl: null,
-      highlight: false,
     },
     {
       id: 'sample-e3',
@@ -183,7 +218,6 @@ export function sampleEvents(now: Date = new Date()): SiteEvent[] {
       spots: 10,
       imageUrl: null,
       ctaUrl: null,
-      highlight: true,
     },
   ];
 }

@@ -5,6 +5,7 @@ import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { EventCard } from '@/features/site/components/EventCard';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
+import { isSample } from '@/features/site/data/samples';
 import { AGENDA_HREF, homeHref } from '@/features/site/lib/paths';
 import { getUpcomingEvents } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
@@ -23,7 +24,7 @@ export default async function AgendaPage() {
   const home = homeHref();
 
   return (
-    <SiteShell home={home} events={events}>
+    <SiteShell home={home} preview={events.some(isSample)}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

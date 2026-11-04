@@ -8,14 +8,16 @@ import { Faq } from "@/features/site/components/Faq";
 import { SiteShell } from "@/features/site/components/SiteShell";
 import { isSample } from "@/features/site/data/samples";
 import type { DeliveryZone } from "@/features/site/lib/delivery-zones";
-import type { Product, ProductCategory } from "@/features/site/types/catalog";
+import type { Product } from "@/features/site/types/catalog";
 import type { SiteEvent } from "@/features/site/types/event";
+import type { HeroSlide } from "@/features/site/types/hero-slide";
 
 export interface FullSiteData {
   home: string;
+  slides: HeroSlide[];
   zones: DeliveryZone[];
-  categories: ProductCategory[];
-  products: Product[];
+  /** Só os produtos em destaque: a home é vitrine, o catálogo inteiro fica em `/produtos`. */
+  featured: Product[];
   events: SiteEvent[];
 }
 
@@ -29,11 +31,13 @@ export interface FullSiteData {
  * seguidas dividiam o mesmo fundo e a página parecia ter menos partes do que
  * tinha.
  */
-export function FullSite({ home, zones, categories, products, events }: FullSiteData) {
+export function FullSite({ home, slides, zones, featured, events }: FullSiteData) {
+  const preview = featured.some(isSample) || events.some(isSample) || slides.some(isSample);
+
   return (
-    <SiteShell home={home} events={events} showPreviewNotice={products.some(isSample)}>
-      <Hero />
-      <ProductsSection categories={categories} products={products} />
+    <SiteShell home={home} preview={preview}>
+      <Hero slides={slides} />
+      <ProductsSection products={featured} />
       <EventsSection events={events} />
       <About />
       <DeliveryZones zones={zones} />
