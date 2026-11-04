@@ -14,7 +14,8 @@ export function Footer({ home }: { home: string }) {
   const { address, contact, legal } = businessInfo;
 
   return (
-    <footer className="bg-ink px-6 py-12 text-sm text-paper/75">
+    // No celular, espaço extra embaixo pro botão flutuante de WhatsApp não cobrir a última linha.
+    <footer className="bg-ink px-6 pt-12 pb-24 text-sm text-paper/75 sm:pb-12">
       <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
         <div className="space-y-2">
           <p className="font-serif text-lg font-semibold text-paper">Daverdinha · Ateliê de Plantas</p>

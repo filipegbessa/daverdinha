@@ -16,7 +16,7 @@ export function MobileNav({ links }: { links: NavLink[] }) {
   }, [open]);
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -31,7 +31,7 @@ export function MobileNav({ links }: { links: NavLink[] }) {
         <nav
           id="mobile-nav"
           aria-label="Menu"
-          className="absolute inset-x-0 top-full border-b border-moss-line bg-paper px-6 pb-6 shadow-card"
+          className="absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-moss-line bg-paper px-6 pb-6 shadow-card"
         >
           <ul className="flex flex-col">
             {links.map((link) => (

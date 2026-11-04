@@ -20,14 +20,17 @@ export function Header({ home }: { home: string }) {
   const links = siteNav(home);
 
   return (
+    // `relative` aqui, e não no container de dentro: a gaveta do celular se
+    // posiciona contra o cabeçalho inteiro e ocupa a largura toda da tela.
     <header className="sticky top-0 z-20 border-b border-moss-line/70 bg-paper/90 px-4 py-2.5 backdrop-blur-md md:px-6">
-      <div className="relative mx-auto flex max-w-6xl items-center justify-between gap-4">
-        <Link href={home} className="flex items-center gap-2.5 font-serif text-xl font-semibold text-ink">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+        <Link href={home} className="flex shrink-0 items-center gap-2.5 font-serif text-xl font-semibold text-ink">
           <Image src="/logo.png" alt="" width={44} height={44} className="size-11 rounded-full shadow-soft" />
           Daverdinha
         </Link>
 
-        <nav aria-label="Principal" className="hidden md:block">
+        {/* Só a partir de `lg`: entre 768 e ~800 px os 5 links, a logo e o botão não cabem numa linha. */}
+        <nav aria-label="Principal" className="hidden lg:block">
           <ul className="flex items-center gap-7 text-sm font-medium text-ink-soft">
             {links.map((link) => (
               <li key={link.href}>
