@@ -1,5 +1,6 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { Leaf, MessageCircle } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
@@ -9,8 +10,8 @@ export function Header() {
     <header className="sticky top-0 z-20 border-b border-moss-line/70 bg-paper/85 px-6 py-4 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <span className="flex items-center gap-2 font-serif text-lg font-semibold text-ink">
-          <Leaf className="size-5 text-moss" strokeWidth={2} aria-hidden="true" />
-          Daverdinha
+          <Image src="/logo.png" alt="" width={80} height={80} className="size-20 rounded-full shadow-soft" />
+          {/* Daverdinha */}
         </span>
         <Link
           href={getWhatsAppUrl('Oi! Vim pelo site da Daverdinha 🌱')}
