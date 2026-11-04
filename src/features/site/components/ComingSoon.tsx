@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { businessInfo } from "@/data/business";
 import { getWhatsAppUrl } from "@/features/site/lib/whatsapp";
 import { Eyebrow } from "@/features/site/components/Eyebrow";
+import { ContactLink } from "@/features/site/components/ContactLink";
 
 /**
  * A landing que `/` mostra enquanto `SITE_MODE` não for 'full'.
@@ -37,9 +38,10 @@ export function ComingSoon() {
       </div>
 
       <div className="flex flex-col items-center gap-3 sm:flex-row">
-        <Link
+        <ContactLink
           href={getWhatsAppUrl("Oi! Vim pelo site da Daverdinha 🌱")}
-          target="_blank"
+          channel="whatsapp"
+          location="coming_soon"
           className={cn(
             buttonVariants({ variant: "default", size: "lg" }),
             "gap-2 rounded-full bg-moss shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft",
@@ -47,10 +49,11 @@ export function ComingSoon() {
         >
           <MessageCircle className="size-4" aria-hidden="true" />
           Falar no WhatsApp
-        </Link>
-        <Link
+        </ContactLink>
+        <ContactLink
           href={businessInfo.contact.instagram.url}
-          target="_blank"
+          channel="instagram"
+          location="coming_soon"
           className={cn(
             buttonVariants({ variant: "outline", size: "lg" }),
             "gap-2 rounded-full border-moss-line text-ink hover:bg-moss/10",
@@ -58,7 +61,7 @@ export function ComingSoon() {
         >
           <AtSign className="size-4 text-moss" aria-hidden="true" />
           {businessInfo.contact.instagram.handle}
-        </Link>
+        </ContactLink>
       </div>
 
       <p className="flex max-w-sm items-center justify-center gap-1.5 text-sm text-ink-soft">

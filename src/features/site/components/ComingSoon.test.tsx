@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ComingSoon } from './ComingSoon';
 
 describe('ComingSoon', () => {
@@ -24,6 +24,36 @@ describe('ComingSoon', () => {
     const link = screen.getByRole('link', { name: '@daverdinha_' });
     expect(link).toHaveAttribute('href', 'https://www.instagram.com/daverdinha_/');
     expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('counts a click on WhatsApp or Instagram as a contact_click in GA', () => {
+    const gtag = jest.fn();
+    (window as unknown as { gtag?: jest.Mock }).gtag = gtag;
+    render(<ComingSoon />);
+
+    fireEvent.click(screen.getByRole('link', { name: 'Falar no WhatsApp' }));
+    fireEvent.click(screen.getByRole('link', { name: '@daverdinha_' }));
+
+    expect(gtag).toHaveBeenCalledWith('event', 'contact_click', {
+      channel: 'whatsapp',
+      location: 'coming_soon',
+    });
+    expect(gtag).toHaveBeenCalledWith('event', 'contact_click', {
+      channel: 'instagram',
+      location: 'coming_soon',
+    });
+    delete (window as unknown as { gtag?: jest.Mock }).gtag;
+  });
+
+  it('does not count the privacy policy link as a conversion', () => {
+    const gtag = jest.fn();
+    (window as unknown as { gtag?: jest.Mock }).gtag = gtag;
+    render(<ComingSoon />);
+
+    fireEvent.click(screen.getByRole('link', { name: 'Política de Privacidade' }));
+
+    expect(gtag).not.toHaveBeenCalled();
+    delete (window as unknown as { gtag?: jest.Mock }).gtag;
   });
 
   it('shows the real address and the business description', () => {
