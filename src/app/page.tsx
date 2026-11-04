@@ -1,12 +1,5 @@
 import type { Metadata } from "next";
-import { Header } from "@/features/site/components/Header";
-import { Hero } from "@/features/site/components/Hero";
-import { About } from "@/features/site/components/About";
-import { Products } from "@/features/site/components/Products";
-import { DeliveryZones } from "@/features/site/components/DeliveryZones";
-import { Location } from "@/features/site/components/Location";
-import { Faq } from "@/features/site/components/Faq";
-import { Footer } from "@/features/site/components/Footer";
+import { FullSite } from "@/features/site/components/FullSite";
 import { ComingSoon } from "@/features/site/components/ComingSoon";
 import { businessInfo, generateLocalBusinessJsonLd } from "@/data/business";
 import { getCoveredDeliveryZones } from "@/features/site/lib/delivery-zones";
@@ -64,20 +57,7 @@ export default async function Page() {
           ),
         }}
       />
-      {mode === "soon" ? (
-        <ComingSoon />
-      ) : (
-        <>
-          <Header />
-          <Hero />
-          <About />
-          <Products />
-          <DeliveryZones zones={zones} />
-          <Location />
-          <Faq />
-          <Footer />
-        </>
-      )}
+      {mode === "soon" ? <ComingSoon /> : <FullSite zones={zones} />}
     </>
   );
 }
