@@ -31,7 +31,7 @@ interface Product {
 | # | Decisão |
 |---|---|
 | 1 | O spike `ProductsCarouselSpike.tsx` fica entre `About` e `DeliveryZones` em `FullSite.tsx` — posição final confirmada visualmente, não muda. |
-| 2 | Carrossel da home mostra **todos** os produtos ativos (sem flag de destaque, decisão espelhada do backend); `/produtos` é o "ver todos" pra quando a lista crescer. |
+| 2 | **Revisto em 2026-11-04 pela cliente:** a home mostra só os produtos **em destaque** (`featured` no admin, `GET /products/active?featured=true`), com tags que filtram na própria página e lista que vira carrossel quando passa do que cabe na tela. Os destaques também aparecem nas páginas internas (página de evento). `/produtos` e as páginas de categoria continuam com todos os ativos. |
 | 3 | **Rotas aninhadas**: `/produtos`, `/produtos/[categoria]`, `/produtos/[categoria]/[produto]`. Todas renderizadas sob demanda (sem `generateStaticParams`) — mesma filosofia de todo o resto do site, que busca dados no servidor com `revalidate: 60`, nunca pré-renderiza uma lista fixa. A rota antiga `/produtos/[slug]` não existe mais. |
 | 4 | **Produto é achado só pelo slug dele.** `/produtos/[categoria]/[produto]` chama `getActiveProductBySlug(produto)` e ignora `categoria` na busca; se `product.category.slug !== categoria`, `permanentRedirect(productHref(product))` (308). Produto que mudou de categoria não quebra link antigo nem duplica conteúdo no Google. |
 | 5 | **Categoria sem produto ativo é 404** e fica fora do sitemap — a API já só devolve em `/product-categories/active` categorias com produto ativo; a página da categoria usa essa lista como fonte de verdade. |
