@@ -1,6 +1,5 @@
-// Minimal service worker: exists only to make the app installable as a PWA
-// today. Push notification handling (the actual point of this file) is
-// planned separately — see docs/superpowers/plans/2026-09-14-daverdinha-admin-push-notifications.md.
+// Minimal service worker: makes the admin installable as a PWA and shows the
+// push notifications the API sends when a conversation needs a human.
 
 self.addEventListener('install', () => {
   self.skipWaiting();

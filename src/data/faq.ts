@@ -3,7 +3,7 @@ export interface FaqItem {
   answer: string;
 }
 
-// Mais itens entram aqui assim que a cliente responder as perguntas de FAQ em PERGUNTAS-CLIENTE-SITE.md.
+// Mais itens entram aqui conforme a cliente confirmar as respostas.
 export const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'Como faço um pedido?',
