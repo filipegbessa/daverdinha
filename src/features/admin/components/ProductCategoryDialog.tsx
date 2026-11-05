@@ -41,7 +41,7 @@ export function ProductCategoryDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{category ? 'Editar categoria de produto' : 'Nova categoria de produto'}</DialogTitle>
+          <DialogTitle>{category ? 'Editar categoria' : 'Nova categoria'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

@@ -687,7 +687,7 @@ describe('ConversaDetailPage', () => {
     expect(screen.queryByRole('button', { name: /Fechou compra/ })).not.toBeInTheDocument();
   });
 
-  it('lists only unattached categories in the "+ Categoria" menu and attaches one on click', async () => {
+  it('lists only unattached categories in the "+ Marcador" menu and attaches one on click', async () => {
     const allCategories = [
       { id: 'cat1', name: 'Bingo', color: '#185928' },
       { id: 'cat2', name: 'Fechou compra', color: '#7a3247' },
@@ -703,9 +703,9 @@ describe('ConversaDetailPage', () => {
 
     render(<ConversaDetailPage />);
     await screen.findByRole('button', { name: /Bingo/ });
-    await userEvent.click(screen.getByRole('button', { name: '+ Categoria' }));
+    await userEvent.click(screen.getByRole('button', { name: '+ Marcador' }));
 
-    const menu = await screen.findByRole('menu', { name: 'Adicionar categoria' });
+    const menu = await screen.findByRole('menu', { name: 'Adicionar marcador' });
     expect(within(menu).queryByRole('menuitem', { name: 'Bingo' })).not.toBeInTheDocument();
     const option = within(menu).getByRole('menuitem', { name: 'Fechou compra' });
     await userEvent.click(option);

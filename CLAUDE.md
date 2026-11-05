@@ -71,4 +71,4 @@ Image and audio messages fetch a short-lived signed R2 URL on demand (`GET /conv
 - `public/sw.js` is a minimal service worker, there for PWA install and push. It has no caching strategy, on purpose.
 
 ### Design docs
-Feature plans live in `docs/plans/`. The README is the most detailed description of how each admin page behaves (`/admin/menu`, `/admin/mensagens`, `/admin/entregas`, `/admin/conversas`, `/admin/categorias`). Check it before changing those pages.
+Feature plans live in `docs/plans/`. The README is the most detailed description of how each admin page behaves (`/admin/menu`, `/admin/mensagens`, `/admin/entregas`, `/admin/conversas`, `/admin/marcadores`, `/admin/produtos`, `/admin/categorias`). Check it before changing those pages.

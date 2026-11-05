@@ -22,7 +22,7 @@ export function CategoryDialog({
   onSaved: () => void;
 }) {
   const { apiFetch } = useApiClient();
-  const save = useApiMutation('Erro ao salvar categoria.');
+  const save = useApiMutation('Erro ao salvar marcador.');
   const [name, setName] = useState(category?.name ?? '');
   const [color, setColor] = useState(category?.color ?? INITIAL_COLOR);
 
@@ -41,7 +41,7 @@ export function CategoryDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{category ? 'Editar categoria' : 'Nova categoria'}</DialogTitle>
+          <DialogTitle>{category ? 'Editar marcador' : 'Novo marcador'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

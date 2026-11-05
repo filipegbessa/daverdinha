@@ -76,7 +76,7 @@ describe('CategoryDialog', () => {
   });
 
   it('surfaces the backend error and keeps the dialog open when saving fails', async () => {
-    const apiFetch = jest.fn().mockRejectedValue(new Error('Já existe uma categoria com esse nome.'));
+    const apiFetch = jest.fn().mockRejectedValue(new Error('Já existe um marcador com esse nome.'));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
     const onSaved = jest.fn();
 
@@ -85,7 +85,7 @@ describe('CategoryDialog', () => {
     await userEvent.type(screen.getByLabelText('Nome'), 'Bingo');
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Já existe uma categoria com esse nome.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Já existe um marcador com esse nome.');
     expect(onSaved).not.toHaveBeenCalled();
   });
 });

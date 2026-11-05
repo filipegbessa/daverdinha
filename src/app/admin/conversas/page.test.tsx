@@ -182,7 +182,7 @@ describe('ConversasPage', () => {
       render(<ConversasPage />);
       await screen.findAllByText('Maria');
 
-      await userEvent.selectOptions(screen.getByLabelText('Filtrar por categoria'), 'cat1');
+      await userEvent.selectOptions(screen.getByLabelText('Filtrar por marcador'), 'cat1');
 
       await waitFor(() => expect(conversationCalls(apiFetch)).toContain('/conversations?categoryId=cat1'));
     });
@@ -194,7 +194,7 @@ describe('ConversasPage', () => {
       await screen.findAllByText('Maria');
 
       await userEvent.click(screen.getByRole('button', { name: 'Não lidas' }));
-      await userEvent.selectOptions(screen.getByLabelText('Filtrar por categoria'), 'cat1');
+      await userEvent.selectOptions(screen.getByLabelText('Filtrar por marcador'), 'cat1');
       await userEvent.type(screen.getByLabelText('Buscar conversas'), 'maria');
 
       await waitFor(() =>

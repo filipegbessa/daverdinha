@@ -91,10 +91,10 @@ describe('ProductDialog', () => {
 
     render(<ProductDialog product={null} categories={[]} onClose={jest.fn()} onSaved={jest.fn()} />);
 
-    expect(screen.getByText(/Cadastre uma categoria de produto primeiro/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ir para categorias de produto' })).toHaveAttribute(
+    expect(screen.getByText(/Cadastre uma categoria primeiro/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ir para categorias' })).toHaveAttribute(
       'href',
-      '/admin/categorias-produtos',
+      '/admin/categorias',
     );
     expect(screen.queryByRole('button', { name: 'Salvar' })).not.toBeInTheDocument();
   });

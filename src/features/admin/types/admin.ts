@@ -35,9 +35,10 @@ export interface DeliveryLocation {
 }
 
 /**
- * Categoria do catálogo do site — não confundir com `Category`, que marca
- * conversas. `slug` é gerado pela API na criação e nunca muda (é a URL
- * `/produtos/[slug]`). Lista sem paginação: são poucas.
+ * Categoria do catálogo do site ("Categorias" no admin) — não confundir com
+ * `Category`, que é o "marcador" de conversa na tela. `slug` é gerado pela
+ * API na criação e nunca muda (é a URL `/produtos/[slug]`). Lista sem
+ * paginação: são poucas.
  */
 export interface ProductCategoryAdmin {
   id: string;
@@ -68,6 +69,10 @@ export interface ProductAdmin {
 export type ConversationStatus = 'bot_active' | 'paused_human';
 export type EntryPoint = 'menu' | 'catalog';
 
+/**
+ * Marcador de conversa ("Marcadores" no admin, `/admin/marcadores`). O nome
+ * no código segue o recurso da API (`/categories`).
+ */
 export interface Category {
   id: string;
   name: string;

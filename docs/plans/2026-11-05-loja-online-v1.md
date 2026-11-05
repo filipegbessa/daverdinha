@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Atualizado em 2026-11-05 (nomenclatura):** no admin, "Categorias" de conversa viraram **Marcadores** (`/admin/marcadores`) e as categorias de produto viraram **Categorias** (`/admin/categorias`). Código e API mantêm os nomes antigos (`Category`/`/categories` = marcador; `ProductCategory`/`/product-categories` = categoria). As rotas citadas abaixo como `/admin/categorias-produtos` hoje são `/admin/categorias`.
+
 **Goal:** fechar o catálogo (a cliente cadastra categorias e produtos sozinha no admin, e a vitrine que já existe passa a mostrar dados reais) e abrir a venda pelo site: carrinho, checkout com entrega ou retirada, pagamento no Mercado Pago (Checkout Pro, fora do site) e página do pedido; no admin, lista de pedidos e valor do frete por zona.
 
 **Plano irmão:** `daverdinha-api/docs/plans/2026-11-05-loja-online-v1.md` — contratos de API, regras de preço/frete/estoque e webhook. **Os contratos de lá são a fonte da verdade pros nomes de campo** usados aqui.

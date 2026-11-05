@@ -92,7 +92,7 @@ export default function ConversasPage() {
     },
     {
       key: 'categories',
-      header: 'Categorias',
+      header: 'Marcadores',
       cell: (conversation) => (
         <div className="flex flex-wrap gap-1">
           {(conversation.categories ?? []).map((cat) => (
@@ -140,10 +140,10 @@ export default function ConversasPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            aria-label="Filtrar por categoria"
+            aria-label="Filtrar por marcador"
             className="rounded-md border border-sand-line bg-paper px-2 py-1.5 text-sm"
           >
-            <option value="all">Todas as categorias</option>
+            <option value="all">Todos os marcadores</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}

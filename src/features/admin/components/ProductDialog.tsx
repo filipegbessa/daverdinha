@@ -68,16 +68,16 @@ export function ProductDialog({
         </DialogHeader>
         {categories.length === 0 ? (
           <div className="space-y-4">
-            <p>Cadastre uma categoria de produto primeiro: todo produto fica dentro de uma.</p>
+            <p>Cadastre uma categoria primeiro: todo produto fica dentro de uma.</p>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={onClose}>
                 Fechar
               </Button>
               <Link
-                href="/admin/categorias-produtos"
+                href="/admin/categorias"
                 className="inline-flex items-center rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
               >
-                Ir para categorias de produto
+                Ir para categorias
               </Link>
             </div>
           </div>

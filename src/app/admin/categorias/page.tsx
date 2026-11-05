@@ -1,39 +1,24 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { usePagination } from '@/features/admin/lib/use-pagination';
-import { TablePagination } from '@/features/admin/components/TablePagination';
-import { CategoryDialog } from '@/features/admin/components/CategoryDialog';
+import { ProductCategoryDialog } from '@/features/admin/components/ProductCategoryDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
-import { readableTextColor } from '@/features/admin/lib/readable-text-color';
-import type { Category, Paginated } from '@/features/admin/types/admin';
+import type { ProductCategoryAdmin } from '@/features/admin/types/admin';
 
 export default function CategoriasPage() {
   const { apiFetch } = useApiClient();
-  const [totalPages, setTotalPages] = useState<number | undefined>(undefined);
-  const { page, setPage } = usePagination('', totalPages);
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useApiResource<Paginated<Category>>(`/categories${page > 1 ? `?page=${page}` : ''}`);
-  const categories = data?.items;
-
-  useEffect(() => {
-    if (data) setTotalPages(data.totalPages);
-  }, [data]);
+  const { data: categories, isLoading, error, refetch } = useApiResource<ProductCategoryAdmin[]>('/product-categories');
   const remove = useApiMutation('Erro ao excluir categoria.');
-  const [editing, setEditing] = useState<Category | 'new' | null>(null);
-  const [deleting, setDeleting] = useState<Category | null>(null);
+  const [editing, setEditing] = useState<ProductCategoryAdmin | 'new' | null>(null);
+  const [deleting, setDeleting] = useState<ProductCategoryAdmin | null>(null);
 
   async function handleConfirmDelete() {
     if (!deleting) return;
-    const ok = await remove.run(() => apiFetch(`/categories/${deleting.id}`, { method: 'DELETE' }));
+    const ok = await remove.run(() => apiFetch(`/product-categories/${deleting.id}`, { method: 'DELETE' }));
     if (ok) {
       setDeleting(null);
       refetch();
@@ -42,24 +27,30 @@ export default function CategoriasPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Categorias</h1>
         <Button onClick={() => setEditing('new')}>Nova categoria</Button>
       </div>
       {error && <ErrorAlert>{error}</ErrorAlert>}
       {isLoading && <LoadingState />}
-      {categories && (
+      {categories && categories.length === 0 && (
+        <p className="mt-6 text-ink-soft">Nenhuma categoria ainda. Crie a primeira pra começar a cadastrar produtos.</p>
+      )}
+      {categories && categories.length > 0 && (
         <ul className="mt-6 space-y-2">
           {categories.map((category) => (
-            <li key={category.id} className="flex items-center gap-3 rounded-lg border border-sand-line p-3">
-              <span
-                className="rounded-full px-2.5 py-0.5 text-sm font-medium"
-                style={{ backgroundColor: category.color, color: readableTextColor(category.color) }}
-              >
-                {category.name}
-              </span>
-              <span className="flex-1" />
-              <span className="text-sm text-ink-soft">{category.conversationCount ?? 0} conversa(s)</span>
+            <li
+              key={category.id}
+              className="flex flex-wrap items-center gap-3 rounded-lg border border-sand-line p-3"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">
+                  {category.name}
+                  {!category.active && <span className="ml-2 text-sm font-normal text-ink-soft">(Inativa)</span>}
+                </p>
+                <p className="truncate font-mono text-sm text-ink-soft">/produtos/{category.slug}</p>
+              </div>
+              <span className="text-sm text-ink-soft">{category._count.products} produto(s)</span>
               <Button variant="outline" onClick={() => setEditing(category)}>
                 Editar
               </Button>
@@ -70,17 +61,8 @@ export default function CategoriasPage() {
           ))}
         </ul>
       )}
-      {data && (
-        <TablePagination
-          page={data.page}
-          totalPages={data.totalPages}
-          total={data.total}
-          itemLabel="categorias"
-          onPageChange={setPage}
-        />
-      )}
       {editing && (
-        <CategoryDialog
+        <ProductCategoryDialog
           category={editing === 'new' ? null : editing}
           onClose={() => setEditing(null)}
           onSaved={() => {
@@ -101,9 +83,9 @@ export default function CategoriasPage() {
           }}
         >
           <p>
-            {deleting.conversationCount && deleting.conversationCount > 0
-              ? `Essa categoria está em ${deleting.conversationCount} conversa(s). Excluir vai remover a marcação dessas conversas.`
-              : 'Essa categoria não está em nenhuma conversa no momento.'}
+            {deleting._count.products > 0
+              ? `Essa categoria tem ${deleting._count.products} produto(s). Mova ou exclua os produtos antes.`
+              : 'A página dessa categoria sai do site. Não dá pra desfazer.'}
           </p>
         </ConfirmDialog>
       )}

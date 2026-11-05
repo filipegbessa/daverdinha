@@ -91,7 +91,7 @@ export default function ConversaDetailPage() {
   const saveName = useApiMutation('Erro ao salvar o nome.');
   const sendReply = useApiMutation('Erro ao enviar resposta.');
   const botState = useApiMutation('Erro ao alterar o estado do bot.');
-  const categoryChange = useApiMutation('Erro ao atualizar categoria.');
+  const categoryChange = useApiMutation('Erro ao atualizar marcador.');
 
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState('');
@@ -309,7 +309,7 @@ export default function ConversaDetailPage() {
                 onClick={() => handleToggleCategory(cat.id, true)}
                 disabled={isPending}
                 aria-busy={isPending}
-                title="Remover categoria"
+                title="Remover marcador"
                 className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
                   isPending ? 'cursor-wait opacity-50' : ''
                 }`}
@@ -328,12 +328,12 @@ export default function ConversaDetailPage() {
               onClick={() => setCategoryMenuOpen((open) => !open)}
               aria-expanded={categoryMenuOpen}
             >
-              + Categoria
+              + Marcador
             </Button>
             {categoryMenuOpen && (
               <div
                 role="menu"
-                aria-label="Adicionar categoria"
+                aria-label="Adicionar marcador"
                 className="absolute left-0 top-full z-10 mt-1 w-48 rounded-md border border-sand-line bg-paper p-1 shadow-md"
               >
                 {(() => {

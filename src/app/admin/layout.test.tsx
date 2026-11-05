@@ -35,12 +35,9 @@ describe('AdminLayout', () => {
     expect(screen.getByRole('link', { name: 'Entregas' })).toHaveAttribute('href', '/admin/entregas');
     // Destaques nunca foi construído e foi substituído pela agenda de eventos.
     expect(screen.queryByRole('link', { name: 'Destaques' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Categorias' })).toHaveAttribute('href', '/admin/categorias');
+    expect(screen.getByRole('link', { name: 'Marcadores' })).toHaveAttribute('href', '/admin/marcadores');
     expect(screen.getByRole('link', { name: 'Produtos' })).toHaveAttribute('href', '/admin/produtos');
-    expect(screen.getByRole('link', { name: 'Categorias de produto' })).toHaveAttribute(
-      'href',
-      '/admin/categorias-produtos',
-    );
+    expect(screen.getByRole('link', { name: 'Categorias' })).toHaveAttribute('href', '/admin/categorias');
     expect(screen.getByRole('link', { name: 'Conversas' })).toHaveAttribute('href', '/admin/conversas');
   });
 

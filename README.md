@@ -64,11 +64,23 @@ Página para configurar as 4 mensagens globais do bot:
 
 Todas as demais mensagens do bot vivem nos itens individuais de menu (um para cada item, e 4 para o item especial de localidades).
 
-### /admin/categorias
+### /admin/marcadores
 
-Rótulos coloridos que o operador anexa a conversas, pra filtrar a lista em `/admin/conversas`.
+Rótulos coloridos ("marcadores") que o operador anexa a conversas, pra filtrar a lista em `/admin/conversas`. No código e na API o recurso continua se chamando `Category` / `/categories`.
 
 A cor é livre: um color picker nativo, sem paleta fixa. O contraste do texto do chip é calculado a partir da cor escolhida (`readable-text-color.ts`), então um tom claro continua legível — antes o texto era branco fixo e sumia.
+
+### /admin/produtos
+
+Cadastro do catálogo que aparece no site (`/produtos`, páginas de categoria e de produto, vitrine da home).
+
+- Nome, descrição, preço, categoria, ordem, "Aparece no site" e "Mostrar na home" (destaque). A chave da lista liga e desliga o produto sem abrir o formulário.
+- Até 6 fotos (JPEG, PNG ou WebP, 5 MB cada), conferidas no navegador antes do envio; a primeira é a capa. Vai tudo num `multipart/form-data` só. Editar sem escolher fotos novas não manda o campo `images` e mantém as atuais; escolher novas substitui todas (é a regra da API).
+- O endereço (`/produtos/[categoria]/[produto]`) é gerado pela API e não muda ao renomear.
+
+### /admin/categorias
+
+Categorias do catálogo (no código, `ProductCategory` / `/product-categories`). Cada uma vira uma página `/produtos/[slug]` no site, com a descrição no topo. Não dá pra excluir categoria com produto: a API recusa e a mensagem aparece na confirmação.
 
 ### /admin/entregas
 
@@ -103,8 +115,8 @@ O cliente manda foto pelo WhatsApp e ela aparece na thread como uma mensagem com
 
 ## Listagens e polling
 
-- **`/admin/conversas` e `/admin/categorias`** são paginadas com `<TablePagination>` (setinhas, "Página X de Y" e o total de itens). O controle some quando só existe uma página.
-- **`/admin/conversas`** manda busca, "não lidas" e categoria como query params — a filtragem acontece no banco. A busca passa por `use-debounced-value` pra não disparar uma query por tecla.
+- **`/admin/conversas`, `/admin/marcadores` e `/admin/produtos`** são paginadas com `<TablePagination>` (setinhas, "Página X de Y" e o total de itens). O controle some quando só existe uma página.
+- **`/admin/conversas`** manda busca, "não lidas" e marcador como query params — a filtragem acontece no banco. A busca passa por `use-debounced-value` pra não disparar uma query por tecla.
 - **`use-pagination`** cuida dos dois jeitos de um número de página ficar obsoleto: mudar filtro volta pra página 1, e uma página que deixou de existir cai pra última válida.
 - **O badge de não-lidas** no menu pede `?perPage=1` e lê `unreadTotal` do envelope. Antes ele baixava a tabela inteira a cada 15s só pra rodar um `.filter()`.
 - ⚠️ A lista de conversas ordena por `updatedAt`, que muda a cada mensagem. Da página 2 em diante o poll pode reordenar as linhas sob o operador; a página 1 não sofre. Decisão consciente pra manter os números de página.
