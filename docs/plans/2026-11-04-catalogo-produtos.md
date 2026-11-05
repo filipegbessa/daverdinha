@@ -372,7 +372,7 @@ git commit -m "feat(site): keep catalog pages noindex and out of the sitemap bef
 
 ---
 
-## Task 8: Ligar na API real — ⏳ pendente (depende do backend implantado)
+## Task 8: Ligar na API real — ➡️ movida para `2026-11-05-loja-online-v1.md` (Tarefa 4)
 
 Nenhum código novo esperado: `public-api.ts` já chama os endpoints definitivos. Esta tarefa é a verificação de ponta a ponta quando o plano do backend estiver em produção.
 
@@ -383,7 +383,7 @@ Nenhum código novo esperado: `public-api.ts` já chama os endpoints definitivos
 
 ---
 
-## Task 9: Tipos de admin — ⏳ pendente
+## Task 9: Tipos de admin — ➡️ substituída por `2026-11-05-loja-online-v1.md` (Tarefa 1, com `featured`)
 
 **Files:**
 - Modify: `src/features/admin/types/admin.ts`
@@ -402,7 +402,7 @@ git commit -m "feat(admin): add Product and ProductCategory admin types"
 
 ---
 
-## Task 10: `/admin/categorias-produtos` — CRUD de categoria de produto — ⏳ pendente
+## Task 10: `/admin/categorias-produtos` — CRUD de categoria de produto — ➡️ substituída por `2026-11-05-loja-online-v1.md` (Tarefa 2)
 
 **Files:**
 - Create: `src/app/admin/categorias-produtos/page.tsx` (+ `.test.tsx`)
@@ -429,7 +429,7 @@ git commit -m "feat(admin): add product category CRUD"
 
 ---
 
-## Task 11: `/admin/produtos` — CRUD de produto com upload de imagem — ⏳ pendente
+## Task 11: `/admin/produtos` — CRUD de produto com upload de imagem — ➡️ substituída por `2026-11-05-loja-online-v1.md` (Tarefa 3, com `featured`)
 
 **Files:**
 - Create: `src/app/admin/produtos/page.tsx` (+ `.test.tsx`)
