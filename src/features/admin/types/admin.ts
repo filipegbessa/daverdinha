@@ -34,6 +34,37 @@ export interface DeliveryLocation {
   covered: boolean;
 }
 
+/**
+ * Categoria do catálogo do site — não confundir com `Category`, que marca
+ * conversas. `slug` é gerado pela API na criação e nunca muda (é a URL
+ * `/produtos/[slug]`). Lista sem paginação: são poucas.
+ */
+export interface ProductCategoryAdmin {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  active: boolean;
+  order: number;
+  _count: { products: number };
+}
+
+export interface ProductAdmin {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  /** URLs públicas do Vercel Blob; a primeira é a capa. */
+  images: string[];
+  categoryId: string;
+  category: { id: string; name: string; slug: string };
+  active: boolean;
+  /** Aparece na vitrine da home. */
+  featured: boolean;
+  order: number;
+}
+
 export type ConversationStatus = 'bot_active' | 'paused_human';
 export type EntryPoint = 'menu' | 'catalog';
 
