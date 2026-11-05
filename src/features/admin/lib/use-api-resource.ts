@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useApiClient } from '@/features/admin/lib/api-client';
 
 interface UseApiResourceOptions {
@@ -9,6 +9,13 @@ interface UseApiResourceOptions {
 interface UseApiResourceResult<T> {
   data: T | null;
   isLoading: boolean;
+  /**
+   * A request the operator caused is in flight while older `data` is still
+   * on screen: another page, new filters, or `refetch()` after a save. Lists
+   * dim themselves with it (`BusyRegion`) so they don't look settled while
+   * they're about to change. Background polls never set it.
+   */
+  isRefreshing: boolean;
   error: string | null;
   refetch: () => void;
 }
@@ -28,11 +35,20 @@ export function useApiResource<T>(
   const { apiFetch } = useApiClient();
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(path !== null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refetchIndex, setRefetchIndex] = useState(0);
+  // Set by the poll right before it bumps the index, so that one fetch stays
+  // invisible; anything else that re-runs the effect is shown.
+  const silentRef = useRef(false);
   const pollIntervalMs = options?.pollIntervalMs;
 
   const refetch = useCallback(() => {
+    setRefetchIndex((index) => index + 1);
+  }, []);
+
+  const pollRefetch = useCallback(() => {
+    silentRef.current = true;
     setRefetchIndex((index) => index + 1);
   }, []);
 
@@ -43,11 +59,15 @@ export function useApiResource<T>(
     }
 
     let cancelled = false;
+    const silent = silentRef.current;
+    silentRef.current = false;
 
     // Only show the loading state before the first successful load — a
     // background poll or a manual refetch shouldn't flash "Carregando...".
     if (data === null) {
       setIsLoading(true);
+    } else if (!silent) {
+      setIsRefreshing(true);
     }
     setError(null);
 
@@ -63,6 +83,7 @@ export function useApiResource<T>(
       .finally(() => {
         if (cancelled) return;
         setIsLoading(false);
+        setIsRefreshing(false);
       });
 
     return () => {
@@ -77,9 +98,9 @@ export function useApiResource<T>(
   useEffect(() => {
     if (path === null || !pollIntervalMs) return;
 
-    const interval = setInterval(refetch, pollIntervalMs);
+    const interval = setInterval(pollRefetch, pollIntervalMs);
     return () => clearInterval(interval);
-  }, [path, pollIntervalMs, refetch]);
+  }, [path, pollIntervalMs, pollRefetch]);
 
-  return { data, isLoading, error, refetch };
+  return { data, isLoading, isRefreshing, error, refetch };
 }

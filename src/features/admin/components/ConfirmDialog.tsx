@@ -39,8 +39,8 @@ export function ConfirmDialog({
           <Button variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
-            {isPending ? pendingLabel : confirmLabel}
+          <Button variant="destructive" onClick={onConfirm} loading={isPending} loadingText={pendingLabel}>
+            {confirmLabel}
           </Button>
         </div>
       </DialogContent>

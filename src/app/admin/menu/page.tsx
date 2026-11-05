@@ -7,17 +7,20 @@ import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { MenuItemDialog } from '@/features/admin/components/MenuItemDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
+import { PageHeader } from '@/features/admin/components/PageHeader';
+import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { MenuItem } from '@/features/admin/types/admin';
 
 export default function MenuPage() {
   const { apiFetch } = useApiClient();
-  const { data: items, isLoading, error, refetch } = useApiResource<MenuItem[]>('/menu-items');
+  const { data: items, isLoading, isRefreshing, error, refetch } = useApiResource<MenuItem[]>('/menu-items');
   const mutation = useApiMutation('Erro ao atualizar item de menu.');
   const [editing, setEditing] = useState<MenuItem | 'new' | null>(null);
   const [deleting, setDeleting] = useState<MenuItem | null>(null);
 
-  const busy = mutation.isPending;
+  // A move/toggle in flight and the reload after it both dim the list.
+  const busy = mutation.isPending || isRefreshing;
 
   async function mutate(action: () => Promise<unknown>) {
     const ok = await mutation.run(action);
@@ -59,14 +62,13 @@ export default function MenuPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Menu</h1>
+      <PageHeader title="Menu">
         <Button onClick={() => setEditing('new')}>Novo item</Button>
-      </div>
+      </PageHeader>
       {mutation.error && <ErrorAlert>{mutation.error}</ErrorAlert>}
-      <ul className={`mt-6 space-y-2 ${busy ? 'cursor-wait opacity-50' : ''}`} aria-busy={busy}>
+      <AdminList busy={busy} isEmpty={items.length === 0} empty="Nenhum item de menu.">
         {items.map((item, index) => (
-          <li key={item.id} className="flex items-center gap-3 rounded border border-sand-line p-3">
+          <AdminListItem key={item.id}>
             <div className="flex flex-col">
               <button
                 type="button"
@@ -100,9 +102,9 @@ export default function MenuPage() {
                 Excluir
               </Button>
             )}
-          </li>
+          </AdminListItem>
         ))}
-      </ul>
+      </AdminList>
       {editing && (
         <MenuItemDialog
           item={editing === 'new' ? null : editing}

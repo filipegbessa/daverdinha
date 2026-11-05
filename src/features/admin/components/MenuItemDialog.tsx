@@ -1,12 +1,11 @@
 'use client';
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { ErrorText } from '@/features/admin/components/StatusMessage';
+import { FormDialog } from '@/features/admin/components/FormDialog';
+import { FormField } from '@/features/admin/components/FormField';
 import type { MenuItem } from '@/features/admin/types/admin';
 
 // WhatsApp's interactive list message rejects the whole request if any row
@@ -39,9 +38,7 @@ export function MenuItemDialog({
   );
   const save = useApiMutation('Erro ao salvar item de menu.');
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
+  async function handleSubmit() {
     const payload = isSystem
       ? { topic, deliveryPrompt, deliveryConfirmedMessage, deliveryNotCoveredMessage, deliveryUnrecognizedMessage }
       : { topic, reply };
@@ -57,102 +54,68 @@ export function MenuItemDialog({
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{item ? 'Editar item' : 'Novo item de menu'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="topic" className="block font-medium">
-              Tema
-            </label>
-            <Input
-              id="topic"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              maxLength={TOPIC_MAX_LENGTH}
+    <FormDialog
+      title={item ? 'Editar item' : 'Novo item de menu'}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      isPending={save.isPending}
+      error={save.error}
+    >
+      <FormField id="topic" label="Tema" hint={`${topic.length}/${TOPIC_MAX_LENGTH}`}>
+        <Input id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} maxLength={TOPIC_MAX_LENGTH} required />
+      </FormField>
+
+      {isSystem ? (
+        <>
+          <FormField
+            id="deliveryPrompt"
+            label="Pergunta inicial"
+            hint="Enviada quando o cliente escolhe esse item, perguntando o bairro."
+          >
+            <Textarea id="deliveryPrompt" value={deliveryPrompt} onChange={(e) => setDeliveryPrompt(e.target.value)} required />
+          </FormField>
+          <FormField
+            id="deliveryConfirmedMessage"
+            label="Mensagem de confirmação de entrega"
+            hint="Enviada quando o bairro informado é atendido."
+          >
+            <Textarea
+              id="deliveryConfirmedMessage"
+              value={deliveryConfirmedMessage}
+              onChange={(e) => setDeliveryConfirmedMessage(e.target.value)}
               required
             />
-            <p className="mt-1 text-right text-xs text-muted-foreground">
-              {topic.length}/{TOPIC_MAX_LENGTH}
-            </p>
-          </div>
-
-          {isSystem ? (
-            <>
-              <div>
-                <label htmlFor="deliveryPrompt" className="block font-medium">
-                  Pergunta inicial
-                </label>
-                <p className="text-sm text-muted-foreground">
-                  Enviada quando o cliente escolhe esse item, perguntando o bairro.
-                </p>
-                <Textarea
-                  id="deliveryPrompt"
-                  value={deliveryPrompt}
-                  onChange={(e) => setDeliveryPrompt(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="deliveryConfirmedMessage" className="block font-medium">
-                  Mensagem de confirmação de entrega
-                </label>
-                <p className="text-sm text-muted-foreground">
-                  Enviada quando o bairro informado é atendido.
-                </p>
-                <Textarea
-                  id="deliveryConfirmedMessage"
-                  value={deliveryConfirmedMessage}
-                  onChange={(e) => setDeliveryConfirmedMessage(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="deliveryNotCoveredMessage" className="block font-medium">
-                  Mensagem de região não atendida
-                </label>
-                <p className="text-sm text-muted-foreground">
-                  Enviada quando o bairro informado não é atendido.
-                </p>
-                <Textarea
-                  id="deliveryNotCoveredMessage"
-                  value={deliveryNotCoveredMessage}
-                  onChange={(e) => setDeliveryNotCoveredMessage(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="deliveryUnrecognizedMessage" className="block font-medium">
-                  Mensagem quando não reconhece o bairro
-                </label>
-                <p className="text-sm text-muted-foreground">
-                  Enviada quando o bot não consegue identificar o texto como um bairro.
-                </p>
-                <Textarea
-                  id="deliveryUnrecognizedMessage"
-                  value={deliveryUnrecognizedMessage}
-                  onChange={(e) => setDeliveryUnrecognizedMessage(e.target.value)}
-                  required
-                />
-              </div>
-            </>
-          ) : (
-            <div>
-              <label htmlFor="reply" className="block font-medium">
-                Resposta
-              </label>
-              <Textarea id="reply" value={reply} onChange={(e) => setReply(e.target.value)} required />
-            </div>
-          )}
-
-          <Button type="submit" disabled={save.isPending}>
-            Salvar
-          </Button>
-          {save.error && <ErrorText>{save.error}</ErrorText>}
-        </form>
-      </DialogContent>
-    </Dialog>
+          </FormField>
+          <FormField
+            id="deliveryNotCoveredMessage"
+            label="Mensagem de região não atendida"
+            hint="Enviada quando o bairro informado não é atendido."
+          >
+            <Textarea
+              id="deliveryNotCoveredMessage"
+              value={deliveryNotCoveredMessage}
+              onChange={(e) => setDeliveryNotCoveredMessage(e.target.value)}
+              required
+            />
+          </FormField>
+          <FormField
+            id="deliveryUnrecognizedMessage"
+            label="Mensagem quando não reconhece o bairro"
+            hint="Enviada quando o bot não consegue identificar o texto como um bairro."
+          >
+            <Textarea
+              id="deliveryUnrecognizedMessage"
+              value={deliveryUnrecognizedMessage}
+              onChange={(e) => setDeliveryUnrecognizedMessage(e.target.value)}
+              required
+            />
+          </FormField>
+        </>
+      ) : (
+        <FormField id="reply" label="Resposta">
+          <Textarea id="reply" value={reply} onChange={(e) => setReply(e.target.value)} required />
+        </FormField>
+      )}
+    </FormDialog>
   );
 }

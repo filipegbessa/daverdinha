@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { ErrorText } from '@/features/admin/components/StatusMessage';
+import { FormDialog } from '@/features/admin/components/FormDialog';
+import { FormField, SwitchField } from '@/features/admin/components/FormField';
 import { ProductImagesInput } from '@/features/admin/components/ProductImagesInput';
 import type { ProductAdmin, ProductCategoryAdmin } from '@/features/admin/types/admin';
 
@@ -40,8 +41,7 @@ export function ProductDialog({
   const [featured, setFeatured] = useState(product?.featured ?? false);
   const [files, setFiles] = useState<File[]>([]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     const form = new FormData();
     form.append('name', name.trim());
     form.append('description', description.trim());
@@ -60,128 +60,91 @@ export function ProductDialog({
     if (ok) onSaved();
   }
 
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{product ? 'Editar produto' : 'Novo produto'}</DialogTitle>
-        </DialogHeader>
-        {categories.length === 0 ? (
-          <div className="space-y-4">
-            <p>Cadastre uma categoria primeiro: todo produto fica dentro de uma.</p>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Fechar
-              </Button>
-              <Link
-                href="/admin/categorias"
-                className="inline-flex items-center rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
-              >
-                Ir para categorias
-              </Link>
-            </div>
+  if (categories.length === 0) {
+    return (
+      <Dialog open onOpenChange={(open) => !open && onClose()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo produto</DialogTitle>
+          </DialogHeader>
+          <p>Cadastre uma categoria primeiro: todo produto fica dentro de uma.</p>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Fechar
+            </Button>
+            <Link href="/admin/categorias" className={buttonVariants()}>
+              Ir para categorias
+            </Link>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="productName" className="mb-1 block font-medium">
-                Nome
-              </label>
-              <Input id="productName" value={name} onChange={(e) => setName(e.target.value)} required />
-            </div>
-            {product && (
-              <p className="text-sm text-ink-soft">
-                Endereço no site: <span className="font-mono">/produtos/{product.category.slug}/{product.slug}</span>.
-                Ele não muda ao renomear.
-              </p>
-            )}
-            <div>
-              <label htmlFor="productDescription" className="mb-1 block font-medium">
-                Descrição
-              </label>
-              <Textarea
-                id="productDescription"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                required
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="productPrice" className="mb-1 block font-medium">
-                  Preço (R$)
-                </label>
-                <Input
-                  id="productPrice"
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="productCategory" className="mb-1 block font-medium">
-                  Categoria
-                </label>
-                <select
-                  id="productCategory"
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  required
-                  className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-base md:text-sm"
-                >
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                      {!category.active ? ' (inativa)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label htmlFor="productOrder" className="mb-1 block font-medium">
-                Ordem
-              </label>
-              <Input
-                id="productOrder"
-                type="number"
-                min={0}
-                step={1}
-                value={order}
-                onChange={(e) => setOrder(e.target.value)}
-                aria-describedby="productOrderHelp"
-                className="w-28"
-              />
-              <p id="productOrderHelp" className="mt-1 text-sm text-ink-soft">
-                Menor aparece primeiro.
-              </p>
-            </div>
-            <ProductImagesInput currentImages={product?.images ?? []} files={files} onChange={setFiles} />
-            <div className="flex items-center gap-3">
-              <Switch checked={active} onCheckedChange={setActive} aria-label="Aparece no site" />
-              <span>Aparece no site</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Switch checked={featured} onCheckedChange={setFeatured} aria-label="Mostrar na home" />
-              <span>Mostrar na home (destaque)</span>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={save.isPending}>
-                {save.isPending ? 'Salvando...' : 'Salvar'}
-              </Button>
-            </div>
-            {save.error && <ErrorText>{save.error}</ErrorText>}
-          </form>
-        )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <FormDialog
+      title={product ? 'Editar produto' : 'Novo produto'}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      isPending={save.isPending}
+      error={save.error}
+    >
+      <FormField id="productName" label="Nome">
+        <Input id="productName" value={name} onChange={(e) => setName(e.target.value)} required />
+      </FormField>
+      {product && (
+        <p className="text-sm text-ink-soft">
+          Endereço no site: <span className="font-mono">/produtos/{product.category.slug}/{product.slug}</span>.
+          Ele não muda ao renomear.
+        </p>
+      )}
+      <FormField id="productDescription" label="Descrição">
+        <Textarea
+          id="productDescription"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={4}
+          required
+        />
+      </FormField>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField id="productPrice" label="Preço (R$)">
+          <Input
+            id="productPrice"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+          />
+        </FormField>
+        <FormField id="productCategory" label="Categoria">
+          <NativeSelect id="productCategory" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+                {!category.active ? ' (inativa)' : ''}
+              </option>
+            ))}
+          </NativeSelect>
+        </FormField>
+      </div>
+      <FormField id="productOrder" label="Ordem" hint="Menor aparece primeiro.">
+        <Input
+          id="productOrder"
+          type="number"
+          min={0}
+          step={1}
+          value={order}
+          onChange={(e) => setOrder(e.target.value)}
+          className="w-28"
+        />
+      </FormField>
+      <ProductImagesInput currentImages={product?.images ?? []} files={files} onChange={setFiles} />
+      <SwitchField label="Aparece no site" checked={active} onCheckedChange={setActive} />
+      <SwitchField label="Mostrar na home" checked={featured} onCheckedChange={setFeatured} />
+    </FormDialog>
   );
 }

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
+import { PageHeader } from '@/features/admin/components/PageHeader';
 import type { DeliveryLocation } from '@/features/admin/types/admin';
 
 type CoverageFilter = 'all' | 'covered' | 'not-covered';
@@ -101,8 +102,7 @@ export default function EntregasPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Locais de entrega</h1>
+      <PageHeader title="Locais de entrega">
         <div className="flex gap-2" role="group" aria-label="Filtrar por status">
           {FILTERS.map(({ value, label }) => (
             <button
@@ -118,7 +118,7 @@ export default function EntregasPage() {
             </button>
           ))}
         </div>
-      </div>
+      </PageHeader>
       {error && <ErrorAlert>{error}</ErrorAlert>}
       <div className="mt-6 space-y-4">
         {Object.entries(byZone).map(([zone, zoneLocations]) => {

@@ -14,6 +14,7 @@ export function TablePagination({
   total,
   itemLabel,
   onPageChange,
+  isBusy = false,
 }: {
   page: number;
   totalPages: number;
@@ -21,12 +22,15 @@ export function TablePagination({
   /** Plural noun for the total, e.g. "conversas". */
   itemLabel: string;
   onPageChange: (page: number) => void;
+  /** The next page is loading: arrows lock and the position says so. */
+  isBusy?: boolean;
 }) {
   if (totalPages <= 1) return null;
 
   return (
     <nav
       aria-label="Paginação"
+      aria-busy={isBusy}
       className="mt-4 flex items-center justify-between gap-4 text-sm text-ink-soft"
     >
       <span>
@@ -36,7 +40,7 @@ export function TablePagination({
         <button
           type="button"
           aria-label="Página anterior"
-          disabled={page <= 1}
+          disabled={isBusy || page <= 1}
           onClick={() => onPageChange(page - 1)}
           className="rounded-md border border-sand-line p-1.5 text-ink hover:bg-sand disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
         >
@@ -45,12 +49,12 @@ export function TablePagination({
         {/* aria-live so a screen reader announces the move; the arrows
             themselves give no feedback that anything changed. */}
         <span aria-live="polite">
-          Página {page} de {totalPages}
+          {isBusy ? 'Carregando...' : `Página ${page} de ${totalPages}`}
         </span>
         <button
           type="button"
           aria-label="Próxima página"
-          disabled={page >= totalPages}
+          disabled={isBusy || page >= totalPages}
           onClick={() => onPageChange(page + 1)}
           className="rounded-md border border-sand-line p-1.5 text-ink hover:bg-sand disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
         >

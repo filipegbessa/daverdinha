@@ -1,32 +1,22 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/features/admin/lib/api-client';
-import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { usePagination } from '@/features/admin/lib/use-pagination';
+import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { TablePagination } from '@/features/admin/components/TablePagination';
 import { CategoryDialog } from '@/features/admin/components/CategoryDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
+import { PageHeader } from '@/features/admin/components/PageHeader';
+import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { readableTextColor } from '@/features/admin/lib/readable-text-color';
-import type { Category, Paginated } from '@/features/admin/types/admin';
+import type { Category } from '@/features/admin/types/admin';
 
 export default function MarcadoresPage() {
   const { apiFetch } = useApiClient();
-  const [totalPages, setTotalPages] = useState<number | undefined>(undefined);
-  const { page, setPage } = usePagination('', totalPages);
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useApiResource<Paginated<Category>>(`/categories${page > 1 ? `?page=${page}` : ''}`);
-  const categories = data?.items;
-
-  useEffect(() => {
-    if (data) setTotalPages(data.totalPages);
-  }, [data]);
+  const { data, items: categories, isLoading, isRefreshing, error, refetch, pagination } =
+    usePaginatedResource<Category>('/categories');
   const remove = useApiMutation('Erro ao excluir marcador.');
   const [editing, setEditing] = useState<Category | 'new' | null>(null);
   const [deleting, setDeleting] = useState<Category | null>(null);
@@ -42,16 +32,19 @@ export default function MarcadoresPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Marcadores</h1>
+      <PageHeader title="Marcadores">
         <Button onClick={() => setEditing('new')}>Novo marcador</Button>
-      </div>
+      </PageHeader>
       {error && <ErrorAlert>{error}</ErrorAlert>}
       {isLoading && <LoadingState />}
-      {categories && (
-        <ul className="mt-6 space-y-2">
+      {data && (
+        <AdminList
+          busy={isRefreshing}
+          isEmpty={categories.length === 0}
+          empty="Nenhum marcador ainda. Crie um pra organizar as conversas."
+        >
           {categories.map((category) => (
-            <li key={category.id} className="flex items-center gap-3 rounded-lg border border-sand-line p-3">
+            <AdminListItem key={category.id}>
               <span
                 className="rounded-full px-2.5 py-0.5 text-sm font-medium"
                 style={{ backgroundColor: category.color, color: readableTextColor(category.color) }}
@@ -66,19 +59,11 @@ export default function MarcadoresPage() {
               <Button variant="destructive" onClick={() => setDeleting(category)}>
                 Excluir
               </Button>
-            </li>
+            </AdminListItem>
           ))}
-        </ul>
+        </AdminList>
       )}
-      {data && (
-        <TablePagination
-          page={data.page}
-          totalPages={data.totalPages}
-          total={data.total}
-          itemLabel="marcadores"
-          onPageChange={setPage}
-        />
-      )}
+      {pagination && <TablePagination {...pagination} itemLabel="marcadores" />}
       {editing && (
         <CategoryDialog
           category={editing === 'new' ? null : editing}

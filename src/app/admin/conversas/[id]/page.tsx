@@ -276,7 +276,7 @@ export default function ConversaDetailPage() {
                 placeholder="Nome do cliente"
                 autoFocus
               />
-              <Button type="submit" disabled={saveName.isPending}>
+              <Button type="submit" loading={saveName.isPending}>
                 Salvar nome
               </Button>
               <Button type="button" variant="outline" onClick={() => setEditingName(false)}>
@@ -286,11 +286,11 @@ export default function ConversaDetailPage() {
           )}
         </div>
         {conversation.status === 'paused_human' ? (
-          <Button variant="outline" onClick={() => handleBotState('reactivate')} disabled={botState.isPending}>
+          <Button variant="outline" onClick={() => handleBotState('reactivate')} loading={botState.isPending}>
             Reativar bot
           </Button>
         ) : (
-          <Button variant="outline" onClick={() => handleBotState('pause')} disabled={botState.isPending}>
+          <Button variant="outline" onClick={() => handleBotState('pause')} loading={botState.isPending}>
             Pausar bot
           </Button>
         )}
@@ -376,8 +376,8 @@ export default function ConversaDetailPage() {
       <div ref={messagesRef} className="my-4 flex-1 space-y-2 overflow-y-auto">
         {hasMore && (
           <div className="flex justify-center pb-2">
-            <Button type="button" variant="outline" size="sm" onClick={loadOlder} disabled={isLoadingOlder}>
-              {isLoadingOlder ? 'Carregando...' : 'Carregar mensagens anteriores'}
+            <Button type="button" variant="outline" size="sm" onClick={loadOlder} loading={isLoadingOlder} loadingText="Carregando...">
+              Carregar mensagens anteriores
             </Button>
           </div>
         )}
@@ -557,7 +557,12 @@ export default function ConversaDetailPage() {
                 rows={2}
                 className="flex-1"
               />
-              <Button type="submit" disabled={sendReply.isPending || recorder.state === 'recording'}>
+              <Button
+                type="submit"
+                disabled={recorder.state === 'recording'}
+                loading={sendReply.isPending}
+                loadingText="Enviando..."
+              >
                 Enviar
               </Button>
             </div>

@@ -6,6 +6,8 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
+import { FormField } from '@/features/admin/components/FormField';
+import { PageHeader } from '@/features/admin/components/PageHeader';
 import type { BotSettings } from '@/features/admin/types/admin';
 
 type MessagesForm = Pick<
@@ -60,23 +62,15 @@ export default function MensagensPage() {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
-      <h1 className="text-2xl font-semibold">Mensagens</h1>
+      <PageHeader title="Mensagens" />
 
       {FIELDS.map(({ name, label, hint }) => (
-        <div key={name}>
-          <label htmlFor={name} className="block font-medium">
-            {label}
-          </label>
-          <p className="text-sm text-muted-foreground">{hint}</p>
-          <Textarea
-            id={name}
-            value={form[name]}
-            onChange={(e) => setForm({ ...form, [name]: e.target.value })}
-          />
-        </div>
+        <FormField key={name} id={name} label={label} hint={hint}>
+          <Textarea id={name} value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })} />
+        </FormField>
       ))}
 
-      <Button type="submit" disabled={save.isPending}>
+      <Button type="submit" loading={save.isPending} loadingText="Salvando...">
         Salvar
       </Button>
       {saved && <p role="status">Salvo!</p>}

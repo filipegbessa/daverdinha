@@ -191,4 +191,50 @@ describe('useApiResource', () => {
     expect(result.current.isLoading).toBe(false);
     jest.useRealTimers();
   });
+
+  it('flags isRefreshing while a new path loads over data already on screen, without going back to isLoading', async () => {
+    let resolveSecond: (value: string) => void = () => {};
+    const apiFetch = jest
+      .fn()
+      .mockResolvedValueOnce('page 1')
+      .mockReturnValueOnce(new Promise<string>((resolve) => (resolveSecond = resolve)));
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    const { result, rerender } = renderHook(({ path }) => useApiResource<string>(path), {
+      initialProps: { path: '/categories' },
+    });
+    await waitFor(() => expect(result.current.data).toBe('page 1'));
+    expect(result.current.isRefreshing).toBe(false);
+
+    rerender({ path: '/categories?page=2' });
+
+    await waitFor(() => expect(result.current.isRefreshing).toBe(true));
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.data).toBe('page 1');
+
+    resolveSecond('page 2');
+    await waitFor(() => expect(result.current.isRefreshing).toBe(false));
+    expect(result.current.data).toBe('page 2');
+  });
+
+  it('keeps background polls silent', async () => {
+    jest.useFakeTimers();
+    try {
+      const apiFetch = jest.fn().mockResolvedValue('ok');
+      (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+      const { result } = renderHook(() => useApiResource<string>('/conversations', { pollIntervalMs: 1000 }));
+      await waitFor(() => expect(result.current.data).toBe('ok'));
+
+      apiFetch.mockReturnValue(new Promise(() => {}));
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      expect(apiFetch).toHaveBeenCalledTimes(2);
+      expect(result.current.isRefreshing).toBe(false);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

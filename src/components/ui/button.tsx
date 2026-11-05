@@ -1,5 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Loader2 } from "lucide-react"
+import type * as React from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -40,18 +42,37 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * `loading` is the one way to show that an action is running: it disables
+ * the button (no double submit), sets `aria-busy` and puts a spinner before
+ * the label. `loadingText` swaps the label too ("Salvando..."), for when the
+ * spinner alone is too subtle.
+ */
 function Button({
   className,
   variant = "default",
   size = "default",
+  loading = false,
+  loadingText,
+  disabled,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props &
+  VariantProps<typeof buttonVariants> & {
+    loading?: boolean
+    loadingText?: React.ReactNode
+  }) {
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
-    />
+    >
+      {loading && <Loader2 aria-hidden="true" className="motion-safe:animate-spin" />}
+      {loading && loadingText ? loadingText : children}
+    </ButtonPrimitive>
   )
 }
 

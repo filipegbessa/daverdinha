@@ -4,6 +4,7 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
+import { PageHeader } from '@/features/admin/components/PageHeader';
 import { StorageUsageNotice } from '@/features/admin/components/StorageUsageNotice';
 import type { BotSettings, MenuItem } from '@/features/admin/types/admin';
 
@@ -35,7 +36,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <PageHeader title="Dashboard" />
       {activeCount === null ? (
         <ErrorAlert>{menuItemsError ?? 'Não foi possível carregar os itens de menu.'}</ErrorAlert>
       ) : (

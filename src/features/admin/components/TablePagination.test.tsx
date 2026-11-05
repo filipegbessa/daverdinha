@@ -48,4 +48,15 @@ describe('TablePagination', () => {
 
     expect(screen.getByText('Página 2 de 7')).toHaveAttribute('aria-live', 'polite');
   });
+
+  it('locks the arrows and says it is loading while the next page is on its way', () => {
+    render(
+      <TablePagination page={2} totalPages={7} total={137} itemLabel="conversas" onPageChange={jest.fn()} isBusy />,
+    );
+
+    expect(screen.getByRole('navigation', { name: 'Paginação' })).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByText('Carregando...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Próxima página' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Página anterior' })).toBeDisabled();
+  });
 });

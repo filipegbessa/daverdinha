@@ -1,12 +1,15 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useDebouncedValue } from '@/features/admin/lib/use-debounced-value';
-import { usePagination } from '@/features/admin/lib/use-pagination';
+import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { TablePagination } from '@/features/admin/components/TablePagination';
+import { PageHeader } from '@/features/admin/components/PageHeader';
+import { BusyRegion } from '@/features/admin/components/AdminList';
 import { DataTable, type DataTableColumn } from '@/features/admin/components/DataTable';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { formatPhone } from '@/features/admin/lib/format-phone';
@@ -34,30 +37,22 @@ export default function ConversasPage() {
   // Filtering moved to the server: applying it in the browser would only ever
   // filter the window that happened to be loaded, silently hiding matches
   // that sit outside it.
-  const filterKey = `${debouncedSearch}|${onlyUnread}|${categoryFilter}`;
-  const [totalPages, setTotalPages] = useState<number | undefined>(undefined);
-  const { page, setPage } = usePagination(filterKey, totalPages);
-
-  const path = useMemo(() => {
-    const params = new URLSearchParams();
-    if (debouncedSearch) params.set('q', debouncedSearch);
-    if (onlyUnread) params.set('unread', 'true');
-    if (categoryFilter !== 'all') params.set('categoryId', categoryFilter);
-    if (page > 1) params.set('page', String(page));
-    const queryString = params.toString();
-    return `/conversations${queryString ? `?${queryString}` : ''}`;
-  }, [debouncedSearch, onlyUnread, categoryFilter, page]);
-
-  const { data, isLoading, error } = useApiResource<ConversationList>(path, { pollIntervalMs: 10000 });
+  const { data, items: conversations, isLoading, isRefreshing, error, pagination } = usePaginatedResource<
+    Conversation,
+    ConversationList
+  >(
+    '/conversations',
+    {
+      q: debouncedSearch || undefined,
+      unread: onlyUnread ? 'true' : undefined,
+      categoryId: categoryFilter !== 'all' ? categoryFilter : undefined,
+    },
+    { pollIntervalMs: 10000 },
+  );
   // The category dropdown wants every category, not the first page of them.
   const { data: categoryData } = useApiResource<Paginated<Category>>('/categories?perPage=100');
 
-  const conversations = data?.items ?? [];
   const categories = categoryData?.items ?? [];
-
-  useEffect(() => {
-    if (data) setTotalPages(data.totalPages);
-  }, [data]);
 
   const columns: DataTableColumn<Conversation>[] = [
     {
@@ -118,9 +113,7 @@ export default function ConversasPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Conversas</h1>
-        <div className="flex flex-wrap items-center gap-2">
+      <PageHeader title="Conversas">
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -137,11 +130,11 @@ export default function ConversasPage() {
           >
             Não lidas
           </Button>
-          <select
+          <NativeSelect
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             aria-label="Filtrar por marcador"
-            className="rounded-md border border-sand-line bg-paper px-2 py-1.5 text-sm"
+            className="w-auto"
           >
             <option value="all">Todos os marcadores</option>
             {categories.map((cat) => (
@@ -149,14 +142,13 @@ export default function ConversasPage() {
                 {cat.name}
               </option>
             ))}
-          </select>
-        </div>
-      </div>
+          </NativeSelect>
+      </PageHeader>
       {isLoading && <LoadingState />}
       {!isLoading && error && <ErrorAlert>{error}</ErrorAlert>}
       {!isLoading && !error && (
         <>
-          <div className="mt-6">
+          <BusyRegion busy={isRefreshing} className="mt-6">
             <DataTable
               columns={columns}
               rows={conversations}
@@ -193,17 +185,9 @@ export default function ConversasPage() {
                 </div>
               )}
             />
-          </div>
+          </BusyRegion>
           {conversations.length === 0 && <p className="mt-6 text-ink-soft">Nenhuma conversa encontrada.</p>}
-          {data && (
-            <TablePagination
-              page={data.page}
-              totalPages={data.totalPages}
-              total={data.total}
-              itemLabel="conversas"
-              onPageChange={setPage}
-            />
-          )}
+          {pagination && <TablePagination {...pagination} itemLabel="conversas" />}
         </>
       )}
     </div>
