@@ -15,6 +15,9 @@ const NAV_ITEMS = [
   { href: '/admin/menu', label: 'Menu' },
   { href: '/admin/entregas', label: 'Entregas' },
   { href: '/admin/categorias', label: 'Categorias' },
+  { href: '/admin/produtos', label: 'Produtos' },
+  // Rótulo diferente de propósito: "Categorias" logo acima marca conversas.
+  { href: '/admin/categorias-produtos', label: 'Categorias de produto' },
   { href: '/admin/conversas', label: 'Conversas' },
 ];
 
