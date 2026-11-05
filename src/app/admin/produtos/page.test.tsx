@@ -101,4 +101,21 @@ describe('ProdutosPage', () => {
 
     expect(apiFetch).toHaveBeenCalledWith('/products/p1', { method: 'DELETE' });
   });
+
+  it('sends search and filters to the API and says when nothing matches', async () => {
+    const apiFetch = mockApi((path) => (path.startsWith('/products?') ? page([]) : undefined));
+
+    render(<ProdutosPage />);
+    await screen.findByText('Vaso M');
+
+    await userEvent.type(screen.getByLabelText('Buscar produtos'), 'vaso');
+    await userEvent.selectOptions(screen.getByLabelText('Filtrar por categoria'), 'cat1');
+    await userEvent.selectOptions(screen.getByLabelText('Filtrar por situação'), 'false');
+    await userEvent.selectOptions(screen.getByLabelText('Filtrar por destaque'), 'true');
+
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenLastCalledWith('/products?q=vaso&categoryId=cat1&active=false&featured=true'),
+    );
+    expect(await screen.findByText('Nenhum produto encontrado com esses filtros.')).toBeInTheDocument();
+  });
 });

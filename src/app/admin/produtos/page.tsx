@@ -1,36 +1,45 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { usePagination } from '@/features/admin/lib/use-pagination';
+import { useDebouncedValue } from '@/features/admin/lib/use-debounced-value';
+import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { TablePagination } from '@/features/admin/components/TablePagination';
+import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
+import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { ProductDialog } from '@/features/admin/components/ProductDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { formatCurrency } from '@/features/admin/lib/format-currency';
-import type { Paginated, ProductAdmin, ProductCategoryAdmin } from '@/features/admin/types/admin';
+import type { ProductAdmin, ProductCategoryAdmin } from '@/features/admin/types/admin';
 
 export default function ProdutosPage() {
   const { apiFetch } = useApiClient();
-  const [totalPages, setTotalPages] = useState<number | undefined>(undefined);
-  const { page, setPage } = usePagination('', totalPages);
-  const { data, isLoading, error, refetch } = useApiResource<Paginated<ProductAdmin>>(
-    `/products${page > 1 ? `?page=${page}` : ''}`,
-  );
+  const [search, setSearch] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [active, setActive] = useState('');
+  const [featured, setFeatured] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim());
+  const hasFilters = Boolean(debouncedSearch || categoryId || active || featured);
+  const { data, items: products, isLoading, isRefreshing, error, refetch, pagination } =
+    usePaginatedResource<ProductAdmin>('/products', {
+      q: debouncedSearch || undefined,
+      categoryId: categoryId || undefined,
+      active: active || undefined,
+      featured: featured || undefined,
+    });
   const { data: categories } = useApiResource<ProductCategoryAdmin[]>('/product-categories');
-  const products = data?.items;
-
-  useEffect(() => {
-    if (data) setTotalPages(data.totalPages);
-  }, [data]);
 
   const mutation = useApiMutation('Erro ao atualizar produto.');
   const [editing, setEditing] = useState<ProductAdmin | 'new' | null>(null);
   const [deleting, setDeleting] = useState<ProductAdmin | null>(null);
-  const busy = mutation.isPending;
+  // A toggle in flight and the reload after it both dim the list.
+  const busy = mutation.isPending || isRefreshing;
 
   async function toggleActive(product: ProductAdmin) {
     // A rota é multipart (por causa das fotos) mesmo quando só o "ativo" muda.
@@ -51,25 +60,68 @@ export default function ProdutosPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Produtos</h1>
+      <PageHeader title="Produtos">
         <Button onClick={() => setEditing('new')} disabled={!categories}>
           Novo produto
         </Button>
-      </div>
+      </PageHeader>
+      <FilterBar>
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar por nome"
+          aria-label="Buscar produtos"
+          className="w-56"
+        />
+        <NativeSelect
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
+          aria-label="Filtrar por categoria"
+          className="w-auto"
+        >
+          <option value="">Todas as categorias</option>
+          {(categories ?? []).map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </NativeSelect>
+        <NativeSelect
+          value={active}
+          onChange={(e) => setActive(e.target.value)}
+          aria-label="Filtrar por situação"
+          className="w-auto"
+        >
+          <option value="">No site e ocultos</option>
+          <option value="true">Aparecem no site</option>
+          <option value="false">Ocultos</option>
+        </NativeSelect>
+        <NativeSelect
+          value={featured}
+          onChange={(e) => setFeatured(e.target.value)}
+          aria-label="Filtrar por destaque"
+          className="w-auto"
+        >
+          <option value="">Com e sem destaque</option>
+          <option value="true">Em destaque</option>
+          <option value="false">Sem destaque</option>
+        </NativeSelect>
+      </FilterBar>
       {error && <ErrorAlert>{error}</ErrorAlert>}
       {mutation.error && !deleting && <ErrorAlert>{mutation.error}</ErrorAlert>}
       {isLoading && <LoadingState />}
-      {products && products.length === 0 && (
-        <p className="mt-6 text-ink-soft">Nenhum produto ainda. Os produtos cadastrados aqui aparecem no site.</p>
-      )}
-      {products && products.length > 0 && (
-        <ul className={`mt-6 space-y-2 ${busy ? 'cursor-wait opacity-50' : ''}`} aria-busy={busy}>
+      {data && (
+        <AdminList
+          busy={busy}
+          isEmpty={products.length === 0}
+          empty={
+            hasFilters
+              ? 'Nenhum produto encontrado com esses filtros.'
+              : 'Nenhum produto ainda. Os produtos cadastrados aqui aparecem no site.'
+          }
+        >
           {products.map((product) => (
-            <li
-              key={product.id}
-              className="flex flex-wrap items-center gap-3 rounded-lg border border-sand-line p-3"
-            >
+            <AdminListItem key={product.id}>
               {product.images[0] ? (
                 // eslint-disable-next-line @next/next/no-img-element -- miniatura de 48px no admin, não precisa do otimizador
                 <img
@@ -109,19 +161,11 @@ export default function ProdutosPage() {
               <Button variant="destructive" disabled={busy} onClick={() => setDeleting(product)}>
                 Excluir
               </Button>
-            </li>
+            </AdminListItem>
           ))}
-        </ul>
+        </AdminList>
       )}
-      {data && (
-        <TablePagination
-          page={data.page}
-          totalPages={data.totalPages}
-          total={data.total}
-          itemLabel="produtos"
-          onPageChange={setPage}
-        />
-      )}
+      {pagination && <TablePagination {...pagination} itemLabel="produtos" />}
       {editing && categories && (
         <ProductDialog
           product={editing === 'new' ? null : editing}

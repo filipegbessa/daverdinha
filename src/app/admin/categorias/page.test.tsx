@@ -11,15 +11,34 @@ const categories = [
 ];
 
 describe('CategoriasPage', () => {
-  it('lists each category with its address, product count and inactive mark', async () => {
+  it('lists each category with its situation, order when set and product count, without the address', async () => {
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch: jest.fn().mockResolvedValue(categories) });
 
     render(<CategoriasPage />);
 
     expect(await screen.findByText('Vasos')).toBeInTheDocument();
-    expect(screen.getByText('/produtos/vasos')).toBeInTheDocument();
-    expect(screen.getByText('2 produto(s)')).toBeInTheDocument();
-    expect(screen.getByText('(Inativa)')).toBeInTheDocument();
+    expect(screen.getByText('Aparece no site · 2 produto(s)')).toBeInTheDocument();
+    expect(screen.getByText('Oculta · Ordem 1 · 0 produto(s)')).toBeInTheDocument();
+    expect(screen.queryByText('/produtos/vasos')).not.toBeInTheDocument();
+  });
+
+  it('filters by name ignoring accents and by situation', async () => {
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch: jest.fn().mockResolvedValue(categories) });
+
+    render(<CategoriasPage />);
+    await screen.findByText('Vasos');
+
+    await userEvent.type(screen.getByLabelText('Buscar categorias'), 'VÁSOS');
+    expect(screen.getByText('Vasos')).toBeInTheDocument();
+    expect(screen.queryByText('Kits')).not.toBeInTheDocument();
+
+    await userEvent.clear(screen.getByLabelText('Buscar categorias'));
+    await userEvent.selectOptions(screen.getByLabelText('Filtrar por situação'), 'inactive');
+    expect(screen.getByText('Kits')).toBeInTheDocument();
+    expect(screen.queryByText('Vasos')).not.toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText('Buscar categorias'), 'xyz');
+    expect(screen.getByText('Nenhuma categoria encontrada com esses filtros.')).toBeInTheDocument();
   });
 
   it('opens the create dialog', async () => {

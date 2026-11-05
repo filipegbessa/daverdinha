@@ -77,10 +77,11 @@ Cadastro do catálogo que aparece no site (`/produtos`, páginas de categoria e 
 - Nome, descrição, preço, categoria, ordem, "Aparece no site" e "Mostrar na home" (destaque). A chave da lista liga e desliga o produto sem abrir o formulário.
 - Até 6 fotos (JPEG, PNG ou WebP, 5 MB cada), conferidas no navegador antes do envio; a primeira é a capa. Vai tudo num `multipart/form-data` só. Editar sem escolher fotos novas não manda o campo `images` e mantém as atuais; escolher novas substitui todas (é a regra da API).
 - O endereço (`/produtos/[categoria]/[produto]`) é gerado pela API e não muda ao renomear.
+- Busca por nome e filtros de categoria, "aparece no site" e destaque, todos no servidor (`GET /products?q=&categoryId=&active=&featured=`), combináveis e paginados.
 
 ### /admin/categorias
 
-Categorias do catálogo (no código, `ProductCategory` / `/product-categories`). Cada uma vira uma página `/produtos/[slug]` no site, com a descrição no topo. Não dá pra excluir categoria com produto: a API recusa e a mensagem aparece na confirmação.
+Categorias do catálogo (no código, `ProductCategory` / `/product-categories`). Cada uma vira uma página `/produtos/[slug]` no site, com a descrição no topo. A lista mostra se aparece no site, a ordem (quando diferente de 0) e quantos produtos tem, com busca por nome (sem acento/caixa) e filtro de situação feitos no navegador, porque a API devolve todas. Não dá pra excluir categoria com produto: a API recusa e a mensagem aparece na confirmação.
 
 ### /admin/entregas
 
