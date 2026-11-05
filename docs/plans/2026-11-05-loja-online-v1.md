@@ -50,6 +50,8 @@
 
 ## Global Constraints
 
+- **Checklist do admin** (`CLAUDE.md` → "Admin UI checklist"): lista que cresce é paginada com `usePaginatedResource`; reaproveitar `PageHeader`, `AdminList`, `FormDialog`, `FormField`, `NativeSelect`, `ConfirmDialog` antes de criar componente; toda ação com `Button loading` e lista recarregando com `BusyRegion`. Vale pra todas as telas novas deste plano (pedidos, frete por zona).
+
 - **Nenhum preço é calculado no front pra cobrar.** Total exibido no checkout = o que veio da última cotação. `formatPrice` (`src/features/site/lib/format.ts`) só formata.
 - **URL de produto só via `productHref`** (`src/features/site/lib/paths.ts`), inclusive no carrinho e na página do pedido.
 - **`localStorage` sempre em `try/catch`** e com leitura validada (formato errado ou versão antiga = carrinho vazio, não tela quebrada). Ler só depois de montar (evita diferença entre HTML do servidor e do navegador): o contador do header começa sem número e aparece após o `useEffect`.
