@@ -46,9 +46,10 @@ describe('ProductDialog', () => {
 
     await userEvent.type(screen.getByLabelText('Nome'), 'Kit Suculentas');
     await userEvent.type(screen.getByLabelText('Descrição'), 'Três mudas.');
-    await userEvent.type(screen.getByLabelText('Preço (R$)'), '59.90');
+    // Máscara de centavos: cada dígito digitado empurra o valor pra esquerda, então "5990" vira R$ 59,90.
+    await userEvent.type(screen.getByLabelText('Preço (R$)'), '5990');
     await userEvent.selectOptions(screen.getByLabelText('Categoria'), 'cat2');
-    await userEvent.click(screen.getByRole('switch', { name: 'Mostrar na home' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Destaque' }));
     await userEvent.upload(screen.getByLabelText('Fotos'), new File(['x'], 'kit.jpg', { type: 'image/jpeg' }));
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
@@ -57,10 +58,8 @@ describe('ProductDialog', () => {
     expect(fields).toEqual({
       name: 'Kit Suculentas',
       description: 'Três mudas.',
-      // O input numérico normaliza o valor digitado; a API aceita os dois.
-      price: '59.9',
+      price: '59.90',
       categoryId: 'cat2',
-      order: '0',
       active: 'true',
       featured: 'true',
     });
@@ -75,13 +74,14 @@ describe('ProductDialog', () => {
     render(<ProductDialog product={vaso} categories={categories} onClose={jest.fn()} onSaved={jest.fn()} />);
 
     expect(screen.getByText('/produtos/vasos/vaso-m')).toBeInTheDocument();
+    expect(screen.getByLabelText('Preço (R$)')).toHaveValue('R$ 89,90');
     await userEvent.clear(screen.getByLabelText('Preço (R$)'));
-    await userEvent.type(screen.getByLabelText('Preço (R$)'), '95');
+    await userEvent.type(screen.getByLabelText('Preço (R$)'), '9500');
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(apiFetch).toHaveBeenCalledWith('/products/p1', { method: 'PATCH', body: expect.any(FormData) });
     const { body, fields } = sentForm(apiFetch);
-    expect(fields.price).toBe('95');
+    expect(fields.price).toBe('95.00');
     expect(fields.featured).toBe('false');
     expect(body.has('images')).toBe(false);
   });

@@ -7,11 +7,11 @@ describe('Header', () => {
     expect(screen.getByRole('link', { name: 'Daverdinha' })).toHaveAttribute('href', '/site');
   });
 
-  it('navigates to the catalog, the agenda and the home sections', () => {
+  it('navigates to the catalog, the events page and the home sections', () => {
     render(<Header home="/site" />);
     const nav = screen.getByRole('navigation', { name: 'Principal' });
     expect(within(nav).getByRole('link', { name: 'Produtos' })).toHaveAttribute('href', '/produtos');
-    expect(within(nav).getByRole('link', { name: 'Agenda' })).toHaveAttribute('href', '/agenda');
+    expect(within(nav).getByRole('link', { name: 'Eventos' })).toHaveAttribute('href', '/agenda');
     expect(within(nav).getByRole('link', { name: 'Entregas' })).toHaveAttribute('href', '/site#entregas');
   });
 
@@ -25,6 +25,6 @@ describe('Header', () => {
   it('opens the mobile menu as a drawer', () => {
     render(<Header home="/" />);
     fireEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
-    expect(within(screen.getByRole('navigation', { name: 'Menu' })).getByRole('link', { name: 'Agenda' })).toBeInTheDocument();
+    expect(within(screen.getByRole('navigation', { name: 'Menu' })).getByRole('link', { name: 'Eventos' })).toBeInTheDocument();
   });
 });

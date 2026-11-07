@@ -30,10 +30,10 @@ export default async function AgendaPage() {
           <Breadcrumbs
             crumbs={[
               { name: 'Início', path: home },
-              { name: 'Agenda', path: AGENDA_HREF },
+              { name: 'Eventos', path: AGENDA_HREF },
             ]}
           />
-          <Eyebrow>Agenda</Eyebrow>
+          <Eyebrow>Eventos</Eyebrow>
           <h1 className="mt-6 font-serif text-3xl font-semibold text-ink md:text-4xl">Oficinas e eventos</h1>
           <p className="mt-3 max-w-2xl text-ink-soft">
             Encontros no ateliê e fora dele. A inscrição é pelo WhatsApp, direto na página de cada evento.

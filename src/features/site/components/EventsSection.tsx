@@ -26,11 +26,11 @@ export function EventsSection({
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
           <div>
-            <Eyebrow>Agenda</Eyebrow>
+            <Eyebrow>Eventos</Eyebrow>
             <h2 className="mt-3 font-serif text-2xl font-semibold text-ink md:text-3xl">{title}</h2>
           </div>
           <Link href={AGENDA_HREF} className="text-sm font-semibold text-moss underline underline-offset-4">
-            Ver agenda completa
+            Ver todos os eventos
           </Link>
         </div>
         <div className="mt-8">

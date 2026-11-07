@@ -71,7 +71,7 @@ export default async function EventPage({ params }: Props) {
           <Breadcrumbs
             crumbs={[
               { name: 'Início', path: home },
-              { name: 'Agenda', path: AGENDA_HREF },
+              { name: 'Eventos', path: AGENDA_HREF },
               { name: event.title, path: eventHref(event) },
             ]}
           />

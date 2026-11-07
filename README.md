@@ -74,7 +74,7 @@ A cor é livre: um color picker nativo, sem paleta fixa. O contraste do texto do
 
 Cadastro do catálogo que aparece no site (`/produtos`, páginas de categoria e de produto, vitrine da home).
 
-- Nome, descrição, preço, categoria, ordem, "Aparece no site" e "Mostrar na home" (destaque). A chave da lista liga e desliga o produto sem abrir o formulário.
+- Nome, descrição, preço (máscara de centavos, sempre com "R$" na frente), categoria, "Aparece no site" e "Destaque". A chave da lista liga e desliga o produto sem abrir o formulário.
 - Até 6 fotos (JPEG, PNG ou WebP, 5 MB cada), conferidas no navegador antes do envio; a primeira é a capa. Vai tudo num `multipart/form-data` só. Editar sem escolher fotos novas não manda o campo `images` e mantém as atuais; escolher novas substitui todas (é a regra da API).
 - O endereço (`/produtos/[categoria]/[produto]`) é gerado pela API e não muda ao renomear.
 - Busca por nome e filtros de categoria, "aparece no site" e destaque, todos no servidor (`GET /products?q=&categoryId=&active=&featured=`), combináveis e paginados.

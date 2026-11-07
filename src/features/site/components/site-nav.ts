@@ -6,13 +6,13 @@ export interface NavLink {
 }
 
 /**
- * O menu do cabeçalho e do rodapé. Produtos e Agenda são páginas; o resto são
+ * O menu do cabeçalho e do rodapé. Produtos e Eventos são páginas; o resto são
  * seções da home — por isso a home entra como parâmetro (`/` ou `/site`).
  */
 export function siteNav(home: string): NavLink[] {
   return [
     { href: PRODUCTS_HREF, label: 'Produtos' },
-    { href: AGENDA_HREF, label: 'Agenda' },
+    { href: AGENDA_HREF, label: 'Eventos' },
     { href: `${home}#entregas`, label: 'Entregas' },
     { href: `${home}#sobre`, label: 'Sobre' },
     { href: `${home}#visite`, label: 'Visite' },

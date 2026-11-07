@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -8,10 +8,20 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
+import { formatCurrency } from '@/features/admin/lib/format-currency';
 import { FormDialog } from '@/features/admin/components/FormDialog';
 import { FormField, SwitchField } from '@/features/admin/components/FormField';
 import { ProductImagesInput } from '@/features/admin/components/ProductImagesInput';
 import type { ProductAdmin, ProductCategoryAdmin } from '@/features/admin/types/admin';
+
+/** Maior preço aceito (R$ 999.999,99) — só pra não deixar o número de centavos crescer sem limite. */
+const MAX_PRICE_CENTS = 99_999_999;
+
+/** Os dígitos do que já foi digitado, reinterpretados como centavos — cada tecla empurra o valor pra esquerda. */
+function priceCentsFromInput(value: string): number {
+  const digits = value.replace(/\D/g, '');
+  return Math.min(Number(digits || '0'), MAX_PRICE_CENTS);
+}
 
 /**
  * Criar e editar produto. Vai como `multipart/form-data` (texto + fotos no
@@ -32,22 +42,28 @@ export function ProductDialog({
 }) {
   const { apiFetch } = useApiClient();
   const save = useApiMutation('Erro ao salvar produto.');
+  const priceInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(product?.name ?? '');
   const [description, setDescription] = useState(product?.description ?? '');
-  const [price, setPrice] = useState(product ? String(product.price) : '');
+  const [priceCents, setPriceCents] = useState(() => Math.round((product?.price ?? 0) * 100));
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? categories[0]?.id ?? '');
-  const [order, setOrder] = useState(String(product?.order ?? 0));
   const [active, setActive] = useState(product?.active ?? true);
   const [featured, setFeatured] = useState(product?.featured ?? false);
   const [files, setFiles] = useState<File[]>([]);
+
+  // O cursor sempre volta pro fim: o valor é inteiramente formatado a cada
+  // tecla, então editar no meio do número não faz sentido nessa máscara.
+  useEffect(() => {
+    const el = priceInputRef.current;
+    el?.setSelectionRange(el.value.length, el.value.length);
+  }, [priceCents]);
 
   async function handleSubmit() {
     const form = new FormData();
     form.append('name', name.trim());
     form.append('description', description.trim());
-    form.append('price', price);
+    form.append('price', (priceCents / 100).toFixed(2));
     form.append('categoryId', categoryId);
-    form.append('order', String(Number(order) || 0));
     form.append('active', String(active));
     form.append('featured', String(featured));
     files.forEach((file) => form.append('images', file));
@@ -111,13 +127,10 @@ export function ProductDialog({
         <FormField id="productPrice" label="Preço (R$)">
           <Input
             id="productPrice"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step="0.01"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
+            ref={priceInputRef}
+            inputMode="numeric"
+            value={formatCurrency(priceCents / 100, 'BRL')}
+            onChange={(e) => setPriceCents(priceCentsFromInput(e.target.value))}
           />
         </FormField>
         <FormField id="productCategory" label="Categoria">
@@ -131,20 +144,9 @@ export function ProductDialog({
           </NativeSelect>
         </FormField>
       </div>
-      <FormField id="productOrder" label="Ordem" hint="Menor aparece primeiro.">
-        <Input
-          id="productOrder"
-          type="number"
-          min={0}
-          step={1}
-          value={order}
-          onChange={(e) => setOrder(e.target.value)}
-          className="w-28"
-        />
-      </FormField>
       <ProductImagesInput currentImages={product?.images ?? []} files={files} onChange={setFiles} />
       <SwitchField label="Aparece no site" checked={active} onCheckedChange={setActive} />
-      <SwitchField label="Mostrar na home" checked={featured} onCheckedChange={setFeatured} />
+      <SwitchField label="Destaque" checked={featured} onCheckedChange={setFeatured} />
     </FormDialog>
   );
 }
