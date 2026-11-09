@@ -11,6 +11,7 @@ import type { ConversationList } from '@/features/admin/types/admin';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/pedidos', label: 'Pedidos' },
   { href: '/admin/mensagens', label: 'Mensagens' },
   { href: '/admin/menu', label: 'Menu' },
   { href: '/admin/entregas', label: 'Entregas' },

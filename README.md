@@ -111,6 +111,13 @@ Configurações da loja online (`/store-settings`, linha única na API), num for
 - **Retirada no ateliê**: ligada/desligada, endereço, horário (texto livre) e instruções opcionais. Endereço e horário não podem ficar vazios; pra tirar a retirada do checkout, desliga.
 - **Parcelamento no cartão**: máximo de parcelas (1 = só à vista) e valor mínimo da parcela, sem juros pro comprador. O texto de ajuda mostra ao vivo em quantas parcelas sai um pedido de R$ 100, com a mesma regra da API.
 
+### /admin/pedidos
+
+Pedidos feitos no site (`/site-orders`), não os de catálogo que chegam pelo WhatsApp.
+
+- Lista paginada que abre nos **pagos**; o filtro troca pra aguardando pagamento, vencidos, cancelados ou estornados. Busca no servidor por código (`DV-0042`, `42`) ou nome do comprador. Cada linha: código, cliente, data, entrega (com bairro) ou retirada, preparo e total.
+- Detalhe (`/admin/pedidos/[id]`): cliente com link de WhatsApp e e-mail, endereço completo com zona e área, observação, itens (com prazo dos sob encomenda) e totais. Pedido pago tem o `<select>` de preparo (Aguardando → Preparando → Pronto/saiu pra entrega → Concluído). "Cancelar pedido" pede confirmação; em pedido pago o texto avisa que os itens voltam pro estoque e que o estorno é no painel do Pagar.me.
+
 ### /admin/conversas
 
 Lista de conversas com clientes; cada linha abre o detalhe em `/admin/conversas/[id]`.

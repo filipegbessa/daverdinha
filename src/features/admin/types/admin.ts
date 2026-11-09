@@ -175,3 +175,44 @@ export interface ConversationList extends Paginated<Conversation> {
   /** Every conversation waiting on a human, regardless of the active filters. */
   unreadTotal: number;
 }
+
+export type SiteOrderStatus = 'pending_payment' | 'paid' | 'expired' | 'cancelled' | 'refunded';
+export type FulfillmentStatus = 'awaiting' | 'preparing' | 'ready' | 'completed';
+
+/** Pedido feito no site (`/site-orders`). Não confundir com o pedido de catálogo do WhatsApp. */
+export interface SiteOrderAdmin {
+  id: string;
+  code: string;
+  kind: 'products' | 'tickets';
+  status: SiteOrderStatus;
+  fulfillmentStatus: FulfillmentStatus;
+  customer: { name: string; email: string; phone: string };
+  deliveryMethod: 'pickup' | 'delivery' | null;
+  address: {
+    cep: string | null;
+    street: string | null;
+    number: string | null;
+    complement: string | null;
+    bairro: string | null;
+    zone: string | null;
+    area: string | null;
+  } | null;
+  notes: string | null;
+  items: {
+    productId: string | null;
+    name: string;
+    slug: string | null;
+    unitPrice: number;
+    quantity: number;
+    imageUrl: string | null;
+    leadTimeDays: number | null;
+  }[];
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  payment: { linkId: string | null; orderId: string | null; chargeId: string | null; status: string | null };
+  paymentUrl: string | null;
+  paidAt: string | null;
+  expiresAt: string;
+  createdAt: string;
+}
