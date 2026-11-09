@@ -52,6 +52,10 @@ function category(slug: string): Product['category'] {
   return { id: found.id, name: found.name, slug: found.slug };
 }
 
+/**
+ * O estoque dos exemplos é o mesmo do seed da API, pra prévia mostrar os
+ * três selos: pronta entrega, sob encomenda (com prazo) e esgotado.
+ */
 export const SAMPLE_PRODUCTS: Product[] = [
   {
     id: 'sample-p1',
@@ -62,6 +66,8 @@ export const SAMPLE_PRODUCTS: Product[] = [
     price: 89.9,
     images: [],
     category: category('vasos'),
+    availability: 'in_stock',
+    leadTimeDays: null,
   },
   {
     id: 'sample-p2',
@@ -71,6 +77,8 @@ export const SAMPLE_PRODUCTS: Product[] = [
     price: 119,
     images: [],
     category: category('vasos'),
+    availability: 'in_stock',
+    leadTimeDays: null,
   },
   {
     id: 'sample-p3',
@@ -80,6 +88,8 @@ export const SAMPLE_PRODUCTS: Product[] = [
     price: 59,
     images: [],
     category: category('mudas'),
+    availability: 'in_stock',
+    leadTimeDays: null,
   },
   {
     id: 'sample-p4',
@@ -89,6 +99,8 @@ export const SAMPLE_PRODUCTS: Product[] = [
     price: 32,
     images: [],
     category: category('mudas'),
+    availability: 'sold_out',
+    leadTimeDays: null,
   },
   {
     id: 'sample-p5',
@@ -98,6 +110,8 @@ export const SAMPLE_PRODUCTS: Product[] = [
     price: 159,
     images: [],
     category: category('arranjos'),
+    availability: 'made_to_order',
+    leadTimeDays: 3,
   },
   {
     id: 'sample-p6',
@@ -107,6 +121,8 @@ export const SAMPLE_PRODUCTS: Product[] = [
     price: 129,
     images: [],
     category: category('kits'),
+    availability: 'made_to_order',
+    leadTimeDays: 10,
   },
   {
     id: 'sample-p7',
@@ -116,6 +132,8 @@ export const SAMPLE_PRODUCTS: Product[] = [
     price: 89,
     images: [],
     category: category('kits'),
+    availability: 'made_to_order',
+    leadTimeDays: 7,
   },
   {
     id: 'sample-p8',
@@ -125,6 +143,8 @@ export const SAMPLE_PRODUCTS: Product[] = [
     price: 99,
     images: [],
     category: category('arranjos'),
+    availability: 'made_to_order',
+    leadTimeDays: 5,
   },
 ];
 

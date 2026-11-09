@@ -37,7 +37,19 @@ describe('structured data', () => {
         price: '89.90',
         priceCurrency: 'BRL',
         url: 'https://daverdinha.com.br/produtos/vasos/vaso-terracota-m',
+        availability: 'https://schema.org/InStock',
       },
+    });
+  });
+
+  it('tells Google when a product is made to order or sold out', () => {
+    const [product] = SAMPLE_PRODUCTS;
+
+    expect(productJsonLd({ ...product, availability: 'made_to_order', leadTimeDays: 10 })).toMatchObject({
+      offers: { availability: 'https://schema.org/MadeToOrder' },
+    });
+    expect(productJsonLd({ ...product, availability: 'sold_out' })).toMatchObject({
+      offers: { availability: 'https://schema.org/OutOfStock' },
     });
   });
 

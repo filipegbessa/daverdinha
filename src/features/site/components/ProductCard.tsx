@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { formatPrice } from '@/features/site/lib/format';
 import { productHref } from '@/features/site/lib/paths';
+import { AvailabilityBadge } from '@/features/site/components/AvailabilityBadge';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import type { Product } from '@/features/site/types/catalog';
 
@@ -20,6 +21,9 @@ export function ProductCard({ product }: { product: Product }) {
         <p className="text-xs tracking-wider text-ink-soft uppercase">{product.category.name}</p>
         <h3 className="font-medium text-berry">{product.name}</h3>
         <p className="text-sm text-ink tabular-nums">{formatPrice(product.price)}</p>
+        <div className="pt-1.5">
+          <AvailabilityBadge product={product} />
+        </div>
       </div>
     </Link>
   );

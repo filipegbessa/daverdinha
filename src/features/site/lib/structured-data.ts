@@ -26,6 +26,13 @@ export function breadcrumbJsonLd(crumbs: Crumb[]): Record<string, unknown> {
   };
 }
 
+/** Os três estados do catálogo, nos valores de `schema.org/ItemAvailability`. */
+const SCHEMA_AVAILABILITY: Record<Product['availability'], string> = {
+  in_stock: 'https://schema.org/InStock',
+  made_to_order: 'https://schema.org/MadeToOrder',
+  sold_out: 'https://schema.org/OutOfStock',
+};
+
 export function productJsonLd(product: Product): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
@@ -41,7 +48,7 @@ export function productJsonLd(product: Product): Record<string, unknown> {
       price: product.price.toFixed(2),
       priceCurrency: 'BRL',
       // A API só devolve produto ativo: se está na página, está à venda.
-      availability: 'https://schema.org/InStock',
+      availability: SCHEMA_AVAILABILITY[product.availability],
       seller: { '@type': 'Organization', name: businessInfo.name },
     },
   };

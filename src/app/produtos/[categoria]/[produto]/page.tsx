@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { SiteShell } from '@/features/site/components/SiteShell';
+import { AvailabilityBadge } from '@/features/site/components/AvailabilityBadge';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { Carousel } from '@/features/site/components/Carousel';
 import { CepChecker } from '@/features/site/components/CepChecker';
@@ -80,6 +81,9 @@ export default async function ProductPage({ params }: Props) {
                 {product.name}
               </h1>
               <p className="mt-3 text-2xl font-semibold text-moss tabular-nums">{formatPrice(product.price)}</p>
+              <div className="mt-3">
+                <AvailabilityBadge product={product} detailed />
+              </div>
               <p className="mt-5 leading-relaxed whitespace-pre-line text-ink-soft">{product.description}</p>
               <ContactLink
                 href={getWhatsAppUrl(orderMessage(product))}

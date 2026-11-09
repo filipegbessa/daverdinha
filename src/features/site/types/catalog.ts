@@ -20,4 +20,13 @@ export interface Product {
   /** A primeira é a capa. Pode vir vazia: o card cai no `ImagePlaceholder`. */
   images: string[];
   category: Pick<ProductCategory, 'id' | 'name' | 'slug'>;
+  /**
+   * Pronta entrega, sob encomenda ou esgotado — a API já desconta as
+   * unidades reservadas por pedidos que ainda estão sendo pagos.
+   */
+  availability: ProductAvailability;
+  /** Prazo de confecção em dias; só vem em `made_to_order` (e pode faltar). */
+  leadTimeDays: number | null;
 }
+
+export type ProductAvailability = 'in_stock' | 'made_to_order' | 'sold_out';
