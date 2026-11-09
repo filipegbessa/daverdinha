@@ -8,6 +8,8 @@
 
 > **Atualizado em 2026-11-09 (revisão da cliente):** **pagamento pelo Pagar.me (Stone)** no lugar do Mercado Pago: Pix e cartão à vista ou parcelado sem juros (parcelas configuradas no admin), sem boleto; produto **sob encomenda** com prazo de confecção e selo no site (esgotado continua esgotado); frete por **área de entrega** (subdivisões das zonas, com valor) no lugar do valor por zona; **retirada configurada no admin**; **máximo de ingressos por compra configurável** no cadastro do evento; políticas de troca e de cancelamento de ingresso escritas a partir do questionário `docs/questionario-politicas.md`.
 
+> **Atualizado em 2026-11-09 (escopo do MVP):** **ingressos ficam fora do MVP** — a primeira entrega é só a venda de produtos. A Fase 3 (Tarefas 13–16) fica como desenho pra depois, e a Tarefa 12 lança só com a página de trocas e devoluções.
+
 **Goal:** fechar o catálogo (a cliente cadastra categorias e produtos sozinha no admin, e a vitrine que já existe passa a mostrar dados reais) e abrir a venda pelo site: carrinho, checkout com entrega ou retirada, pagamento no Pagar.me (checkout hospedado, fora do site) e página do pedido; no admin, lista de pedidos, áreas de entrega, retirada, estoque e prazo de encomenda. Depois, venda de ingresso (e inscrição gratuita) na página do evento, com lista de presença no admin.
 
 **Plano irmão:** `daverdinha-api/docs/plans/2026-11-05-loja-online-v1.md` — contratos de API, regras de preço/frete/estoque e webhook. **Os contratos de lá são a fonte da verdade pros nomes de campo** usados aqui.
@@ -22,8 +24,7 @@
 | Ligar a vitrine na API real | ⏳ Fase 1, Tarefa 4 (era a Tarefa 8 do plano do catálogo) |
 | Loja V1 — produtos | ⏳ **Fase 2** deste plano — depende das Tarefas 1–9 do plano irmão no ar. Já feitos em 2026-11-09, antecipados: estoque e sob encomenda no cadastro de produto e o selo na vitrine (partes das Tarefas 7 e 11), áreas de entrega em `/admin/entregas` e `/admin/loja` (Tarefa 11, Steps 3, 3b e 3c). Também prontos, sem pagamento: Tarefas 5–10 (carrinho, `/carrinho`, `/checkout`, `/pedido/[token]`) e o admin de pedidos da Tarefa 11. A prévia `/site` roda a loja inteira com os exemplos (decisão 4). Falta o pagamento de verdade (API, Tarefas 6–8) e a Tarefa 12 (políticas, depende do questionário) |
 | Agenda — página pública (`/agenda`, `/agenda/[slug]`) | ✅ feita, lendo `src/features/site/types/event.ts` |
-| Agenda — cadastro no admin (`/admin/agenda`) | ⏳ Fase 3, Tarefa 13 (não tinha plano no site até aqui) |
-| Loja V1 — ingressos | ⏳ **Fase 3**, Tarefas 14–16 — depende das Tarefas 11–13 do plano irmão no ar |
+| Agenda no admin e ingressos | ⏸️ **Fase 3**, Tarefas 13–16 — fora do MVP (2026-11-09) |
 | V2 — pagamento dentro do site | fora deste plano (ver "Depois da V1") |
 
 **A Fase 1 não depende de nada novo no backend** e pode ser entregue sozinha: a cliente começa a cadastrar enquanto a loja é construída.
@@ -307,7 +308,7 @@ Tela por status (`PublicSiteOrder.status`):
 
 **Files:**
 - Create: `src/app/trocas-e-devolucoes/page.tsx` — texto escrito a partir das respostas da cliente ao questionário `docs/questionario-politicas.md` (Parte 1), incluindo o caso de peça sob encomenda
-- Create: `src/app/cancelamento-de-ingressos/page.tsx` — idem, Parte 2 do questionário; linkado no formulário de ingresso (Tarefa 14)
+- ~~Create: `src/app/cancelamento-de-ingressos/page.tsx`~~ — fora do MVP, vem com a Fase 3 (Parte 2 do questionário)
 - Modify: `src/app/politica-de-privacidade/page.tsx` — dados coletados na compra (nome, e-mail, telefone, endereço, nomes dos participantes), pra quê e com quem são compartilhados (Pagar.me/Stone)
 - Modify: `src/features/site/components/Footer.tsx` — links das políticas
 - Modify: `src/app/sitemap.ts` (+ teste) — `/trocas-e-devolucoes` entra; `/carrinho`, `/checkout`, `/pedido` nunca
@@ -322,6 +323,8 @@ Tela por status (`PublicSiteOrder.status`):
 ---
 
 # Fase 3 — Ingressos dos eventos
+
+> ⏸️ **Fora do MVP (2026-11-09).** Desenho pronto pra depois da loja de produtos no ar.
 
 Pré-requisito: plano da agenda da API (Tarefas 1–5) e Tarefas 11–13 do plano irmão no ar. A Tarefa 13 só precisa da agenda da API.
 

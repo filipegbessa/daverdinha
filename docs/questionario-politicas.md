@@ -64,6 +64,8 @@ O que a lei já obriga vale de qualquer jeito, mesmo que a resposta seja diferen
 
 ## Parte 2: cancelamento de ingressos (oficinas, aulas e eventos)
 
+> **Pode pular por enquanto:** a venda de ingressos pelo site fica para depois. Só a Parte 1 é necessária para abrir a loja.
+
 > **Pela lei:** em compra pela internet, o direito de desistir em 7 dias também costuma valer para ingressos. Muitas empresas limitam esse direito quando o evento está muito perto. Esse é um ponto para confirmar com o advogado antes de publicar.
 
 15. Até quando o comprador pode cancelar e receber o dinheiro todo de volta?
