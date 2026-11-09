@@ -1,12 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
 import { isSample } from '@/features/site/data/samples';
-import { useCart } from '@/features/store/components/CartProvider';
+import { useAddToCart } from '@/features/store/components/use-add-to-cart';
 import type { Product } from '@/features/site/types/catalog';
-
-const CONFIRMATION_MS = 4000;
 
 const BUTTON =
   'inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 font-semibold shadow-card transition-shadow sm:w-auto';
@@ -19,15 +16,7 @@ const BUTTON =
  * mostra por uns segundos o atalho pro carrinho.
  */
 export function AddToCartButton({ product }: { product: Product }) {
-  const { add } = useCart();
-  const [added, setAdded] = useState(false);
-  const [full, setFull] = useState(false);
-
-  useEffect(() => {
-    if (!added) return;
-    const timeout = setTimeout(() => setAdded(false), CONFIRMATION_MS);
-    return () => clearTimeout(timeout);
-  }, [added]);
+  const { addToCart, added, full } = useAddToCart(product);
 
   if (product.availability === 'sold_out') {
     return (
@@ -37,31 +26,11 @@ export function AddToCartButton({ product }: { product: Product }) {
     );
   }
 
-  function handleAdd() {
-    const ok = add(product);
-    setFull(!ok);
-    setAdded(ok);
-    if (!ok) return;
-    window.gtag?.('event', 'add_to_cart', {
-      currency: 'BRL',
-      value: product.price,
-      items: [
-        {
-          item_id: product.id,
-          item_name: product.name,
-          item_category: product.category.name,
-          price: product.price,
-          quantity: 1,
-        },
-      ],
-    });
-  }
-
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
       <button
         type="button"
-        onClick={handleAdd}
+        onClick={addToCart}
         className={`${BUTTON} cursor-pointer bg-moss text-paper hover:bg-moss/90 hover:shadow-soft`}
       >
         <ShoppingBag className="size-5" aria-hidden="true" />
