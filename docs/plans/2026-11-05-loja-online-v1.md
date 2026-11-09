@@ -4,7 +4,11 @@
 
 > **Atualizado em 2026-11-05 (nomenclatura):** no admin, "Categorias" de conversa viraram **Marcadores** (`/admin/marcadores`) e as categorias de produto viraram **Categorias** (`/admin/categorias`). Código e API mantêm os nomes antigos (`Category`/`/categories` = marcador; `ProductCategory`/`/product-categories` = categoria). As rotas citadas abaixo como `/admin/categorias-produtos` hoje são `/admin/categorias`.
 
-**Goal:** fechar o catálogo (a cliente cadastra categorias e produtos sozinha no admin, e a vitrine que já existe passa a mostrar dados reais) e abrir a venda pelo site: carrinho, checkout com entrega ou retirada, pagamento no Mercado Pago (Checkout Pro, fora do site) e página do pedido; no admin, lista de pedidos e valor do frete por zona.
+> **Atualizado em 2026-11-06 (revisão da cliente):** (1) **vai ter estoque** — campo "Estoque" no cadastro de produto entra na Tarefa 11, com um checkbox "Sob encomenda" que desabilita a quantidade (o "soldOut" daqui virou `availability` na revisão de 2026-11-09); (2) **venda de ingresso pros eventos**, em compra separada do carrinho (formulário na página do evento), com nome por participante e inscrição gratuita pelo site — **Fase 3**, Tarefas 13–16. Decisões no plano irmão (decisões 12–18).
+
+> **Atualizado em 2026-11-09 (revisão da cliente):** **pagamento pelo Pagar.me (Stone)** no lugar do Mercado Pago: Pix e cartão à vista ou parcelado sem juros (parcelas configuradas no admin), sem boleto; produto **sob encomenda** com prazo de confecção e selo no site (esgotado continua esgotado); frete por **área de entrega** (subdivisões das zonas, com valor) no lugar do valor por zona; **retirada configurada no admin**; **máximo de ingressos por compra configurável** no cadastro do evento; políticas de troca e de cancelamento de ingresso escritas a partir do questionário `docs/questionario-politicas.md`.
+
+**Goal:** fechar o catálogo (a cliente cadastra categorias e produtos sozinha no admin, e a vitrine que já existe passa a mostrar dados reais) e abrir a venda pelo site: carrinho, checkout com entrega ou retirada, pagamento no Pagar.me (checkout hospedado, fora do site) e página do pedido; no admin, lista de pedidos, áreas de entrega, retirada, estoque e prazo de encomenda. Depois, venda de ingresso (e inscrição gratuita) na página do evento, com lista de presença no admin.
 
 **Plano irmão:** `daverdinha-api/docs/plans/2026-11-05-loja-online-v1.md` — contratos de API, regras de preço/frete/estoque e webhook. **Os contratos de lá são a fonte da verdade pros nomes de campo** usados aqui.
 
@@ -16,7 +20,10 @@
 | API do catálogo | ✅ feita e aplicada na Neon |
 | Telas de cadastro no admin | ✅ **Fase 1**, Tarefas 1–3, implementadas em 2026-11-05 (substituem as Tarefas 9–11 do plano do catálogo). Diferença do texto abaixo: a lista de produtos não tem filtro por categoria, porque `GET /products` não filtra e a lista é paginada; fica pra quando o catálogo crescer |
 | Ligar a vitrine na API real | ⏳ Fase 1, Tarefa 4 (era a Tarefa 8 do plano do catálogo) |
-| Loja V1 | ⏳ **Fase 2** deste plano — depende das Tarefas 1–9 do plano irmão no ar |
+| Loja V1 — produtos | ⏳ **Fase 2** deste plano — depende das Tarefas 1–9 do plano irmão no ar |
+| Agenda — página pública (`/agenda`, `/agenda/[slug]`) | ✅ feita, lendo `src/features/site/types/event.ts` |
+| Agenda — cadastro no admin (`/admin/agenda`) | ⏳ Fase 3, Tarefa 13 (não tinha plano no site até aqui) |
+| Loja V1 — ingressos | ⏳ **Fase 3**, Tarefas 14–16 — depende das Tarefas 11–13 do plano irmão no ar |
 | V2 — pagamento dentro do site | fora deste plano (ver "Depois da V1") |
 
 **A Fase 1 não depende de nada novo no backend** e pode ser entregue sozinha: a cliente começa a cadastrar enquanto a loja é construída.
@@ -35,22 +42,25 @@
 
 | # | Decisão |
 |---|---|
-| 1 | **Pagamento por redirect (Checkout Pro).** "Finalizar compra" cria o pedido na API e manda o navegador pra `paymentUrl` (`window.location.assign`). O Mercado Pago devolve pra `/pedido/<token>`. Nada de dado de cartão passa pelo site. |
+| 1 | **Pagamento por redirect (checkout hospedado do Pagar.me).** "Finalizar compra" cria o pedido na API e manda o navegador pra `paymentUrl` (`window.location.assign`). O Pagar.me devolve pra `/pedido/<token>`. Pix e cartão (à vista ou parcelado sem juros pro comprador, até o número de parcelas configurado em `/admin/loja`), sem boleto. Nada de dado de cartão passa pelo site. |
 | 2 | **Rotas novas:** `/carrinho`, `/checkout`, `/pedido/[token]`. Todas `noindex`, fora do sitemap, e `/pedido` também com `robots: nofollow` e sem cache (`dynamic = 'force-dynamic'`) — é por pedido e muda de status. |
 | 3 | **WhatsApp continua.** Página do produto ganha "Adicionar ao carrinho" como botão principal e mantém "Pedir pelo WhatsApp" como secundário. Checkout e página do pedido têm "Falar no WhatsApp" com o código do pedido na mensagem. |
 | 4 | **Exemplos da prévia não vão pro carrinho.** Produto `sample-…` (`isSample`) mostra o botão desabilitado com "Disponível no lançamento" — senão a cliente testa a prévia e o checkout dá 409. |
 | 5 | **Carrinho tolera mudança.** Produto que saiu do ar, esgotou ou mudou de preço aparece na cotação (`problems`/preço novo); a tela de carrinho mostra o aviso na linha, atualiza o preço salvo e bloqueia "Finalizar" até o cliente ajustar. 409 no `POST /checkout` faz o mesmo. |
-| 6 | **Entrega:** o cliente escolhe "Entregar" ou "Retirar no ateliê" no checkout. "Entregar" exige CEP; se a cotação disser que não entrega (`delivery.available === false`), a opção fica desabilitada com o motivo e o link pro WhatsApp. |
-| 7 | **Carrinho limpo só quando o pedido é criado com sucesso** (resposta 201 do `POST /checkout`), não ao voltar do Mercado Pago — o cliente que desiste do pagamento volta pra `/pedido/<token>`, que tem "Pagar agora" enquanto não vence. |
+| 6 | **Entrega:** o cliente escolhe "Entregar" ou "Retirar no ateliê" no checkout. "Entregar" exige CEP; se a cotação disser que não entrega (`delivery.available === false`), a opção fica desabilitada com o motivo e o link pro WhatsApp. "Retirar" mostra endereço, horário e instruções configurados no admin e some se a cliente desligar a retirada (`pickup.available === false`). |
+| 7 | **Carrinho limpo só quando o pedido é criado com sucesso** (resposta 201 do `POST /checkout`), não ao voltar do Pagar.me — o cliente que desiste do pagamento volta pra `/pedido/<token>`, que tem "Pagar agora" enquanto não vence. |
 | 8 | **Destaque no admin.** `featured` (já aceito pela API) é um `Switch` "Mostrar na home" no cadastro de produto e uma coluna na lista. |
 | 9 | **Admin de pedidos mostra pagos por padrão** (mesma regra da API); pendentes/vencidos/cancelados atrás do filtro. Status de preparo é um `<select>` (Aguardando → Preparando → Pronto/Saiu pra entrega → Concluído). |
 | 10 | **Eventos de GA:** `add_to_cart`, `begin_checkout` e `purchase` (este só na página do pedido, uma vez por pedido, quando o status é `paid`; guardado em `localStorage` pra não contar de novo num F5). Nomes do GA4 de e-commerce, pra o relatório de compras funcionar sem configuração extra. |
+| 11 | **Disponibilidade do produto no site** (`ProductPublic.availability`): `in_stock` → selo "Pronta entrega"; `made_to_order` → selo "Sob encomenda" e "Confecção em até N dias" (sem prazo cadastrado: "prazo combinado no WhatsApp"); `sold_out` → "Esgotado", botão de compra desabilitado (o "avise-me" é da V2). O selo aparece no card da listagem, na página do produto, no carrinho e no resumo do checkout. |
 
-**Pra confirmar com a cliente** (afetam texto, não estrutura): endereço e horário de retirada; política de troca/devolução e prazo de entrega (texto das páginas da Tarefa 12); se há peça única (liga o campo "Estoque" na Tarefa 3).
+**Pendente da conta Stone/Pagar.me da cliente** (esclarecer durante o desenvolvimento, quando ela trouxer as informações): plano, taxas e parcelamento da conta — ver plano irmão, Tarefa 6, Step 0. Até lá valem 3x sem juros e parcela mínima de R$ 30, editáveis em `/admin/loja`.
+
+**Pra confirmar com a cliente:** textos de troca/devolução e de cancelamento de ingresso, a partir das respostas do questionário `docs/questionario-politicas.md` (Tarefa 12).
 
 ## Global Constraints
 
-- **Checklist do admin** (`CLAUDE.md` → "Admin UI checklist"): lista que cresce é paginada com `usePaginatedResource`; reaproveitar `PageHeader`, `AdminList`, `FormDialog`, `FormField`, `NativeSelect`, `ConfirmDialog` antes de criar componente; toda ação com `Button loading` e lista recarregando com `BusyRegion`. Vale pra todas as telas novas deste plano (pedidos, frete por zona).
+- **Checklist do admin** (`CLAUDE.md` → "Admin UI checklist"): lista que cresce é paginada com `usePaginatedResource`; reaproveitar `PageHeader`, `AdminList`, `FormDialog`, `FormField`, `NativeSelect`, `ConfirmDialog` antes de criar componente; toda ação com `Button loading` e lista recarregando com `BusyRegion`. Vale pra todas as telas novas deste plano (pedidos, áreas de entrega, retirada, agenda, participantes).
 
 - **Nenhum preço é calculado no front pra cobrar.** Total exibido no checkout = o que veio da última cotação. `formatPrice` (`src/features/site/lib/format.ts`) só formata.
 - **URL de produto só via `productHref`** (`src/features/site/lib/paths.ts`), inclusive no carrinho e na página do pedido.
@@ -139,7 +149,7 @@ Espelha `admin/categorias/page.tsx` + `CategoryDialog.tsx` — sem cor, com desc
 - [ ] **Step 2: Testes do `ProductImagesInput`** — escolher arquivos mostra miniaturas (`URL.createObjectURL`, revogadas ao desmontar); mais de 6 → mensagem e não aceita; arquivo > 5 MB ou de outro tipo → mensagem por arquivo; na edição mostra as fotos atuais com o aviso "Escolher novas fotos substitui as atuais".
 - [ ] **Step 3: Testes do dialog** — cria com `FormData` (`name`, `description`, `price`, `categoryId`, `order`, `active`, `featured`, `images[]`); **edição sem trocar fotos não envia `images`**; sem categorias cadastradas, mostra "Cadastre uma categoria primeiro" com link pra Tarefa 2 em vez do formulário; erro 400 da API ("Categoria não encontrada.", tipo de arquivo) aparece no dialog.
 - [ ] **Step 4: Rodar e confirmar que falha.**
-- [ ] **Step 5: Implementar** — campos: `name`; `description` (`Textarea`); `price` (`Input type="number" step="0.01" min="0"`); `categoryId` (`<select>` com `useApiResource<ProductCategoryAdmin[]>('/product-categories')`); `order`; `active` (`Switch`, "Aparece no site"); `featured` (`Switch`, "Mostrar na home"); fotos (`ProductImagesInput`); e, quando a Tarefa 4 do plano irmão existir, `stock` (`Input type="number"`, vazio = "Sem controle de estoque").
+- [ ] **Step 5: Implementar** — campos: `name`; `description` (`Textarea`); `price` (`Input type="number" step="0.01" min="0"`); `categoryId` (`<select>` com `useApiResource<ProductCategoryAdmin[]>('/product-categories')`); `order`; `active` (`Switch`, "Aparece no site"); `featured` (`Switch`, "Mostrar na home"); fotos (`ProductImagesInput`); e, quando a Tarefa 4 do plano irmão existir, `stock` (ver Tarefa 11: quantidade + checkbox "Sob encomenda").
 - [ ] **Step 6: Nav** — `{ href: '/admin/produtos', label: 'Produtos' }` logo antes de `'Categorias de produto'`.
 - [ ] **Step 7: Rodar e confirmar que passa.**
 - [ ] **Step 8: Commit** — `feat(admin): add product CRUD with photos and featured flag`
@@ -160,7 +170,7 @@ Sem código novo esperado — `public-api.ts` já chama os endpoints definitivos
 
 # Fase 2 — Loja V1
 
-Pré-requisito: Tarefas 1–9 do plano irmão no ar (pelo menos em homologação, com credenciais de teste do Mercado Pago).
+Pré-requisito: Tarefas 1–9 do plano irmão no ar (pelo menos em homologação, com o sandbox do Pagar.me).
 
 ## Task 5: Tipos e `store-api.ts`
 
@@ -202,9 +212,12 @@ Pré-requisito: Tarefas 1–9 do plano irmão no ar (pelo menos em homologação
 - Create: `src/features/store/components/CartLink.tsx` (+ `.test.tsx`)
 - Modify: `src/app/produtos/[categoria]/[produto]/page.tsx`
 - Modify: `src/features/site/components/Header.tsx`, `MobileNav.tsx`
-- Modify: `src/features/site/types/catalog.ts` (`soldOut?: boolean`, opcional até a Tarefa 4 do plano irmão)
+- Modify: `src/features/site/types/catalog.ts` (`availability` e `leadTimeDays`, da Tarefa 4 do plano irmão; os exemplos de `samples.ts` ganham valores variados pra prévia mostrar os três selos)
+- Create: `src/features/site/components/AvailabilityBadge.tsx` (+ `.test.tsx`) — selo da decisão 11, usado no `ProductCard`, na página do produto, no carrinho e no checkout
 
-- [ ] **Step 1: Testes do botão** — adiciona e mostra confirmação ("Adicionado · Ver carrinho") por alguns segundos; produto `sample-…` → desabilitado "Disponível no lançamento"; `soldOut` → desabilitado "Esgotado"; dispara `gtag('event', 'add_to_cart', { currency: 'BRL', value, items: [...] })`.
+- [ ] **Step 0b: Parcelas na página do produto** — com a loja ligada, abaixo do preço: "ou em até 3x de R$ 33,30 sem juros", calculado com `GET /store-settings/public` (`installmentsFor` do plano irmão, copiado em `src/features/store/lib/installments.ts` com o mesmo teste); 1 parcela possível → não mostra nada. Falha ao buscar → não mostra (nunca quebra a página).
+- [ ] **Step 0: Testes do selo** — "Pronta entrega"; "Sob encomenda" + "Confecção em até 10 dias"; sob encomenda sem prazo → "prazo combinado no WhatsApp"; "Esgotado". Aparece mesmo com a loja desligada (é informação do catálogo).
+- [ ] **Step 1: Testes do botão** — adiciona e mostra confirmação ("Adicionado · Ver carrinho") por alguns segundos; produto `sample-…` → desabilitado "Disponível no lançamento"; `availability: 'sold_out'` → desabilitado "Esgotado"; dispara `gtag('event', 'add_to_cart', { currency: 'BRL', value, items: [...] })`.
 - [ ] **Step 2: Testes do `CartLink`** — sem número antes de `ready`; com itens mostra a contagem e `aria-label="Carrinho, 3 itens"`.
 - [ ] **Step 3: Implementar** — na página do produto, `AddToCartButton` vira o botão principal (mesmo estilo do atual) e "Pedir pelo WhatsApp" passa pra botão secundário (contorno), **só com a loja ligada**; com ela desligada a página fica idêntica à de hoje. `CartLink` no header ao lado do menu, e no `MobileNav`.
 - [ ] **Step 4: Rodar e confirmar que passa; conferir em 375 px que o header não estoura.**
@@ -230,9 +243,9 @@ Pré-requisito: Tarefas 1–9 do plano irmão no ar (pelo menos em homologação
 
 Formulário em três blocos, numa página só:
 
-1. **Seus dados** — nome, e-mail ("pra receber o comprovante do Mercado Pago"), WhatsApp (máscara `(21) 99999-9999`).
-2. **Entrega** — "Retirar no ateliê" (mostra `pickup.address`) ou "Entregar"; com "Entregar": CEP (recota ao completar 8 dígitos e mostra "Entrega em <bairro>: R$ X"), rua, número, complemento. Entrega indisponível → opção desabilitada com o motivo e link "Falar no WhatsApp".
-3. **Resumo** — itens, subtotal, frete, total (da cotação), observações (opcional), aceite "Li a política de trocas" (link da Tarefa 12), botão "Ir para o pagamento".
+1. **Seus dados** — nome, e-mail ("pra receber o comprovante do pagamento"), WhatsApp (máscara `(21) 99999-9999`).
+2. **Entrega** — "Retirar no ateliê" (mostra `pickup.address`, `pickup.hours` e `pickup.instructions`; some se `pickup.available` é `false`) ou "Entregar"; com "Entregar": CEP (recota ao completar 8 dígitos e mostra "Entrega em <bairro>: R$ X"), rua, número, complemento. Entrega indisponível → opção desabilitada com o motivo e link "Falar no WhatsApp" (`no_area` usa o mesmo texto de `not_covered`: "Ainda não entregamos nesse bairro pelo site").
+3. **Resumo** — itens com o selo de disponibilidade (sob encomenda com o prazo de confecção, e um aviso "Seu pedido tem itens sob encomenda: a entrega/retirada acontece depois da confecção, em até N dias", com N = maior prazo do carrinho), subtotal, frete, total (da cotação), "Pix ou cartão em até Nx sem juros" (N = `installments` da cotação, que já considera o frete), observações (opcional), aceite "Li a política de trocas" (link da Tarefa 12), botão "Ir para o pagamento".
 
 - [ ] **Step 1: Testes** — validação no cliente (campos obrigatórios, e-mail, telefone, CEP) com mensagem ligada ao campo; total exibido = o da cotação; envio chama `createCheckout` só com `{ productId, quantity }` dos itens; 201 → `clear()` e `window.location.assign(paymentUrl)`; 409 → `syncFromQuote` + aviso + volta pro carrinho; 422 → aviso no bloco de entrega; 503/erro de rede → mensagem "Não foi possível iniciar o pagamento…" e o botão volta a funcionar; botão fica "Abrindo o pagamento…" e desabilitado durante o envio (sem pedido em dobro com duplo clique); carrinho vazio redireciona pra `/carrinho`.
 - [ ] **Step 2: Rodar e confirmar que falha. Implementar. Rodar e confirmar que passa.**
@@ -253,8 +266,8 @@ Tela por status (`PublicSiteOrder.status`):
 
 | Status | O que mostra |
 |---|---|
-| `pending_payment` | "Aguardando pagamento", prazo (`expiresAt`, "até 14:32"), botão **Pagar agora** (`paymentUrl`), "Já paguei" (recarrega a página — a API reconcilia com o Mercado Pago na leitura) |
-| `paid` | "Pedido confirmado!", código `DV-0042`, itens, total, como vai ser a entrega/retirada, status de preparo (`fulfillmentStatus` em texto), "Falar no WhatsApp" com o código |
+| `pending_payment` | "Aguardando pagamento", prazo (`expiresAt`, "até 14:32"), botão **Pagar agora** (`paymentUrl`), "Já paguei" (recarrega a página — a API reconcilia com o Pagar.me na leitura) |
+| `paid` | "Pedido confirmado!", código `DV-0042`, itens (com o prazo dos sob encomenda), total, como vai ser a entrega/retirada (na retirada, `pickup.address`, `pickup.hours` e `pickup.instructions`), status de preparo (`fulfillmentStatus` em texto), "Falar no WhatsApp" com o código |
 | `expired` | "O prazo de pagamento acabou", link "Ver produtos" |
 | `cancelled` / `refunded` | mensagem curta + WhatsApp |
 
@@ -264,50 +277,129 @@ Tela por status (`PublicSiteOrder.status`):
 
 ---
 
-## Task 11: Admin — pedidos e frete por zona
+## Task 11: Admin — pedidos, áreas de entrega, retirada e estoque
 
 **Files:**
+- Modify: `src/features/admin/components/ProductDialog.tsx` (+ teste) — campo "Estoque" (`Input type="number" min="0"`) com um checkbox **"Sob encomenda"** ao lado. Marcado: o campo de estoque fica desabilitado (e limpo), aparece o campo **"Prazo de confecção (dias)"** (obrigatório, 1–180) e o envio manda `stock=""` + `leadTimeDays`. Desmarcado: o prazo some, a quantidade é obrigatória (0 vale e significa esgotado) e o envio manda `stock` (o `leadTimeDays` salvo fica guardado na API, pra voltar se ela marcar de novo). Abrir um produto com `stock: null` já vem com o checkbox marcado e o prazo preenchido. Só muda a tela; a API e o banco seguem a decisão 6 do plano irmão.
+- Modify: `src/app/admin/produtos/page.tsx` (+ teste) — linha mostra "Estoque: N" / "Esgotado" / "Sob encomenda · N dias"
 - Create: `src/app/admin/pedidos/page.tsx` (+ `page.test.tsx`)
 - Create: `src/app/admin/pedidos/[id]/page.tsx` (+ `page.test.tsx`)
-- Modify: `src/app/admin/entregas/page.tsx` (+ teste) — bloco "Valor da entrega por zona"
-- Modify: `src/features/admin/types/admin.ts` — `SiteOrderAdmin`, `DeliveryZoneFee`
-- Modify: `src/app/admin/layout.tsx` — `{ href: '/admin/pedidos', label: 'Pedidos' }` logo depois de `'Dashboard'`
+- Modify: `src/app/admin/entregas/page.tsx` (+ teste) — seção "Áreas de entrega" por zona
+- Create: `src/features/admin/components/DeliveryAreaDialog.tsx` (+ `.test.tsx`)
+- Create: `src/app/admin/loja/page.tsx` (+ `page.test.tsx`) — "Configurações da loja": retirada e parcelamento
+- Modify: `src/features/admin/types/admin.ts` — `SiteOrderAdmin`, `DeliveryAreaAdmin`, `StoreSettings`; `ProductAdmin.stock`/`leadTimeDays` deixam de ser opcionais
+- Modify: `src/app/admin/layout.tsx` — `{ href: '/admin/pedidos', label: 'Pedidos' }` logo depois de `'Dashboard'` e `{ href: '/admin/loja', label: 'Loja' }` no fim
 
 **Interfaces:**
-- Consumes: rotas `/site-orders` e `/delivery-zone-fees` (plano irmão, Tarefas 3 e 10). O push de pedido novo abre `/admin/pedidos/<id>`.
+- Consumes: rotas `/site-orders`, `/delivery-areas` e `/store-settings` (plano irmão, Tarefas 3 e 10). O push de pedido novo abre `/admin/pedidos/<id>`.
 
 - [ ] **Step 1: Testes da lista** — padrão mostra pagos; filtro por status (Pagos, Aguardando pagamento, Vencidos, Cancelados, Estornados); colunas código, data, cliente, entrega/retirada, total, preparo; paginação com `TablePagination`; clique abre o detalhe.
-- [ ] **Step 2: Testes do detalhe** — dados do cliente com link de WhatsApp (`wa.me`) e endereço completo; itens com link pro produto; troca de preparo via `PATCH`; "Cancelar pedido" com `ConfirmDialog` e, se pago, o texto "O estorno do pagamento é feito no painel do Mercado Pago"; "Atualizar pagamento" chama `POST /site-orders/:id/sync`.
-- [ ] **Step 3: Testes do frete** — lista as zonas com o valor (vazio = "Sem entrega"); editar e salvar chama `PUT /delivery-zone-fees/:zone` (zona com espaço: `encodeURIComponent`); valor vazio salva `null`; aviso "Zona sem valor não oferece entrega no site".
+- [ ] **Step 2: Testes do detalhe** — dados do cliente com link de WhatsApp (`wa.me`) e endereço completo; itens com link pro produto; troca de preparo via `PATCH`; "Cancelar pedido" com `ConfirmDialog` e, se pago, o texto "O estorno do pagamento é feito no painel do Pagar.me"; "Atualizar pagamento" chama `POST /site-orders/:id/sync`; itens sob encomenda mostram o prazo do pedido.
+- [ ] **Step 3: Testes das áreas de entrega** — em `/admin/entregas`, cada zona mostra suas áreas ("Perto · R$ 15,00 · 6 bairros") e os bairros cobertos sem área com o aviso "Esses bairros não têm entrega pelo site até entrarem numa área"; "Nova área" na zona abre o `DeliveryAreaDialog` (nome, valor, lista de bairros da zona com checkbox e busca por nome); salvar chama `POST`/`PATCH /delivery-areas` e depois `PUT /delivery-areas/:id/locations`; excluir com `ConfirmDialog` ("Os bairros dessa área ficam sem entrega pelo site"); nome repetido na zona mostra o 409 da API no dialog.
+- [ ] **Step 3b: Testes do estoque** — criar com quantidade envia `stock`; marcar "Sob encomenda" desabilita a quantidade, mostra o prazo e envia `stock=""` + `leadTimeDays`; sob encomenda sem prazo não envia (mensagem no campo); desmarcar reabilita e exige quantidade; produto com `stock: null` abre com o checkbox marcado e o prazo; a lista mostra "Esgotado" com `stock: 0` e "Sob encomenda · N dias" com `null`.
+- [ ] **Step 3c: Testes de `/admin/loja`** — carrega `GET /store-settings`. Bloco **Retirada**: `SwitchField` "Oferecer retirada no ateliê"; endereço, horário (texto livre, ex.: "Seg a sex, 10h às 18h") e instruções (opcional); desligada mostra "O checkout não oferece retirada enquanto estiver desligada". Bloco **Parcelamento no cartão**: "Máximo de parcelas" (`NativeSelect` 1 a 12, 1 = só à vista) e "Valor mínimo da parcela" (R$), com a ajuda "Sem juros pro cliente: a taxa do parcelamento é descontada do valor que você recebe" e um exemplo ao vivo ("Um pedido de R$ 100 pode ser pago em até 3x de R$ 33,33"). Salvar envia `PATCH` com `Button loading`; endereço/horário vazios não salvam.
 - [ ] **Step 4: Rodar e confirmar que falha. Implementar. Rodar e confirmar que passa.**
-- [ ] **Step 5: Commit** — `feat(admin): add site orders and delivery fees`
+- [ ] **Step 5: Commit** — `feat(admin): add site orders, delivery areas, pickup settings and product stock`
 
 ---
 
 ## Task 12: Páginas de política, SEO e lançamento
 
 **Files:**
-- Create: `src/app/trocas-e-devolucoes/page.tsx` (texto da cliente)
-- Modify: `src/app/politica-de-privacidade/page.tsx` — dados coletados na compra (nome, e-mail, telefone, endereço), pra quê e com quem são compartilhados (Mercado Pago)
+- Create: `src/app/trocas-e-devolucoes/page.tsx` — texto escrito a partir das respostas da cliente ao questionário `docs/questionario-politicas.md` (Parte 1), incluindo o caso de peça sob encomenda
+- Create: `src/app/cancelamento-de-ingressos/page.tsx` — idem, Parte 2 do questionário; linkado no formulário de ingresso (Tarefa 14)
+- Modify: `src/app/politica-de-privacidade/page.tsx` — dados coletados na compra (nome, e-mail, telefone, endereço, nomes dos participantes), pra quê e com quem são compartilhados (Pagar.me/Stone)
 - Modify: `src/features/site/components/Footer.tsx` — links das políticas
 - Modify: `src/app/sitemap.ts` (+ teste) — `/trocas-e-devolucoes` entra; `/carrinho`, `/checkout`, `/pedido` nunca
-- Modify: `src/features/site/lib/structured-data.ts` (+ teste) — `offers.availability` `InStock`/`OutOfStock` conforme `soldOut`
+- Modify: `src/features/site/lib/structured-data.ts` (+ teste) — `offers.availability` conforme `availability`: `InStock`, `MadeToOrder` ou `OutOfStock` (todos valores de `schema.org/ItemAvailability`)
 
 - [ ] **Step 1: Testes** — sitemap e JSON-LD como acima.
 - [ ] **Step 2: Implementar e rodar.**
-- [ ] **Step 3: Homologação ponta a ponta** (Mercado Pago de teste, preview da Vercel com `NEXT_PUBLIC_STORE_ENABLED=true`): comprar com entrega e com retirada; cartão recusado e depois aprovado; Pix que vence; voltar do MP sem pagar e pagar pela página do pedido; produto esgotado no meio da compra; celular (375 px) e desktop; push de pedido novo chegando no admin.
-- [ ] **Step 4: Lançamento** — `NEXT_PUBLIC_STORE_ENABLED=true` em produção (depois das variáveis do Mercado Pago de produção na API); marcar `purchase` como evento-chave no GA4; primeira compra real de valor baixo, estornada pelo painel.
+- [ ] **Step 3: Homologação ponta a ponta** (sandbox do Pagar.me, preview da Vercel com `NEXT_PUBLIC_STORE_ENABLED=true`): comprar com entrega e com retirada; cartão à vista e parcelado; pedido abaixo da parcela mínima (só à vista); cartão recusado e depois aprovado; Pix que vence; voltar do Pagar.me sem pagar e pagar pela página do pedido; produto esgotado no meio da compra; carrinho com item sob encomenda (selo e prazo do começo ao fim); CEP de bairro sem área; retirada desligada; celular (375 px) e desktop; push de pedido novo chegando no admin.
+- [ ] **Step 4: Lançamento** — a cliente cadastra as áreas de entrega e confere a retirada no admin; `NEXT_PUBLIC_STORE_ENABLED=true` em produção (depois das variáveis do Pagar.me de produção na API); marcar `purchase` como evento-chave no GA4; primeira compra real de valor baixo, estornada pelo painel.
 - [ ] **Step 5: Commit** — `feat(site): add store policies and launch checks`
+
+---
+
+# Fase 3 — Ingressos dos eventos
+
+Pré-requisito: plano da agenda da API (Tarefas 1–5) e Tarefas 11–13 do plano irmão no ar. A Tarefa 13 só precisa da agenda da API.
+
+Ingresso **não usa o carrinho** (decisão 12 do plano irmão): a página do evento tem o próprio formulário e vai direto pro pagamento. Carrinho, `/checkout` e frete não mudam.
+
+## Task 13: `/admin/agenda` — cadastro de eventos
+
+**Files:**
+- Create: `src/app/admin/agenda/page.tsx` (+ `page.test.tsx`)
+- Create: `src/features/admin/components/EventDialog.tsx` (+ `.test.tsx`)
+- Modify: `src/features/admin/types/admin.ts` — `EventAdmin`
+- Modify: `src/app/admin/layout.tsx` — `{ href: '/admin/agenda', label: 'Agenda' }` depois de `'Categorias'`
+
+**Interfaces:**
+- Consumes: `GET /events` (paginado), `POST /events`, `PATCH /events/:id`, `DELETE /events/:id` (multipart, uma foto) do plano da agenda; `ticketSales`, `sold`, `reserved` da Tarefa 11 do plano irmão.
+
+- [ ] **Step 1: Testes da lista** — `usePaginatedResource('/events', { q })` com busca por título; linha com data (fuso `America/Sao_Paulo`), "Rascunho"/"Publicado", "Já aconteceu" quando `endsAt` passou e, com venda ligada, "8 de 20 vagas" (`sold` de `spots`) ou "8 inscritos" sem limite; link "Participantes" (Tarefa 16); excluir com `ConfirmDialog` mostrando o 409 da API como está.
+- [ ] **Step 2: Testes do dialog** (`FormDialog`) — título, descrição, início/fim (`datetime-local`, convertido de/para UTC), local (vazio = no ateliê), preço (vazio = gratuito), vagas (vazio = sem limite), "Máximo de ingressos por compra" (número, padrão 10, de 1 a 50, só aparece com a venda ligada), foto, link de inscrição externo, `Switch` "Publicado" e `Switch` "Vender ingressos pelo site" (ajuda: "Pago vira 'Comprar ingresso', gratuito vira 'Inscrever-se'. O link de inscrição deixa de ser usado."); campo vazio envia `""` (a API grava `null`); fim antes do início não envia.
+- [ ] **Step 3: Rodar e confirmar que falha. Implementar. Rodar e confirmar que passa.**
+- [ ] **Step 4: Commit** — `feat(admin): add event agenda CRUD`
+
+---
+
+## Task 14: Comprar ingresso na página do evento
+
+**Files:**
+- Modify: `src/features/site/types/event.ts` — `ticketSales`, `maxTicketsPerOrder`, `spotsLeft`, `soldOut` (nos exemplos de `samples.ts`: `false`/`10`/`null`/`false`)
+- Modify: `src/features/store/types/store.ts`, `src/features/store/lib/store-api.ts` (+ teste) — `createTicketCheckout(input)` com o mesmo formato de retorno de `createCheckout` (`paymentUrl: string | null`; 409 com `reason`/`spotsLeft`)
+- Create: `src/features/store/components/TicketForm.tsx` (+ `.test.tsx`)
+- Modify: `src/app/agenda/[slug]/page.tsx` (+ teste), `src/features/site/components/EventCard.tsx` (+ teste)
+
+O formulário aparece **só** com a loja ligada, `ticketSales: true` e o evento ainda não começado; nos outros casos a página fica como hoje (`ctaUrl` ou WhatsApp). Esgotado → botão desabilitado "Esgotado" + "Falar no WhatsApp" pra lista de espera.
+
+Blocos: **Participantes** (um campo de nome por ingresso, começa com 1, "+ Adicionar participante" até `maxTicketsPerOrder` do evento ou até `spotsLeft`, o que for menor, com o aviso "Máximo de N ingressos por compra"; remover), **Seus dados** (nome, e-mail, WhatsApp, como no checkout), **Resumo** ("2 × R$ 45,00 = R$ 90,00" ou "Gratuito", aceite da política de cancelamento com link pra `/cancelamento-de-ingressos`), botão "Ir para o pagamento" / "Confirmar inscrição".
+
+- [ ] **Step 1: Testes** — não aparece com loja desligada, `ticketSales: false` ou evento começado; `soldOut` → "Esgotado"; não deixa adicionar além de `spotsLeft`/`maxTicketsPerOrder`; 409 `too_many` → "O máximo por compra é N ingressos"; nomes vazios bloqueiam o envio com mensagem no campo; envio manda só `{ eventId, attendees, customer, notes }`; pago → `window.location.assign(paymentUrl)`; gratuito (`paymentUrl: null`) → `router.push('/pedido/<token>')`; 409 `sold_out` → "Restam N vagas" e ajusta o limite; 409 `not_available` → "As vendas desse evento foram encerradas"; 503/rede → mensagem e o botão volta; botão com `loading` durante o envio; dispara `begin_checkout` com o evento como item. `EventCard` mostra "Esgotado" quando `soldOut`.
+- [ ] **Step 2: Rodar e confirmar que falha. Implementar. Rodar e confirmar que passa.** Conferir em 375 px.
+- [ ] **Step 3: Commit** — `feat(store): buy event tickets from the event page`
+
+---
+
+## Task 15: `/pedido/[token]` com ingresso
+
+**Files:**
+- Modify: `src/features/store/components/OrderStatus.tsx` (+ teste), `PurchaseTracker.tsx` (+ teste)
+
+Com `kind: 'tickets'`: em vez de itens e entrega, mostra o evento (título com link pra `/agenda/<slug>`, data, local) e a lista de participantes. `paid` com total 0 → "Inscrição confirmada!"; `paid` com valor → "Ingresso confirmado!". Os dois com "Apresente esta página ou diga o nome na entrada". Sem status de preparo. `expired` → "O prazo de pagamento acabou" + link pro evento.
+
+- [ ] **Step 1: Testes** — cada caso acima; `purchase` do GA só quando `total > 0`, e inscrição gratuita dispara `generate_lead` (evento recomendado do GA4 pra cadastro sem valor), uma vez por código; a página não mostra e-mail nem telefone.
+- [ ] **Step 2: Rodar e confirmar que falha. Implementar. Rodar e confirmar que passa.**
+- [ ] **Step 3: Commit** — `feat(store): show tickets on the order page`
+
+---
+
+## Task 16: Admin — participantes e pedidos de ingresso
+
+**Files:**
+- Create: `src/app/admin/agenda/[id]/participantes/page.tsx` (+ `page.test.tsx`)
+- Modify: `src/app/admin/pedidos/page.tsx`, `src/app/admin/pedidos/[id]/page.tsx` (+ testes)
+- Modify: `src/features/admin/types/admin.ts` — `Attendee`, `SiteOrderAdmin` com `kind`/`event`/`tickets`
+
+- [ ] **Step 1: Testes dos participantes** — `usePaginatedResource('/events/<id>/attendees', { q })`; cabeçalho "Oficina X · 12 de 20 vagas"; linha com participante, comprador, código do pedido (link pro detalhe) e `Switch` "Presente" (`PATCH /site-order-tickets/:id/check-in`, desabilitado enquanto salva, lista com `BusyRegion`); busca por nome.
+- [ ] **Step 2: Testes dos pedidos** — filtro "Produtos / Ingressos" (`kind`) ao lado do de status, e busca por código ou nome (`q`); linha de ingresso mostra o evento e "2 ingressos" no lugar de entrega/retirada; detalhe de ingresso mostra participantes e esconde preparo e endereço.
+- [ ] **Step 3: Rodar e confirmar que falha. Implementar. Rodar e confirmar que passa.**
+- [ ] **Step 4: Commit** — `feat(admin): add event attendees and ticket orders`
 
 ---
 
 ## Depois da V1 (fora deste plano)
 
-- **V2 — pagamento dentro do site (Checkout Bricks):** a Tarefa 9 deixa de redirecionar e mostra o Brick de pagamento do Mercado Pago no próprio `/checkout`; carrinho, página do pedido e admin não mudam. Estimativa: 16–24 h (somando os dois projetos).
+- **V2 — pagamento dentro do site (checkout transparente do Pagar.me):** a Tarefa 9 deixa de redirecionar; o `/checkout` ganha os campos de cartão (tokenizados no navegador com a chave pública `pk_…`) e o QR do Pix na própria página; carrinho, página do pedido e admin não mudam. Estimativa: 16–24 h (somando os dois projetos).
+- **E-mail próprio** (confirmação, pedido pronto, ingresso) pelo Resend — detalhes no plano irmão, "Depois da V1".
 - E-mail próprio, cupom, frete grátis acima de um valor, Correios, boleto.
+- **"Avise-me quando chegar"** (pedido da cliente em 2026-11-06, pra V2): na página do produto esgotado, o botão "Esgotado" ganha ao lado um campo de e-mail com "Avise-me quando chegar" e a frase de consentimento; enviado, mostra "Pronto, avisamos você por e-mail". No admin, a lista de produtos mostra "N esperando" nos esgotados. Regras e disparo do aviso no plano irmão ("Depois da V1").
 
 ## Self-review (feito ao escrever este plano)
 
 - **Cobertura:** cadastro (Fase 1, Tarefas 1–3, com `featured` que faltava no plano do catálogo), exibição já feita + verificação (Tarefa 4), V1 completa (Tarefas 5–12), V2 fora.
 - **Conferido contra o código:** `NAV_ITEMS` em `admin/layout.tsx`; `apiFetch` pula `Content-Type` com `FormData`; componentes de admin disponíveis (`ConfirmDialog`, `TablePagination`, `StatusMessage`, `Switch`, `Textarea`); `isSample` em `data/samples.ts`; botão "Pedir pelo WhatsApp" atual em `produtos/[categoria]/[produto]/page.tsx`; GA via `window.gtag` (como `ContactLink`).
-- **Dependências:** Fase 1 independe do backend novo. Fase 2: 5 → 6 → 7 → 8 → 9 → 10; 11 e 12 em paralelo depois da 5.
+- **Dependências:** Fase 1 independe do backend novo. Fase 2: 5 → 6 → 7 → 8 → 9 → 10; 11 e 12 em paralelo depois da 5. Fase 3: 13 (só precisa da agenda da API) → 14 → 15 → 16; 14–16 depois da Fase 2 (reaproveitam `store-api.ts`, `OrderStatus` e o admin de pedidos).
+- **Revisão de 2026-11-06:** estoque no cadastro de produto (Tarefa 11); ingressos em compra separada na página do evento (Fase 3); `/admin/agenda` entrou aqui porque nenhum plano do site cobria o cadastro de eventos.
