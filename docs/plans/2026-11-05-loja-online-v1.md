@@ -20,7 +20,7 @@
 | API do catálogo | ✅ feita e aplicada na Neon |
 | Telas de cadastro no admin | ✅ **Fase 1**, Tarefas 1–3, implementadas em 2026-11-05 (substituem as Tarefas 9–11 do plano do catálogo). Diferença do texto abaixo: a lista de produtos não tem filtro por categoria, porque `GET /products` não filtra e a lista é paginada; fica pra quando o catálogo crescer |
 | Ligar a vitrine na API real | ⏳ Fase 1, Tarefa 4 (era a Tarefa 8 do plano do catálogo) |
-| Loja V1 — produtos | ⏳ **Fase 2** deste plano — depende das Tarefas 1–9 do plano irmão no ar |
+| Loja V1 — produtos | ⏳ **Fase 2** deste plano — depende das Tarefas 1–9 do plano irmão no ar. Já feitos em 2026-11-09, antecipados: estoque e sob encomenda no cadastro de produto e o selo na vitrine (partes das Tarefas 7 e 11), áreas de entrega em `/admin/entregas` e `/admin/loja` (Tarefa 11, Steps 3, 3b e 3c) |
 | Agenda — página pública (`/agenda`, `/agenda/[slug]`) | ✅ feita, lendo `src/features/site/types/event.ts` |
 | Agenda — cadastro no admin (`/admin/agenda`) | ⏳ Fase 3, Tarefa 13 (não tinha plano no site até aqui) |
 | Loja V1 — ingressos | ⏳ **Fase 3**, Tarefas 14–16 — depende das Tarefas 11–13 do plano irmão no ar |
