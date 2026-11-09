@@ -3,15 +3,10 @@
 import { useState } from 'react';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { checkCep, onlyDigits, type CepCheckResult } from '@/features/site/lib/cep-check';
+import { checkCep, maskCep, onlyDigits, type CepCheckResult } from '@/features/site/lib/cep-check';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import type { DeliveryZone } from '@/features/site/lib/delivery-zones';
-
-function maskCep(value: string): string {
-  const digits = onlyDigits(value).slice(0, 8);
-  return digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
-}
 
 export function CepChecker({ zones }: { zones: DeliveryZone[] }) {
   const [cep, setCep] = useState('');

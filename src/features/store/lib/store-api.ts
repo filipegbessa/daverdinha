@@ -1,4 +1,4 @@
-import type { CheckoutQuote } from '@/features/store/types/store';
+import type { CheckoutQuote, CreateCheckoutInput, CreateCheckoutResult } from '@/features/store/types/store';
 
 /**
  * As chamadas da loja à API, como `public-api.ts` é pro catálogo. Rodam no
@@ -22,5 +22,46 @@ export async function quoteCart(
     return (await response.json()) as CheckoutQuote;
   } catch {
     return null;
+  }
+}
+
+type CheckoutFailure = Extract<CreateCheckoutResult, { ok: false }>;
+
+const PAYMENT_UNAVAILABLE = 'Não foi possível iniciar o pagamento. Tente de novo em instantes.';
+
+/**
+ * Cria o pedido e devolve pra onde mandar o cliente pagar. Nunca lança: a
+ * tela decide pelo `status` (409 volta pro carrinho, 422 avisa na entrega,
+ * o resto é "tente de novo").
+ */
+export async function createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return { ok: false, status: 0, message: PAYMENT_UNAVAILABLE };
+
+  try {
+    const response = await fetch(`${apiUrl}/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+    if (response.ok) {
+      return {
+        ok: true,
+        code: String(body.code),
+        token: String(body.token),
+        paymentUrl: String(body.paymentUrl),
+      };
+    }
+    const known = response.status === 409 || response.status === 422;
+    return {
+      ok: false,
+      status: response.status,
+      message: known && typeof body.message === 'string' ? body.message : PAYMENT_UNAVAILABLE,
+      ...(Array.isArray(body.problems) && { problems: body.problems as CheckoutQuote['problems'] }),
+      ...(typeof body.reason === 'string' && { reason: body.reason as CheckoutFailure['reason'] }),
+    };
+  } catch {
+    return { ok: false, status: 0, message: PAYMENT_UNAVAILABLE };
   }
 }

@@ -29,3 +29,23 @@ export interface CheckoutQuote {
     | { available: false; reason: DeliveryUnavailableReason; bairro?: string };
   problems: { productId: string; reason: QuoteProblemReason; available?: number }[];
 }
+
+/** Corpo de `POST /checkout`. Itens só com id e quantidade: preço e frete são do servidor. */
+export interface CreateCheckoutInput {
+  items: { productId: string; quantity: number }[];
+  customer: { name: string; email: string; phone: string };
+  deliveryMethod: 'pickup' | 'delivery';
+  address?: { cep: string; street: string; number: string; complement?: string };
+  notes?: string;
+}
+
+export type CreateCheckoutResult =
+  | { ok: true; code: string; token: string; paymentUrl: string }
+  | {
+      ok: false;
+      /** 409 = estoque/produto mudou; 422 = entrega indisponível; 503 = pagamento fora; 0 = rede. */
+      status: number;
+      message: string;
+      problems?: CheckoutQuote['problems'];
+      reason?: DeliveryUnavailableReason | 'pickup_disabled';
+    };
