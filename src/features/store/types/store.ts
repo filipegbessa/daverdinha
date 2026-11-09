@@ -49,3 +49,33 @@ export type CreateCheckoutResult =
       problems?: CheckoutQuote['problems'];
       reason?: DeliveryUnavailableReason | 'pickup_disabled';
     };
+
+export type SiteOrderStatus = 'pending_payment' | 'paid' | 'expired' | 'cancelled' | 'refunded';
+export type FulfillmentStatus = 'awaiting' | 'preparing' | 'ready' | 'completed';
+
+/** `GET /checkout/orders/:token`: o pedido sem dados de contato nem rua. */
+export interface PublicSiteOrder {
+  code: string;
+  kind: 'products' | 'tickets';
+  status: SiteOrderStatus;
+  fulfillmentStatus: FulfillmentStatus;
+  items: {
+    name: string;
+    slug: string | null;
+    unitPrice: number;
+    quantity: number;
+    imageUrl: string | null;
+    leadTimeDays: number | null;
+  }[];
+  event: null;
+  tickets: { attendeeName: string; unitPrice: number }[];
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  deliveryMethod: 'pickup' | 'delivery' | null;
+  bairro: string | null;
+  pickup: { address: string; hours: string; instructions: string | null } | null;
+  paymentUrl: string | null;
+  expiresAt: string;
+  createdAt: string;
+}

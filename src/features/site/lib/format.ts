@@ -55,6 +55,18 @@ export function formatEventShort(startsAt: string): string {
   return `${weekday} ${p.day}/${p.month} · ${hour(startsAt)}`;
 }
 
+/** "14:32" no horário do Rio: o prazo de pagamento do pedido. */
+export function formatClock(iso: string): string {
+  const p = parts(iso, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  return `${p.hour}:${p.minute}`;
+}
+
+/** "09/11/2026" no horário do Rio. */
+export function formatDate(iso: string): string {
+  const p = parts(iso, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return `${p.day}/${p.month}/${p.year}`;
+}
+
 export function formatEventPrice(price: number | null): string {
   return price === null ? 'Gratuito' : formatPrice(price);
 }

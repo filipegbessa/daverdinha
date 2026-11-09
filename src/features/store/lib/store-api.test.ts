@@ -1,4 +1,4 @@
-import { createCheckout, quoteCart } from './store-api';
+import { createCheckout, getOrderByToken, quoteCart } from './store-api';
 
 /** Resposta mínima de `fetch`: o jsdom dos testes não tem `Response`. */
 function reply(status: number, body: unknown) {
@@ -103,5 +103,34 @@ describe('createCheckout', () => {
 
     fetchMock.mockRejectedValueOnce(new Error('offline'));
     await expect(createCheckout(input)).resolves.toEqual(expect.objectContaining({ ok: false, status: 0 }));
+  });
+});
+
+describe('getOrderByToken', () => {
+  const originalUrl = process.env.NEXT_PUBLIC_API_URL;
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_API_URL = 'https://api.test';
+    fetchMock = jest.fn();
+    global.fetch = fetchMock;
+  });
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_API_URL = originalUrl;
+  });
+
+  it('reads the order without cache', async () => {
+    fetchMock.mockResolvedValue(reply(200, { code: 'DV-0001' }));
+
+    await expect(getOrderByToken('a b')).resolves.toEqual({ code: 'DV-0001' });
+    expect(fetchMock).toHaveBeenCalledWith('https://api.test/checkout/orders/a%20b', { cache: 'no-store' });
+  });
+
+  it('is null on a 404 or a failure', async () => {
+    fetchMock.mockResolvedValueOnce(reply(404, {}));
+    await expect(getOrderByToken('x')).resolves.toBeNull();
+    fetchMock.mockRejectedValueOnce(new Error('offline'));
+    await expect(getOrderByToken('x')).resolves.toBeNull();
   });
 });

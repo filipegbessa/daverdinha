@@ -1,4 +1,9 @@
-import type { CheckoutQuote, CreateCheckoutInput, CreateCheckoutResult } from '@/features/store/types/store';
+import type {
+  CheckoutQuote,
+  CreateCheckoutInput,
+  CreateCheckoutResult,
+  PublicSiteOrder,
+} from '@/features/store/types/store';
 import { isPreviewCart, previewQuote } from '@/features/store/lib/preview-quote';
 
 /**
@@ -73,5 +78,22 @@ export async function createCheckout(input: CreateCheckoutInput): Promise<Create
     };
   } catch {
     return { ok: false, status: 0, message: PAYMENT_UNAVAILABLE };
+  }
+}
+
+/**
+ * O pedido pelo token do link, lido no servidor e sem cache (o status muda
+ * com o pagamento). Não existe, falha ou API sem URL: `null`, e a página
+ * responde 404.
+ */
+export async function getOrderByToken(token: string): Promise<PublicSiteOrder | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/checkout/orders/${encodeURIComponent(token)}`, { cache: 'no-store' });
+    if (!response.ok) return null;
+    return (await response.json()) as PublicSiteOrder;
+  } catch {
+    return null;
   }
 }
