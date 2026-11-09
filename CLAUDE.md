@@ -46,7 +46,7 @@ Tests sit next to the file they cover (`foo.tsx` + `foo.test.tsx`). `jest.setup.
 - Product URLs are nested (`/produtos/[categoria]/[produto]`). The product is looked up by its unique slug only, and a category mismatch does a `permanentRedirect` to the current URL. A category with no active products is a 404.
 - SEO: `lib/seo.ts` builds page metadata (canonical, `noindex` before launch). `lib/structured-data.ts` builds JSON-LD (`Product`, `Event`, `BreadcrumbList`), rendered through `JsonLd`, which escapes `<` because the text comes from the admin. `robots.ts` deliberately has no Disallow: preview pages rely on their own `noindex`. `sitemap.ts` lists the catalog and agenda only in `full` mode.
 - Dates are formatted in `America/Sao_Paulo` (`lib/format.ts`), because Vercel renders in UTC. Prices go through `formatPrice` everywhere, so a card and a product page never disagree.
-- The CEP checker (`lib/cep-check.ts`) is an interim browser-side check against BrasilAPI plus the covered-bairros list. It skips the bot's seeded CEP-range step, so it can occasionally differ from the bot. The target is a public `GET /delivery-locations/check` endpoint.
+- The CEP checker (`lib/cep-check.ts`) asks the API (`GET /delivery-locations/check`), which runs the bot's own resolution (seeded CEP ranges, then BrasilAPI, Rio only), so the site and WhatsApp always agree. The answer is cached by the Vercel CDN for 10 minutes per CEP.
 - Every WhatsApp/Instagram link that should count as a conversion goes through `ContactLink`, which sends a GA `contact_click` event with `channel` and `location`.
 
 ### Public site data sources

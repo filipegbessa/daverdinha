@@ -19,7 +19,7 @@ export function DeliveryZones({ zones }: { zones: DeliveryZone[] }) {
             Digite seu CEP ou procure seu bairro na lista. É a mesma lista que o atendimento do WhatsApp usa.
           </p>
           <div className="mt-6">
-            <CepChecker zones={zones} />
+            <CepChecker />
           </div>
         </div>
         <ul className="grid gap-4 sm:grid-cols-2">

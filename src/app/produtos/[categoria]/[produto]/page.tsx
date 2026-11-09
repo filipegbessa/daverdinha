@@ -119,7 +119,7 @@ export default async function ProductPage({ params }: Props) {
                 <div className="mt-10 rounded-2xl border border-sand-line bg-sand/60 p-5">
                   <h2 className="font-serif text-lg font-semibold text-ink">Entregamos no seu bairro?</h2>
                   <div className="mt-3">
-                    <CepChecker zones={zones} />
+                    <CepChecker />
                   </div>
                 </div>
               )}

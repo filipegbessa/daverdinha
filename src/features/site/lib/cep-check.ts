@@ -1,18 +1,7 @@
-import type { DeliveryZone } from '@/features/site/lib/delivery-zones';
-
 export type CepCheckResult =
   | { status: 'covered'; bairro: string }
   | { status: 'not_covered'; bairro: string }
   | { status: 'unresolved' };
-
-/** Mesma normalização que o bot usa pra comparar bairro: sem acento, sem caixa. */
-export function normalizeBairro(name: string): string {
-  return name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim();
-}
 
 export function onlyDigits(value: string): string {
   return value.replace(/\D/g, '');
@@ -25,35 +14,26 @@ export function maskCep(value: string): string {
 }
 
 /**
- * Verificação de CEP feita no navegador, provisória: consulta a BrasilAPI
- * (a mesma que o bot usa como plano B) e compara o bairro com a lista de
- * bairros atendidos que a página já tem.
- *
- * O bot primeiro olha as faixas de CEP cadastradas no banco e só depois cai
- * na BrasilAPI. Esta versão pula a primeira etapa, então em casos raros pode
- * responder diferente do WhatsApp. O destino é um endpoint público na API
- * (`GET /delivery-locations/check`) que reaproveite a lógica do bot — ver
- * `docs/plans/2026-11-04-agenda-eventos.md` no daverdinha-api.
+ * "Entregamos no seu CEP?", perguntado à API (`GET /delivery-locations/check`),
+ * que usa a mesma regra do bot: faixas de CEP cadastradas primeiro, BrasilAPI
+ * depois, só bairros do Rio. Antes o site consultava a BrasilAPI direto e
+ * podia responder diferente do WhatsApp. Nunca lança: falha, API sem URL ou
+ * CEP incompleto viram `unresolved`.
  */
-export async function checkCep(cep: string, zones: DeliveryZone[]): Promise<CepCheckResult> {
+export async function checkCep(cep: string): Promise<CepCheckResult> {
   const digits = onlyDigits(cep);
-  if (digits.length !== 8) return { status: 'unresolved' };
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (digits.length !== 8 || !apiUrl) return { status: 'unresolved' };
 
-  let bairro: string | undefined;
   try {
-    const response = await fetch(`https://brasilapi.com.br/api/cep/v2/${digits}`);
+    const response = await fetch(`${apiUrl}/delivery-locations/check?cep=${digits}`);
     if (!response.ok) return { status: 'unresolved' };
-    const data = (await response.json()) as { neighborhood?: string; city?: string };
-    if (data.city && normalizeBairro(data.city) !== 'rio de janeiro') {
-      return { status: 'not_covered', bairro: data.neighborhood || data.city };
+    const data = (await response.json()) as { status?: string; bairro?: string };
+    if ((data.status === 'covered' || data.status === 'not_covered') && data.bairro) {
+      return { status: data.status, bairro: data.bairro };
     }
-    bairro = data.neighborhood;
+    return { status: 'unresolved' };
   } catch {
     return { status: 'unresolved' };
   }
-  if (!bairro) return { status: 'unresolved' };
-
-  const target = normalizeBairro(bairro);
-  const covered = zones.some((zone) => zone.bairros.some((b) => normalizeBairro(b) === target));
-  return covered ? { status: 'covered', bairro } : { status: 'not_covered', bairro };
 }

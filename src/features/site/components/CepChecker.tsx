@@ -6,9 +6,8 @@ import { cn } from '@/lib/utils';
 import { checkCep, maskCep, onlyDigits, type CepCheckResult } from '@/features/site/lib/cep-check';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
-import type { DeliveryZone } from '@/features/site/lib/delivery-zones';
 
-export function CepChecker({ zones }: { zones: DeliveryZone[] }) {
+export function CepChecker() {
   const [cep, setCep] = useState('');
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<CepCheckResult | null>(null);
@@ -16,7 +15,7 @@ export function CepChecker({ zones }: { zones: DeliveryZone[] }) {
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setChecking(true);
-    setResult(await checkCep(cep, zones));
+    setResult(await checkCep(cep));
     setChecking(false);
   }
 
