@@ -9,19 +9,11 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { formatCurrency } from '@/features/admin/lib/format-currency';
+import { centsFromInput } from '@/features/admin/lib/currency-input';
 import { FormDialog } from '@/features/admin/components/FormDialog';
 import { FormField, SwitchField } from '@/features/admin/components/FormField';
 import { ProductImagesInput } from '@/features/admin/components/ProductImagesInput';
 import type { ProductAdmin, ProductCategoryAdmin } from '@/features/admin/types/admin';
-
-/** Maior preço aceito (R$ 999.999,99) — só pra não deixar o número de centavos crescer sem limite. */
-const MAX_PRICE_CENTS = 99_999_999;
-
-/** Os dígitos do que já foi digitado, reinterpretados como centavos — cada tecla empurra o valor pra esquerda. */
-function priceCentsFromInput(value: string): number {
-  const digits = value.replace(/\D/g, '');
-  return Math.min(Number(digits || '0'), MAX_PRICE_CENTS);
-}
 
 /** Maior prazo de confecção aceito pela API, em dias. */
 const MAX_LEAD_TIME_DAYS = 180;
@@ -166,7 +158,7 @@ export function ProductDialog({
             ref={priceInputRef}
             inputMode="numeric"
             value={formatCurrency(priceCents / 100, 'BRL')}
-            onChange={(e) => setPriceCents(priceCentsFromInput(e.target.value))}
+            onChange={(e) => setPriceCents(centsFromInput(e.target.value))}
           />
         </FormField>
         <FormField id="productCategory" label="Categoria">

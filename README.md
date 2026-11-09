@@ -91,6 +91,14 @@ Página para configurar quais bairros do Rio de Janeiro o bot considera atendido
 - A lista de bairros é fixa: mostra todos os bairros oficiais do Rio, agrupados por região administrativa, com dados vindos do seed do backend. O admin não pode mais criar, renomear nem excluir um bairro — só ligar/desligar a cobertura.
 - Cada bairro tem um toggle individual de atende/não atende. Cada região tem um checkbox de "marcar todos", que fica marcado se todos os bairros da região atendem, desmarcado se nenhum atende, e indeterminado se só parte atende; clicar nele liga ou desliga a região inteira de uma vez.
 - Um filtro de status ("Todas"/"Atende"/"Não atende") restringe quais bairros aparecem dentro de cada região — mas o cabeçalho da região continua visível mesmo se o filtro esconder todos os seus bairros.
+- **Áreas de entrega do site** (no topo da página, `DeliveryAreasSection`): cada região se divide em áreas com nome e valor de entrega (`/delivery-areas`). O diálogo da área tem nome, valor (máscara de centavos) e os bairros da região, com busca; marcar um bairro de outra área move ele, e bairro não atendido aparece marcado como tal. Salvar é `POST`/`PATCH` da área e depois `PUT /delivery-areas/:id/locations` com a lista inteira. Bairros atendidos sem área aparecem num aviso: o site não entrega neles. O bot não usa áreas, só a cobertura.
+
+### /admin/loja
+
+Configurações da loja online (`/store-settings`, linha única na API), num formulário só com um "Salvar":
+
+- **Retirada no ateliê**: ligada/desligada, endereço, horário (texto livre) e instruções opcionais. Endereço e horário não podem ficar vazios; pra tirar a retirada do checkout, desliga.
+- **Parcelamento no cartão**: máximo de parcelas (1 = só à vista) e valor mínimo da parcela, sem juros pro comprador. O texto de ajuda mostra ao vivo em quantas parcelas sai um pedido de R$ 100, com a mesma regra da API.
 
 ### /admin/conversas
 

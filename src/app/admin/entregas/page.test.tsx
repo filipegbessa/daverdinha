@@ -11,10 +11,27 @@ const locations = [
   { id: 'l3', zone: 'Zona Oeste', regionName: 'Barra da Tijuca', covered: true },
 ];
 
+/**
+ * A página também carrega as áreas de entrega (`/delivery-areas`); aqui elas
+ * vêm vazias e fora do mock do teste, pra contagem e ordem das chamadas de
+ * bairro continuarem as mesmas. As áreas têm testes próprios mais abaixo.
+ */
+/** A lista de bairros (o bot), separada da seção de áreas, que repete os nomes das zonas. */
+function bairros() {
+  return within(screen.getByRole('region', { name: 'Bairros atendidos' }));
+}
+
+function mockClient(apiFetch: jest.Mock, areas: unknown[] = []) {
+  (useApiClient as jest.Mock).mockReturnValue({
+    apiFetch: (path: string, init?: RequestInit) =>
+      path.startsWith('/delivery-areas') && !init ? Promise.resolve(areas) : apiFetch(path, init),
+  });
+}
+
 describe('EntregasPage', () => {
   it('shows a loading state before the locations arrive', () => {
     const apiFetch = jest.fn().mockReturnValue(new Promise(() => {}));
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
 
@@ -23,20 +40,21 @@ describe('EntregasPage', () => {
 
   it('groups locations by zone', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
 
-    expect(await screen.findByText('Zona Sul')).toBeInTheDocument();
+    await screen.findByRole('region', { name: 'Bairros atendidos' });
+    expect(bairros().getByText('Zona Sul')).toBeInTheDocument();
     expect(screen.getByText('Ipanema')).toBeInTheDocument();
     expect(screen.getByText('Copacabana')).toBeInTheDocument();
-    expect(screen.getByText('Zona Oeste')).toBeInTheDocument();
+    expect(bairros().getByText('Zona Oeste')).toBeInTheDocument();
     expect(screen.getByText('Barra da Tijuca')).toBeInTheDocument();
   });
 
   it('shows an inline error when loading the locations fails', async () => {
     const apiFetch = jest.fn().mockRejectedValue(new Error('Não foi possível carregar os locais de entrega.'));
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
 
@@ -46,7 +64,7 @@ describe('EntregasPage', () => {
 
   it('toggling a bairro calls PATCH with the flipped value', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Ipanema');
@@ -66,7 +84,7 @@ describe('EntregasPage', () => {
       .fn()
       .mockResolvedValueOnce(locations)
       .mockRejectedValueOnce(new Error('Erro ao atualizar local de entrega.'));
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Ipanema');
@@ -78,7 +96,7 @@ describe('EntregasPage', () => {
 
   it('shows the region checkbox as checked when every bairro in it is covered', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Barra da Tijuca');
@@ -91,7 +109,7 @@ describe('EntregasPage', () => {
       { id: 'l1', zone: 'Centro', regionName: 'Lapa', covered: false },
       { id: 'l2', zone: 'Centro', regionName: 'Saúde', covered: false },
     ]);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Lapa');
@@ -103,7 +121,7 @@ describe('EntregasPage', () => {
 
   it('shows the region checkbox as indeterminate when the region has mixed coverage', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Ipanema');
@@ -113,7 +131,7 @@ describe('EntregasPage', () => {
 
   it('clicking a mixed-coverage region checkbox covers every bairro that was not already covered', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Ipanema');
@@ -145,7 +163,7 @@ describe('EntregasPage', () => {
         { id: 'l1', zone: 'Zona Sul', regionName: 'Ipanema', covered: true },
         { id: 'l2', zone: 'Zona Sul', regionName: 'Copacabana', covered: false },
       ]); // reload reflecting the server's actual (partially-updated) state
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Ipanema');
@@ -160,7 +178,7 @@ describe('EntregasPage', () => {
 
   it('clicking a fully-covered region checkbox uncovers every bairro in it', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Barra da Tijuca');
@@ -177,7 +195,7 @@ describe('EntregasPage', () => {
 
   it('the "Atende" filter hides non-covered bairros without hiding their region header', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Ipanema');
@@ -186,19 +204,19 @@ describe('EntregasPage', () => {
 
     expect(screen.getByText('Ipanema')).toBeInTheDocument();
     expect(screen.queryByText('Copacabana')).not.toBeInTheDocument();
-    expect(screen.getByText('Zona Sul')).toBeInTheDocument();
+    expect(bairros().getByText('Zona Sul')).toBeInTheDocument();
   });
 
   it('the "Não atende" filter can leave a region listed with an empty bairro list', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Barra da Tijuca');
 
     await userEvent.click(screen.getByRole('button', { name: 'Não atende' }));
 
-    expect(screen.getByText('Zona Oeste')).toBeInTheDocument();
+    expect(bairros().getByText('Zona Oeste')).toBeInTheDocument();
     expect(screen.queryByText('Barra da Tijuca')).not.toBeInTheDocument();
   });
 
@@ -212,7 +230,7 @@ describe('EntregasPage', () => {
       }
       return Promise.resolve(locations);
     });
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Ipanema');
@@ -233,7 +251,7 @@ describe('EntregasPage', () => {
       }
       return Promise.resolve(locations);
     });
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Ipanema');
@@ -250,7 +268,7 @@ describe('EntregasPage', () => {
 
   it('renders no controls to create, rename, or delete a bairro', async () => {
     const apiFetch = jest.fn().mockResolvedValue(locations);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    mockClient(apiFetch);
 
     render(<EntregasPage />);
     await screen.findByText('Ipanema');

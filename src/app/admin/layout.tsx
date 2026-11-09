@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: '/admin/produtos', label: 'Produtos' },
   { href: '/admin/categorias', label: 'Categorias' },
   { href: '/admin/conversas', label: 'Conversas' },
+  { href: '/admin/loja', label: 'Loja' },
 ];
 
 function isActiveRoute(pathname: string, href: string) {

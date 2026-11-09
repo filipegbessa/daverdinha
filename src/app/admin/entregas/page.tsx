@@ -4,7 +4,8 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { PageHeader } from '@/features/admin/components/PageHeader';
-import type { DeliveryLocation } from '@/features/admin/types/admin';
+import { DeliveryAreasSection } from '@/features/admin/components/DeliveryAreasSection';
+import type { DeliveryAreaAdmin, DeliveryLocation, DeliveryZoneAreas } from '@/features/admin/types/admin';
 
 type CoverageFilter = 'all' | 'covered' | 'not-covered';
 
@@ -22,6 +23,15 @@ export default function EntregasPage() {
     error: loadError,
     refetch: load,
   } = useApiResource<DeliveryLocation[]>('/delivery-locations');
+  // Áreas de entrega do site. Elas dependem do `covered` e do `areaId` dos
+  // bairros, então toda mudança aqui recarrega as duas listas.
+  const {
+    data: zoneAreas,
+    isRefreshing: areasRefreshing,
+    error: areasError,
+    refetch: loadAreas,
+  } = useApiResource<DeliveryZoneAreas[]>('/delivery-areas');
+  const areas: DeliveryAreaAdmin[] = zoneAreas?.flatMap((z) => z.areas) ?? [];
   // Coverage toggles report their own failures; a load failure comes from
   // the resource hook. They're kept apart so a failed toggle doesn't read
   // like the whole page failed to load.
@@ -38,7 +48,8 @@ export default function EntregasPage() {
         method: 'PATCH',
         body: JSON.stringify({ covered: !location.covered }),
       });
-      await load();
+      load();
+      loadAreas();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao atualizar local de entrega.');
     } finally {
@@ -69,7 +80,8 @@ export default function EntregasPage() {
           }),
         ),
       );
-      await load();
+      load();
+      loadAreas();
       if (results.some((result) => result.status === 'rejected')) {
         setError('Erro ao atualizar a região.');
       }
@@ -120,50 +132,67 @@ export default function EntregasPage() {
         </div>
       </PageHeader>
       {error && <ErrorAlert>{error}</ErrorAlert>}
-      <div className="mt-6 space-y-4">
-        {Object.entries(byZone).map(([zone, zoneLocations]) => {
-          const visible = zoneLocations.filter(matchesFilter);
-          const allCovered = zoneLocations.every((loc) => loc.covered);
-          const noneCovered = zoneLocations.every((loc) => !loc.covered);
-          const zonePending = pendingZones.has(zone);
+      {areasError && <ErrorAlert>{areasError}</ErrorAlert>}
+      {zoneAreas && (
+        <DeliveryAreasSection
+          areas={areas}
+          locations={locations}
+          busy={areasRefreshing}
+          onChanged={() => {
+            load();
+            loadAreas();
+          }}
+        />
+      )}
+      <section aria-labelledby="covered-bairros-title" className="mt-8">
+        <h2 id="covered-bairros-title" className="text-lg font-semibold">
+          Bairros atendidos
+        </h2>
+        <div className="mt-3 space-y-4">
+          {Object.entries(byZone).map(([zone, zoneLocations]) => {
+            const visible = zoneLocations.filter(matchesFilter);
+            const allCovered = zoneLocations.every((loc) => loc.covered);
+            const noneCovered = zoneLocations.every((loc) => !loc.covered);
+            const zonePending = pendingZones.has(zone);
 
-          return (
-            <div key={zone} className="overflow-hidden rounded-lg border border-sand-line">
-              <div className="flex items-center gap-2 bg-sand px-3 py-2">
-                <IndeterminateCheckbox
-                  checked={allCovered}
-                  indeterminate={!allCovered && !noneCovered}
-                  onChange={() => toggleZone(zone, zoneLocations)}
-                  disabled={zonePending}
-                  aria-label={`Marcar toda a região ${zone}`}
-                  aria-busy={zonePending}
-                  className="h-4 w-4 accent-berry disabled:cursor-wait disabled:opacity-50"
-                />
-                <h2 className="text-sm font-semibold tracking-wide text-berry uppercase">{zone}</h2>
+            return (
+              <div key={zone} className="overflow-hidden rounded-lg border border-sand-line">
+                <div className="flex items-center gap-2 bg-sand px-3 py-2">
+                  <IndeterminateCheckbox
+                    checked={allCovered}
+                    indeterminate={!allCovered && !noneCovered}
+                    onChange={() => toggleZone(zone, zoneLocations)}
+                    disabled={zonePending}
+                    aria-label={`Marcar toda a região ${zone}`}
+                    aria-busy={zonePending}
+                    className="h-4 w-4 accent-berry disabled:cursor-wait disabled:opacity-50"
+                  />
+                  <h3 className="text-sm font-semibold tracking-wide text-berry uppercase">{zone}</h3>
+                </div>
+                <ul className="grid grid-cols-1 gap-x-4 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {visible.map((location) => {
+                    const itemPending = pendingIds.has(location.id);
+                    return (
+                      <li key={location.id} className="flex items-center gap-2 py-1">
+                        <input
+                          type="checkbox"
+                          checked={location.covered}
+                          onChange={() => toggleCovered(location)}
+                          disabled={itemPending}
+                          aria-label={`Atendida ${location.regionName}`}
+                          aria-busy={itemPending}
+                          className="h-4 w-4 accent-berry disabled:cursor-wait disabled:opacity-50"
+                        />
+                        <span className={`text-sm ${itemPending ? 'text-ink-soft' : ''}`}>{location.regionName}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
-              <ul className="grid grid-cols-1 gap-x-4 p-3 sm:grid-cols-2 lg:grid-cols-3">
-                {visible.map((location) => {
-                  const itemPending = pendingIds.has(location.id);
-                  return (
-                    <li key={location.id} className="flex items-center gap-2 py-1">
-                      <input
-                        type="checkbox"
-                        checked={location.covered}
-                        onChange={() => toggleCovered(location)}
-                        disabled={itemPending}
-                        aria-label={`Atendida ${location.regionName}`}
-                        aria-busy={itemPending}
-                        className="h-4 w-4 accent-berry disabled:cursor-wait disabled:opacity-50"
-                      />
-                      <span className={`text-sm ${itemPending ? 'text-ink-soft' : ''}`}>{location.regionName}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

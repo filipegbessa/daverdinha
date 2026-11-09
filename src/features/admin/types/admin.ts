@@ -32,6 +32,34 @@ export interface DeliveryLocation {
   zone: string;
   regionName: string;
   covered: boolean;
+  /** Área de entrega do site; sem área, o site não entrega no bairro. */
+  areaId?: string | null;
+}
+
+/** Subdivisão de uma zona com valor de entrega próprio (só o site usa). */
+export interface DeliveryAreaAdmin {
+  id: string;
+  zone: string;
+  name: string;
+  fee: number;
+  locations: { id: string; regionName: string; covered: boolean }[];
+}
+
+/** `GET /delivery-areas`: por zona, as áreas e os bairros atendidos sem área. */
+export interface DeliveryZoneAreas {
+  zone: string;
+  areas: DeliveryAreaAdmin[];
+  unassigned: { id: string; regionName: string }[];
+}
+
+/** Configurações da loja (`/admin/loja`): retirada e parcelamento. */
+export interface StoreSettings {
+  pickupEnabled: boolean;
+  pickupAddress: string;
+  pickupHours: string;
+  pickupInstructions: string | null;
+  maxInstallments: number;
+  minInstallmentValue: number;
 }
 
 /**
