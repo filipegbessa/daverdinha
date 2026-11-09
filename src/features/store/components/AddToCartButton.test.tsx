@@ -45,10 +45,13 @@ describe('AddToCartButton', () => {
     jest.useRealTimers();
   });
 
-  it('does not sell preview samples', () => {
+  it('lets preview samples into the cart, saying the purchase will not go through', async () => {
+    const user = userEvent.setup();
     renderButton(SAMPLE_PRODUCTS[0]);
 
-    expect(screen.getByRole('button', { name: 'Disponível no lançamento' })).toBeDisabled();
+    expect(screen.getByText(/Prévia: produto de exemplo/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Adicionar ao carrinho' }));
+    expect(readCart()).toEqual([expect.objectContaining({ productId: SAMPLE_PRODUCTS[0].id })]);
   });
 
   it('does not sell a sold-out product', () => {

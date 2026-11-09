@@ -73,8 +73,9 @@ describe('/produtos/[categoria]/[produto]', () => {
     it('makes buying on the site the main action and keeps WhatsApp as the second one', async () => {
       await renderPage('vasos', 'vaso-terracota-m');
 
-      // Exemplo da prévia: o botão existe, mas não vende.
-      expect(screen.getByRole('button', { name: 'Disponível no lançamento' })).toBeDisabled();
+      // Exemplo da prévia: entra no carrinho pra validar a loja, com o aviso.
+      expect(screen.getByRole('button', { name: 'Adicionar ao carrinho' })).toBeEnabled();
+      expect(screen.getByText(/Prévia: produto de exemplo/)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'Pedir pelo WhatsApp' })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'Carrinho' })).toHaveAttribute('href', '/carrinho');
     });

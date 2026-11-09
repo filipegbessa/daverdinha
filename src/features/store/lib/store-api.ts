@@ -1,4 +1,5 @@
 import type { CheckoutQuote, CreateCheckoutInput, CreateCheckoutResult } from '@/features/store/types/store';
+import { isPreviewCart, previewQuote } from '@/features/store/lib/preview-quote';
 
 /**
  * As chamadas da loja à API, como `public-api.ts` é pro catálogo. Rodam no
@@ -9,6 +10,8 @@ export async function quoteCart(
   items: { productId: string; quantity: number }[],
   cep?: string,
 ): Promise<CheckoutQuote | null> {
+  // Prévia (`/site` com produtos de exemplo): cotação montada aqui mesmo.
+  if (isPreviewCart(items)) return previewQuote(items, cep);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl || items.length === 0) return null;
 
@@ -27,6 +30,10 @@ export async function quoteCart(
 
 type CheckoutFailure = Extract<CreateCheckoutResult, { ok: false }>;
 
+/** O que aparece ao finalizar uma compra de exemplo na prévia. */
+export const PREVIEW_CHECKOUT =
+  'Prévia: o pagamento ainda não está ligado. Na loja de verdade, aqui você iria pra página de pagamento.';
+
 const PAYMENT_UNAVAILABLE = 'Não foi possível iniciar o pagamento. Tente de novo em instantes.';
 
 /**
@@ -35,6 +42,9 @@ const PAYMENT_UNAVAILABLE = 'Não foi possível iniciar o pagamento. Tente de no
  * o resto é "tente de novo").
  */
 export async function createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
+  if (isPreviewCart(input.items)) {
+    return { ok: false, status: 0, message: PREVIEW_CHECKOUT };
+  }
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) return { ok: false, status: 0, message: PAYMENT_UNAVAILABLE };
 
