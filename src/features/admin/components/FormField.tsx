@@ -1,27 +1,36 @@
 'use client';
 import { cloneElement, isValidElement } from 'react';
 import { Switch } from '@/components/ui/switch';
+import { ErrorText } from '@/features/admin/components/StatusMessage';
 
 /**
- * Label + control + optional hint, the block every admin form repeats. The
- * hint is wired to the control with `aria-describedby`, so a screen reader
- * reads it with the field instead of as loose text.
+ * Label + control + optional hint and error, the block every admin form
+ * repeats. Hint and error are wired to the control with `aria-describedby`
+ * (and the error with `aria-invalid`), so a screen reader reads them with the
+ * field instead of as loose text.
  */
 export function FormField({
   id,
   label,
   hint,
+  error,
   children,
 }: {
   /** The control's `id`; the label points at it. */
   id: string;
   label: React.ReactNode;
   hint?: React.ReactNode;
-  children: React.ReactElement<{ 'aria-describedby'?: string }>;
+  /** A validation message for this field, shown under it. */
+  error?: React.ReactNode;
+  children: React.ReactElement<{ 'aria-describedby'?: string; 'aria-invalid'?: boolean }>;
 }) {
   const hintId = hint ? `${id}-hint` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
+  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
   const control =
-    hintId && isValidElement(children) ? cloneElement(children, { 'aria-describedby': hintId }) : children;
+    describedBy && isValidElement(children)
+      ? cloneElement(children, { 'aria-describedby': describedBy, ...(error ? { 'aria-invalid': true } : {}) })
+      : children;
 
   return (
     <div>
@@ -33,6 +42,11 @@ export function FormField({
         <p id={hintId} className="mt-1 text-sm text-ink-soft">
           {hint}
         </p>
+      )}
+      {error && (
+        <ErrorText id={errorId} className="mt-1 text-sm">
+          {error}
+        </ErrorText>
       )}
     </div>
   );

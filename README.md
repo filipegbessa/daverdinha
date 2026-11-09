@@ -77,6 +77,7 @@ Cadastro do catálogo que aparece no site (`/produtos`, páginas de categoria e 
 - Nome, descrição, preço (máscara de centavos, sempre com "R$" na frente), categoria, "Aparece no site" e "Destaque". A chave da lista liga e desliga o produto sem abrir o formulário.
 - Até 6 fotos (JPEG, PNG ou WebP, 5 MB cada), conferidas no navegador antes do envio; a primeira é a capa. Vai tudo num `multipart/form-data` só. Editar sem escolher fotos novas não manda o campo `images` e mantém as atuais; escolher novas substitui todas (é a regra da API).
 - O endereço (`/produtos/[categoria]/[produto]`) é gerado pela API e não muda ao renomear.
+- Estoque: com quantidade é pronta entrega (0 = esgotado). O checkbox "Sob encomenda" desliga a quantidade e pede o prazo de confecção (1 a 180 dias); vai como `stock=""` + `leadTimeDays`. Voltando pra pronta entrega, o prazo não é enviado e fica guardado na API. A lista mostra "Estoque: N", "Esgotado" ou "Sob encomenda · N dias", e o site mostra o selo correspondente (`AvailabilityBadge`) no card, na página do produto e no JSON-LD (`InStock`/`MadeToOrder`/`OutOfStock`).
 - Busca por nome e filtros de categoria, "aparece no site" e destaque, todos no servidor (`GET /products?q=&categoryId=&active=&featured=`), combináveis e paginados.
 
 ### /admin/categorias

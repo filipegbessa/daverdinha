@@ -18,6 +18,14 @@ import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMess
 import { formatCurrency } from '@/features/admin/lib/format-currency';
 import type { ProductAdmin, ProductCategoryAdmin } from '@/features/admin/types/admin';
 
+/** Como o produto está pro site, em poucas palavras, na linha da lista. */
+function stockLabel(product: ProductAdmin): string {
+  if (product.stock === null) {
+    return product.leadTimeDays ? `Sob encomenda · ${product.leadTimeDays} dias` : 'Sob encomenda · sem prazo';
+  }
+  return product.stock === 0 ? 'Esgotado' : `Estoque: ${product.stock}`;
+}
+
 export default function ProdutosPage() {
   const { apiFetch } = useApiClient();
   const [search, setSearch] = useState('');
@@ -147,6 +155,7 @@ export default function ProdutosPage() {
                 <p className="text-sm text-ink-soft">
                   {product.category.name} · {formatCurrency(product.price, 'BRL')}
                   {product.images.length === 0 && ' · sem foto'}
+                  {` · ${stockLabel(product)}`}
                 </p>
               </div>
               <Switch

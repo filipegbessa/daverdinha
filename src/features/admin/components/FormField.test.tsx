@@ -13,6 +13,19 @@ describe('FormField', () => {
 
     expect(screen.getByLabelText('Ordem')).toHaveAccessibleDescription('Menor aparece primeiro.');
   });
+
+  it('shows an error under the control, marks it invalid and reads it with the hint', () => {
+    render(
+      <FormField id="stock" label="Estoque" hint="0 = esgotado." error="Informe a quantidade.">
+        <Input id="stock" />
+      </FormField>,
+    );
+
+    const input = screen.getByLabelText('Estoque');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAccessibleDescription('0 = esgotado. Informe a quantidade.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Informe a quantidade.');
+  });
 });
 
 describe('SwitchField', () => {

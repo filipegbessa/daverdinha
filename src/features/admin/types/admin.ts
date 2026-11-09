@@ -64,6 +64,12 @@ export interface ProductAdmin {
   /** Aparece na vitrine da home. */
   featured: boolean;
   order: number;
+  /** Com número: pronta entrega (0 = esgotado). `null`: sob encomenda. */
+  stock: number | null;
+  /** Prazo de confecção salvo, em dias — guardado mesmo em pronta entrega. */
+  leadTimeDays: number | null;
+  /** O que o site mostra, já descontando unidades reservadas em pedidos pendentes. */
+  availability: 'in_stock' | 'made_to_order' | 'sold_out';
 }
 
 export type ConversationStatus = 'bot_active' | 'paused_human';

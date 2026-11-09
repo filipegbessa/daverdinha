@@ -23,11 +23,19 @@ function priceCentsFromInput(value: string): number {
   return Math.min(Number(digits || '0'), MAX_PRICE_CENTS);
 }
 
+/** Maior prazo de confecção aceito pela API, em dias. */
+const MAX_LEAD_TIME_DAYS = 180;
+
 /**
  * Criar e editar produto. Vai como `multipart/form-data` (texto + fotos no
  * mesmo envio); `apiFetch` já deixa o navegador montar o `Content-Type`.
  * O campo `images` só é enviado quando a cliente escolheu fotos novas —
  * a API troca todas as fotos sempre que ele chega.
+ *
+ * Estoque: com quantidade é pronta entrega (0 = esgotado); "Sob encomenda"
+ * desliga a quantidade e pede o prazo de confecção. Sob encomenda vai como
+ * `stock=""`, que a API grava como `null`. Voltando pra pronta entrega, o
+ * prazo não é enviado e fica guardado na API pra reaparecer depois.
  */
 export function ProductDialog({
   product,
@@ -49,6 +57,10 @@ export function ProductDialog({
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? categories[0]?.id ?? '');
   const [active, setActive] = useState(product?.active ?? true);
   const [featured, setFeatured] = useState(product?.featured ?? false);
+  const [madeToOrder, setMadeToOrder] = useState(product ? product.stock === null : false);
+  const [stock, setStock] = useState(product?.stock?.toString() ?? '');
+  const [leadTimeDays, setLeadTimeDays] = useState(product?.leadTimeDays?.toString() ?? '');
+  const [fieldErrors, setFieldErrors] = useState<{ stock?: string; leadTimeDays?: string }>({});
   const [files, setFiles] = useState<File[]>([]);
 
   // O cursor sempre volta pro fim: o valor é inteiramente formatado a cada
@@ -58,7 +70,25 @@ export function ProductDialog({
     el?.setSelectionRange(el.value.length, el.value.length);
   }, [priceCents]);
 
+  function validateStock() {
+    const errors: typeof fieldErrors = {};
+    if (madeToOrder) {
+      const days = Number(leadTimeDays);
+      if (leadTimeDays === '' || !Number.isInteger(days) || days < 1 || days > MAX_LEAD_TIME_DAYS) {
+        errors.leadTimeDays = `Informe o prazo de confecção, de 1 a ${MAX_LEAD_TIME_DAYS} dias.`;
+      }
+    } else {
+      const quantity = Number(stock);
+      if (stock === '' || !Number.isInteger(quantity) || quantity < 0) {
+        errors.stock = 'Informe a quantidade em estoque (0 se estiver esgotado).';
+      }
+    }
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
   async function handleSubmit() {
+    if (!validateStock()) return;
     const form = new FormData();
     form.append('name', name.trim());
     form.append('description', description.trim());
@@ -66,6 +96,12 @@ export function ProductDialog({
     form.append('categoryId', categoryId);
     form.append('active', String(active));
     form.append('featured', String(featured));
+    if (madeToOrder) {
+      form.append('stock', '');
+      form.append('leadTimeDays', leadTimeDays);
+    } else {
+      form.append('stock', stock);
+    }
     files.forEach((file) => form.append('images', file));
 
     const ok = await save.run(() =>
@@ -143,6 +179,58 @@ export function ProductDialog({
             ))}
           </NativeSelect>
         </FormField>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <FormField
+            id="productStock"
+            label="Estoque"
+            hint={madeToOrder ? 'Sob encomenda não tem limite de quantidade.' : '0 = esgotado.'}
+            error={fieldErrors.stock}
+          >
+            <Input
+              id="productStock"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={1}
+              value={madeToOrder ? '' : stock}
+              onChange={(e) => setStock(e.target.value)}
+              disabled={madeToOrder}
+            />
+          </FormField>
+          <label className="mt-2 flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={madeToOrder}
+              onChange={(e) => {
+                setMadeToOrder(e.target.checked);
+                setFieldErrors({});
+              }}
+              className="h-4 w-4 accent-berry"
+            />
+            Sob encomenda
+          </label>
+        </div>
+        {madeToOrder && (
+          <FormField
+            id="productLeadTime"
+            label="Prazo de confecção (dias)"
+            hint="Aparece no site junto com o selo “Sob encomenda”."
+            error={fieldErrors.leadTimeDays}
+          >
+            <Input
+              id="productLeadTime"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={MAX_LEAD_TIME_DAYS}
+              step={1}
+              value={leadTimeDays}
+              onChange={(e) => setLeadTimeDays(e.target.value)}
+            />
+          </FormField>
+        )}
       </div>
       <ProductImagesInput currentImages={product?.images ?? []} files={files} onChange={setFiles} />
       <SwitchField label="Aparece no site" checked={active} onCheckedChange={setActive} />

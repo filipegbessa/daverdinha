@@ -22,9 +22,17 @@ export function ErrorAlert({ children, className = '' }: { children: React.React
 }
 
 /** The inline, unboxed variant for errors shown next to the control that caused them. */
-export function ErrorText({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+export function ErrorText({
+  children,
+  className = '',
+  id,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+}) {
   return (
-    <p role="alert" className={`mt-2 text-berry ${className}`}>
+    <p id={id} role="alert" className={`mt-2 text-berry ${className}`}>
       {children}
     </p>
   );

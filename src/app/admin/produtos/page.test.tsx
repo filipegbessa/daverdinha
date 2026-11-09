@@ -22,6 +22,9 @@ const products = [
     active: true,
     featured: true,
     order: 0,
+    stock: 4,
+    leadTimeDays: null,
+    availability: 'in_stock',
   },
   {
     id: 'p2',
@@ -35,6 +38,25 @@ const products = [
     active: false,
     featured: false,
     order: 1,
+    stock: null,
+    leadTimeDays: 7,
+    availability: 'made_to_order',
+  },
+  {
+    id: 'p3',
+    name: 'Vaso G',
+    slug: 'vaso-g',
+    description: 'Cerâmica.',
+    price: 129,
+    images: ['https://blob/3.jpg'],
+    categoryId: 'cat1',
+    category: { id: 'cat1', name: 'Vasos', slug: 'vasos' },
+    active: true,
+    featured: false,
+    order: 2,
+    stock: 0,
+    leadTimeDays: null,
+    availability: 'sold_out',
   },
 ];
 
@@ -64,6 +86,16 @@ describe('ProdutosPage', () => {
     expect(screen.getByText(/Vasos · R\$ 89,90/)).toBeInTheDocument();
     expect(screen.getByText(/R\$ 49,00 · sem foto/)).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Mostrar Vaso P no site' })).not.toBeChecked();
+  });
+
+  it('says how each product is for sale: stock, sold out or made to order', async () => {
+    mockApi();
+
+    render(<ProdutosPage />);
+
+    expect(await screen.findByText(/R\$ 89,90 · Estoque: 4/)).toBeInTheDocument();
+    expect(screen.getByText(/sem foto · Sob encomenda · 7 dias/)).toBeInTheDocument();
+    expect(screen.getByText(/R\$ 129,00 · Esgotado/)).toBeInTheDocument();
   });
 
   it('toggles "active" with a multipart PATCH carrying only that field', async () => {
