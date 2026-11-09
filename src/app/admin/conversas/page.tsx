@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
-import { useDebouncedValue } from '@/features/admin/lib/use-debounced-value';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { TablePagination } from '@/features/admin/components/TablePagination';
 import { PageHeader } from '@/features/admin/components/PageHeader';

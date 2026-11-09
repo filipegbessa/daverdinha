@@ -24,7 +24,7 @@ export function categoryHref(categorySlug: string): string {
  * trilha de navegação. Se o produto trocar de categoria, a página redireciona
  * a URL antiga (ver `app/produtos/[categoria]/[produto]/page.tsx`).
  */
-export function productHref(product: Pick<Product, 'slug' | 'category'>): string {
+export function productHref(product: Pick<Product, 'slug'> & { category: Pick<Product['category'], 'slug'> }): string {
   return `${categoryHref(product.category.slug)}/${product.slug}`;
 }
 

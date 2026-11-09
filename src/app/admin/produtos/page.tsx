@@ -7,7 +7,7 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { useDebouncedValue } from '@/features/admin/lib/use-debounced-value';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { TablePagination } from '@/features/admin/components/TablePagination';
 import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';

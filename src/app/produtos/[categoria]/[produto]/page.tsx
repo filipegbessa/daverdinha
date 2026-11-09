@@ -20,6 +20,8 @@ import { pageMetadata } from '@/features/site/lib/seo';
 import { productJsonLd } from '@/features/site/lib/structured-data';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { orderMessage } from '@/features/site/lib/whatsapp-messages';
+import { AddToCartButton } from '@/features/store/components/AddToCartButton';
+import { isStoreEnabled } from '@/features/store/lib/store-enabled';
 
 type Props = { params: Promise<{ categoria: string; produto: string }> };
 
@@ -54,6 +56,7 @@ export default async function ProductPage({ params }: Props) {
   ]);
   const related = siblings.filter((p) => p.id !== product.id).slice(0, RELATED_LIMIT);
   const home = homeHref();
+  const storeEnabled = isStoreEnabled();
 
   return (
     <SiteShell home={home} preview={isSample(product)}>
@@ -85,15 +88,32 @@ export default async function ProductPage({ params }: Props) {
                 <AvailabilityBadge product={product} detailed />
               </div>
               <p className="mt-5 leading-relaxed whitespace-pre-line text-ink-soft">{product.description}</p>
-              <ContactLink
-                href={getWhatsAppUrl(orderMessage(product))}
-                channel="whatsapp"
-                location="product"
-                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-moss px-6 py-3.5 font-semibold text-paper shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft sm:w-auto"
-              >
-                <MessageCircle className="size-5" aria-hidden="true" />
-                Pedir pelo WhatsApp
-              </ContactLink>
+              {storeEnabled ? (
+                // Com a loja ligada, comprar no site é o caminho principal e o
+                // WhatsApp vira o secundário (contorno).
+                <div className="mt-8 space-y-3">
+                  <AddToCartButton product={product} />
+                  <ContactLink
+                    href={getWhatsAppUrl(orderMessage(product))}
+                    channel="whatsapp"
+                    location="product"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-moss-line px-6 py-3 font-semibold text-ink transition-colors hover:bg-moss/10 sm:w-auto"
+                  >
+                    <MessageCircle className="size-5" aria-hidden="true" />
+                    Pedir pelo WhatsApp
+                  </ContactLink>
+                </div>
+              ) : (
+                <ContactLink
+                  href={getWhatsAppUrl(orderMessage(product))}
+                  channel="whatsapp"
+                  location="product"
+                  className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-moss px-6 py-3.5 font-semibold text-paper shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft sm:w-auto"
+                >
+                  <MessageCircle className="size-5" aria-hidden="true" />
+                  Pedir pelo WhatsApp
+                </ContactLink>
+              )}
 
               {zones.length > 0 && (
                 <div className="mt-10 rounded-2xl border border-sand-line bg-sand/60 p-5">

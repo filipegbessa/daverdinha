@@ -26,6 +26,15 @@ A landing é **indexável de propósito**: `robots.ts` segue liberando `/`, `sit
 
 Os canais de contato são WhatsApp e Instagram; não há e-mail porque o negócio não tem um.
 
+### Loja online (`NEXT_PUBLIC_STORE_ENABLED`)
+
+A loja só aparece com `NEXT_PUBLIC_STORE_ENABLED=true` (`src/features/store/lib/store-enabled.ts`). Sem ela o site fica como antes, só com WhatsApp, e `/carrinho` responde 404. Por ser `NEXT_PUBLIC_`, mudar na Vercel vale a partir do próximo deploy.
+
+- **Carrinho** (`src/features/store`): fica no `localStorage` (`daverdinha:cart:v1`), num `CartProvider` que o `SiteShell` monta com a loja ligada. Guarda só o necessário pra desenhar a tela; leitura tolerante (JSON inválido, item sem id ou armazenamento bloqueado viram carrinho vazio), quantidade de 1 a 20, até 30 produtos, e acompanha outra aba pelo evento `storage`.
+- **Página do produto**: "Adicionar ao carrinho" vira o botão principal e "Pedir pelo WhatsApp" o secundário. Produto de exemplo da prévia fica "Disponível no lançamento" e esgotado fica "Esgotado", ambos desabilitados. Dispara `add_to_cart` no GA.
+- **Cabeçalho**: ícone do carrinho com a contagem, que só aparece depois de ler o carrinho salvo.
+- **`/carrinho`** (noindex, fora do sitemap): pede a cotação (`POST /checkout/quote`) a cada mudança de produto ou quantidade, com 400 ms de espera. Preço, problemas por item ("Esgotado", "Só restam 2", "Não está mais disponível"), subtotal e parcelas vêm da cotação, nunca do que está salvo no navegador. "Finalizar compra" só libera com a cotação em dia e sem problemas, e dispara `begin_checkout`. A tela de `/checkout` ainda não existe.
+
 ### Áreas de entrega
 
 A seção "Onde entregamos" e o `areaServed` do JSON-LD leem `GET /delivery-locations/covered` da API, com `revalidate` de 60s. A fonte da verdade é o banco — os mesmos `covered` que o bot consulta pra responder um CEP no WhatsApp.

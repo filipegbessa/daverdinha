@@ -61,4 +61,29 @@ describe('/produtos/[categoria]/[produto]', () => {
     await expect(renderPage('vasos', 'nao-existe')).rejects.toThrow('NEXT_NOT_FOUND');
     expect(notFound).toHaveBeenCalled();
   });
+
+  describe('with the store on', () => {
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_STORE_ENABLED = 'true';
+    });
+    afterEach(() => {
+      delete process.env.NEXT_PUBLIC_STORE_ENABLED;
+    });
+
+    it('makes buying on the site the main action and keeps WhatsApp as the second one', async () => {
+      await renderPage('vasos', 'vaso-terracota-m');
+
+      // Exemplo da prévia: o botão existe, mas não vende.
+      expect(screen.getByRole('button', { name: 'Disponível no lançamento' })).toBeDisabled();
+      expect(screen.getByRole('link', { name: 'Pedir pelo WhatsApp' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Carrinho' })).toHaveAttribute('href', '/carrinho');
+    });
+  });
+
+  it('has no cart without the store', async () => {
+    await renderPage('vasos', 'vaso-terracota-m');
+
+    expect(screen.queryByRole('link', { name: 'Carrinho' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /carrinho|lançamento/i })).not.toBeInTheDocument();
+  });
 });

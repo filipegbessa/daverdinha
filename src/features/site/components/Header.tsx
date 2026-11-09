@@ -7,6 +7,8 @@ import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { MobileNav } from '@/features/site/components/MobileNav';
 import { siteNav } from '@/features/site/components/site-nav';
+import { CartLink } from '@/features/store/components/CartLink';
+import { isStoreEnabled } from '@/features/store/lib/store-enabled';
 
 export const WHATSAPP_GREETING = 'Oi! Vim pelo site da Daverdinha 🌱';
 
@@ -55,6 +57,7 @@ export function Header({ home }: { home: string }) {
             <MessageCircle className="size-4" aria-hidden="true" />
             Falar no WhatsApp
           </ContactLink>
+          {isStoreEnabled() && <CartLink />}
           <MobileNav links={links} />
         </div>
       </div>

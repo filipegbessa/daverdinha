@@ -3,11 +3,13 @@ import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { Footer } from '@/features/site/components/Footer';
 import { Header, WHATSAPP_GREETING } from '@/features/site/components/Header';
+import { CartProvider } from '@/features/store/components/CartProvider';
+import { isStoreEnabled } from '@/features/store/lib/store-enabled';
 
 /**
  * A moldura de toda página do site completo: cabeçalho, rodapé e o botão
  * flutuante de WhatsApp. Síncrono de propósito — quem busca os dados é a
- * página.
+ * página. Com a loja ligada, envolve tudo no carrinho.
  */
 export function SiteShell({
   home,
@@ -19,7 +21,7 @@ export function SiteShell({
   preview?: boolean;
   children: React.ReactNode;
 }) {
-  return (
+  const page = (
     <>
       {preview && (
         <p className="bg-berry px-4 py-1.5 text-center text-xs font-medium text-paper">
@@ -40,4 +42,5 @@ export function SiteShell({
       </ContactLink>
     </>
   );
+  return isStoreEnabled() ? <CartProvider>{page}</CartProvider> : page;
 }
