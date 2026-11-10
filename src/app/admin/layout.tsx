@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
-import { PushNotificationBanner } from '@/components/push-notification-banner';
-import { InstallAppNavItem } from '@/components/install-app-nav-item';
+import { PushNotificationBanner } from '@/features/admin/components/PushNotificationBanner';
+import { InstallAppNavItem } from '@/features/admin/components/InstallAppNavItem';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import type { ConversationList } from '@/features/admin/types/admin';
 

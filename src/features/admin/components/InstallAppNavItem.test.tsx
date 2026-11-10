@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { InstallAppNavItem } from './install-app-nav-item';
+import { InstallAppNavItem } from './InstallAppNavItem';
 
 function setUserAgent(userAgent: string) {
   Object.defineProperty(window.navigator, 'userAgent', { value: userAgent, configurable: true });

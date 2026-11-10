@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PushNotificationBanner } from './push-notification-banner';
+import { PushNotificationBanner } from './PushNotificationBanner';
 import { usePushSubscription } from '@/features/admin/lib/use-push-subscription';
 
 jest.mock('@/features/admin/lib/use-push-subscription');

@@ -1,6 +1,6 @@
 'use client';
 import { Check, ShoppingBag } from 'lucide-react';
-import { useAddToCart } from '@/features/store/components/use-add-to-cart';
+import { useAddToCart } from '@/features/store/lib/use-add-to-cart';
 import type { Product } from '@/features/site/types/catalog';
 
 const BUTTON =
