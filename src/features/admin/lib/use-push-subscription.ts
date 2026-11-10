@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useApiClient } from './api-client';
-import { urlBase64ToUint8Array } from './url-base64-to-uint8-array';
+import { useApiClient } from '@/features/admin/lib/api-client';
+import { urlBase64ToUint8Array } from '@/features/admin/lib/url-base64-to-uint8-array';
 
 export function usePushSubscription() {
   const { apiFetch } = useApiClient();

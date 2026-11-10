@@ -1,4 +1,4 @@
-import { ErrorAlert } from './StatusMessage';
+import { ErrorAlert } from '@/features/admin/components/StatusMessage';
 
 /**
  * Espelha o teto do backend (`MEDIA_STORAGE_CAP_BYTES` em
