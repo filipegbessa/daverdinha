@@ -19,7 +19,7 @@ const OG_IMAGE = {
  * propósito: com ele o Google não leria este noindex.
  */
 export function generateMetadata(): Metadata {
-  const title = 'Daverdinha — Ateliê de plantas no Rio de Janeiro';
+  const title = 'Daverdinha · Ateliê de plantas no Rio de Janeiro';
   const description = businessInfo.description;
 
   return {

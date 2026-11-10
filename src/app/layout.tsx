@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   // Base das URLs relativas de canonical e Open Graph das páginas internas
   // (`/produtos/...`, `/agenda/...`). Sem ela o Next resolve contra localhost.
   ...(process.env.SITE_URL ? { metadataBase: new URL(process.env.SITE_URL) } : {}),
-  title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
+  title: 'Daverdinha · Ateliê de plantas no Rio de Janeiro',
   description: businessInfo.description,
   // O .ico existe porque o navegador pede `/favicon.ico` sozinho, com ou sem
   // link tag, e traz 16/32/48 — os tamanhos que a aba realmente usa. Antes o
@@ -42,14 +42,14 @@ export const metadata: Metadata = {
     title: 'Daverdinha',
   },
   openGraph: {
-    title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
+    title: 'Daverdinha · Ateliê de plantas no Rio de Janeiro',
     description: businessInfo.description,
     type: 'website',
     url: process.env.SITE_URL,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Daverdinha — Ateliê de plantas no Rio de Janeiro',
+    title: 'Daverdinha · Ateliê de plantas no Rio de Janeiro',
     description: businessInfo.description,
   },
 };

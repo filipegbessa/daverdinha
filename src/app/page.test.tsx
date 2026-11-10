@@ -90,7 +90,7 @@ describe("Home page — full site (SITE_MODE=full)", () => {
     const metadata = generateMetadata();
 
     expect(metadata.title).toBe(
-      "Daverdinha — Ateliê de plantas no Rio de Janeiro",
+      "Daverdinha · Ateliê de plantas no Rio de Janeiro",
     );
     expect(metadata.openGraph?.images).toEqual([
       {
@@ -159,8 +159,8 @@ describe("Home page — coming soon (SITE_MODE unset)", () => {
   it('titles the page "Em breve" and repeats every OpenGraph field, since metadata merges shallowly', () => {
     const metadata = generateMetadata();
 
-    expect(metadata.title).toBe("Daverdinha — Em breve");
-    expect(metadata.openGraph?.title).toBe("Daverdinha — Em breve");
+    expect(metadata.title).toBe("Daverdinha · Em breve");
+    expect(metadata.openGraph?.title).toBe("Daverdinha · Em breve");
     expect(metadata.openGraph?.description).toBe(metadata.description);
     expect(metadata.openGraph).toHaveProperty("type", "website");
     expect(metadata.openGraph?.images).toEqual([

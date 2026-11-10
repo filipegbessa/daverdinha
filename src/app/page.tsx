@@ -16,7 +16,7 @@ const OG_IMAGE = {
 export function generateMetadata(): Metadata {
   const soon = getSiteMode() === 'soon';
 
-  const title = soon ? 'Daverdinha — Em breve' : 'Daverdinha — Ateliê de plantas no Rio de Janeiro';
+  const title = soon ? 'Daverdinha · Em breve' : 'Daverdinha · Ateliê de plantas no Rio de Janeiro';
   const description = soon
     ? 'Nosso site está em construção. Enquanto isso, fale com a gente pelo WhatsApp ou pelo Instagram.'
     : businessInfo.description;

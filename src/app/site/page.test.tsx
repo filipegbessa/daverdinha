@@ -75,7 +75,7 @@ describe("/site preview — always renders the full institutional site", () => {
     const metadata = generateMetadata();
 
     expect(metadata.title).toBe(
-      "Daverdinha — Ateliê de plantas no Rio de Janeiro",
+      "Daverdinha · Ateliê de plantas no Rio de Janeiro",
     );
     expect(metadata.openGraph?.images).toEqual([
       {
