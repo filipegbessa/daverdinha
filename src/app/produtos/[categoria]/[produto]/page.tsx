@@ -91,19 +91,10 @@ export default async function ProductPage({ params }: Props) {
               </div>
               <p className="mt-5 leading-relaxed whitespace-pre-line text-ink-soft">{product.description}</p>
               {storeEnabled ? (
-                // Com a loja ligada, comprar no site é o caminho principal e o
-                // WhatsApp vira o secundário (contorno).
-                <div className="mt-8 space-y-3">
+                // Com a loja ligada, a compra é só pelo carrinho. O WhatsApp
+                // continua no cabeçalho e no rodapé pra quem quiser conversar.
+                <div className="mt-8">
                   <AddToCartButton product={product} />
-                  <ContactLink
-                    href={getWhatsAppUrl(orderMessage(product))}
-                    channel="whatsapp"
-                    location="product"
-                    className={siteButtonClass({ variant: 'secondary', className: 'w-full sm:w-auto' })}
-                  >
-                    <MessageCircle className="size-5" aria-hidden="true" />
-                    Pedir pelo WhatsApp
-                  </ContactLink>
                 </div>
               ) : (
                 <ContactLink
