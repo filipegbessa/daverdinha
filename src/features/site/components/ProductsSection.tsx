@@ -33,7 +33,7 @@ export function ProductsSection({
   const activeCategory = categories.find((c) => c.slug === active);
 
   return (
-    <section id="produtos" className="scroll-mt-24 bg-sand px-6 py-14 md:py-24">
+    <section id="produtos" className="scroll-mt-24 px-6 py-14 md:py-24">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
           <div>

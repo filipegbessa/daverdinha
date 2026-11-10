@@ -5,7 +5,7 @@ import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 
 export function About() {
   return (
-    <section id="sobre" className="scroll-mt-24 bg-sand px-6 py-16 md:py-24">
+    <section id="sobre" className="scroll-mt-24 px-6 py-16 md:py-24">
       <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2 md:gap-16">
         <ImagePlaceholder
           alt="Foto do espaço da Daverdinha"

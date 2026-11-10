@@ -30,7 +30,10 @@ export function SiteShell({
         </p>
       )}
       <Header home={home} />
-      <main>{children}</main>
+      {/* Fundo das seções da página: claro e areia alternados, contados pelas
+          seções que de fato aparecem (seção vazia que retorna null não
+          quebra a sequência). Nenhuma seção de página define o próprio fundo. */}
+      <main className="[&>section:nth-of-type(even)]:bg-sand">{children}</main>
       <Footer home={home} />
       <ContactLink
         href={getWhatsAppUrl(WHATSAPP_GREETING)}

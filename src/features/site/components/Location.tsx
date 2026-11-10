@@ -10,7 +10,7 @@ export function Location() {
   const { address, hours, contact } = businessInfo;
 
   return (
-    <section id="visite" className="scroll-mt-24 bg-sand px-6 py-14 md:py-24">
+    <section id="visite" className="scroll-mt-24 px-6 py-14 md:py-24">
       <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-[1fr_1.4fr] md:gap-16">
         <div>
           <Eyebrow>Visite</Eyebrow>

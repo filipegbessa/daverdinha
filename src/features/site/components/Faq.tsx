@@ -16,7 +16,7 @@ export function Faq() {
           {FAQ_ITEMS.map((item) => (
             <details
               key={item.question}
-              className="group rounded-2xl border border-sand-line bg-sand/60 p-5 shadow-card open:shadow-soft"
+              className="group rounded-2xl border border-sand-line bg-paper p-5 shadow-card open:shadow-soft"
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-ink marker:content-none [&::-webkit-details-marker]:hidden">
                 <span>{item.question}</span>

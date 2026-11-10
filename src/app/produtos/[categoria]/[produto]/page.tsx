@@ -122,7 +122,7 @@ export default async function ProductPage({ params }: Props) {
       </section>
 
       {related.length > 0 && (
-        <section className="bg-sand px-6 py-14">
+        <section className="px-6 py-14">
           <div className="mx-auto max-w-6xl">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <h2 className="font-serif text-2xl font-semibold text-ink">

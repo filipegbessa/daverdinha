@@ -24,7 +24,7 @@ export function DeliveryZones({ zones }: { zones: DeliveryZone[] }) {
         </div>
         <ul className="grid gap-4 sm:grid-cols-2">
           {zones.map((zone) => (
-            <li key={zone.zone} className="rounded-2xl border border-sand-line bg-sand p-5 shadow-card">
+            <li key={zone.zone} className="rounded-2xl border border-sand-line bg-paper p-5 shadow-card">
               <div className="flex items-center gap-2">
                 <MapPin className="size-5 shrink-0 text-berry" strokeWidth={1.75} aria-hidden="true" />
                 <h3 className="font-medium text-berry">{zone.zone}</h3>
