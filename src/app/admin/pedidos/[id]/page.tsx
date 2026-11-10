@@ -69,8 +69,11 @@ export default function PedidoPage() {
 
   return (
     <div>
-      <Link href="/admin/pedidos" className="text-sm text-ink-soft hover:underline">
-        ← Pedidos
+      <Link
+        href="/admin/pedidos"
+        className="mb-2 inline-flex w-fit items-center gap-1 text-sm text-ink-soft underline underline-offset-4 hover:text-ink"
+      >
+        ← Voltar para pedidos
       </Link>
       <PageHeader title={`Pedido ${order.code}`}>
         <span className="rounded-full bg-sand px-3 py-1 text-sm font-semibold">{ORDER_STATUS_SINGULAR[order.status]}</span>

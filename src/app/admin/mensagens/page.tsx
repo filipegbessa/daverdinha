@@ -41,7 +41,7 @@ const FIELDS: { name: keyof MessagesForm; label: string; hint: string }[] = [
 export default function MensagensPage() {
   const { apiFetch } = useApiClient();
   const { data, isLoading, error } = useApiResource<MessagesForm>('/bot-settings');
-  const save = useApiMutation('Erro ao salvar');
+  const save = useApiMutation('Erro ao salvar as mensagens.');
   const [form, setForm] = useState<MessagesForm | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -66,14 +66,27 @@ export default function MensagensPage() {
 
       {FIELDS.map(({ name, label, hint }) => (
         <FormField key={name} id={name} label={label} hint={hint}>
-          <Textarea id={name} value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })} />
+          <Textarea
+            id={name}
+            value={form[name]}
+            onChange={(e) => {
+              setSaved(false);
+              setForm({ ...form, [name]: e.target.value });
+            }}
+          />
         </FormField>
       ))}
 
-      <Button type="submit" loading={save.isPending} loadingText="Salvando...">
-        Salvar
-      </Button>
-      {saved && <p role="status">Salvo!</p>}
+      <div className="flex items-center gap-3">
+        <Button type="submit" loading={save.isPending} loadingText="Salvando...">
+          Salvar
+        </Button>
+        {saved && (
+          <p role="status" className="text-sm text-moss">
+            Mensagens salvas.
+          </p>
+        )}
+      </div>
       {save.error && <ErrorText>{save.error}</ErrorText>}
     </form>
   );

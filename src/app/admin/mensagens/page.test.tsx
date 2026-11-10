@@ -54,7 +54,10 @@ describe('MensagensPage', () => {
         body: JSON.stringify({ ...settings, welcomeMessage: 'Novo texto' }),
       }),
     );
-    expect(await screen.findByRole('status')).toHaveTextContent('Salvo!');
+    expect(await screen.findByRole('status')).toHaveTextContent('Mensagens salvas.');
+
+    await userEvent.type(field, '!');
+    expect(screen.queryByText('Mensagens salvas.')).not.toBeInTheDocument();
   });
 
   it('saves the edited escalation message', async () => {
