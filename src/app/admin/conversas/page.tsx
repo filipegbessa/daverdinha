@@ -7,7 +7,8 @@ import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { TablePagination } from '@/features/admin/components/TablePagination';
-import { PageHeader } from '@/features/admin/components/PageHeader';
+import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
+import { EmptyState } from '@/features/admin/components/AdminList';
 import { ColorDot } from '@/features/admin/components/Badge';
 import { ToggleButton } from '@/features/admin/components/ToggleButton';
 import { DataTable, type DataTableColumn } from '@/features/admin/components/DataTable';
@@ -39,6 +40,7 @@ export default function ConversasPage() {
   // The search now runs against the database, so it waits for a pause in
   // typing rather than firing a query per character.
   const debouncedSearch = useDebouncedValue(search.trim());
+  const hasFilters = Boolean(debouncedSearch || onlyUnread || categoryFilter !== 'all');
 
   // Filtering moved to the server: applying it in the browser would only ever
   // filter the window that happened to be loaded, silently hiding matches
@@ -118,7 +120,8 @@ export default function ConversasPage() {
 
   return (
     <div>
-      <PageHeader title="Conversas">
+      <PageHeader title="Conversas" />
+      <FilterBar>
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -142,43 +145,48 @@ export default function ConversasPage() {
             </option>
           ))}
         </NativeSelect>
-      </PageHeader>
+      </FilterBar>
       {isLoading && <LoadingState />}
       {!isLoading && error && <ErrorAlert>{error}</ErrorAlert>}
       {!isLoading && !error && (
         <>
           <BusyRegion busy={isRefreshing} className="mt-6">
-            <DataTable
-              columns={columns}
-              rows={conversations}
-              rowKey={(conversation) => conversation.id}
-              renderMobileCard={(conversation) => (
-                <div className="rounded-md border border-border p-3">
-                  <Link
-                    href={`/admin/conversas/${conversation.id}`}
-                    className="flex items-center gap-2 font-medium underline underline-offset-4"
-                  >
-                    {conversation.unread && <UnreadDot />}
-                    {conversation.name || formatPhone(conversation.phone)}
-                  </Link>
-                  <p className="mt-1 text-sm text-muted-foreground">{formatPhone(conversation.phone)}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                    <span>{STATUS_LABEL[conversation.status]}</span>
-                    <span>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</span>
-                    <span>{formatDateTime(conversation.updatedAt)}</span>
-                  </div>
-                  {(conversation.categories ?? []).length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {(conversation.categories ?? []).map((cat) => (
-                        <ColorDot key={cat.id} color={cat.color} title={cat.name} />
-                      ))}
+            {conversations.length === 0 ? (
+              <EmptyState>
+                {hasFilters ? 'Nenhuma conversa encontrada com esses filtros.' : 'Nenhuma conversa ainda.'}
+              </EmptyState>
+            ) : (
+              <DataTable
+                columns={columns}
+                rows={conversations}
+                rowKey={(conversation) => conversation.id}
+                renderMobileCard={(conversation) => (
+                  <div className="rounded-md border border-border p-3">
+                    <Link
+                      href={`/admin/conversas/${conversation.id}`}
+                      className="flex items-center gap-2 font-medium underline underline-offset-4"
+                    >
+                      {conversation.unread && <UnreadDot />}
+                      {conversation.name || formatPhone(conversation.phone)}
+                    </Link>
+                    <p className="mt-1 text-sm text-muted-foreground">{formatPhone(conversation.phone)}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                      <span>{STATUS_LABEL[conversation.status]}</span>
+                      <span>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</span>
+                      <span>{formatDateTime(conversation.updatedAt)}</span>
                     </div>
-                  )}
-                </div>
-              )}
-            />
+                    {(conversation.categories ?? []).length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {(conversation.categories ?? []).map((cat) => (
+                          <ColorDot key={cat.id} color={cat.color} title={cat.name} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              />
+            )}
           </BusyRegion>
-          {conversations.length === 0 && <p className="mt-6 text-muted-foreground">Nenhuma conversa encontrada.</p>}
           {pagination && <TablePagination {...pagination} itemLabel="conversas" />}
         </>
       )}

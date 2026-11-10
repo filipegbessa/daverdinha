@@ -250,7 +250,10 @@ describe('ConversasPage', () => {
 
     render(<ConversasPage />);
 
-    expect(await screen.findByText('Nenhuma conversa encontrada.')).toBeInTheDocument();
+    expect(await screen.findByText('Nenhuma conversa ainda.')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Não lidas' }));
+    expect(await screen.findByText('Nenhuma conversa encontrada com esses filtros.')).toBeInTheDocument();
   });
 
   it('renders the row cells in the expected column order', async () => {

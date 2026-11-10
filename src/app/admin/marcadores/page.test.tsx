@@ -130,4 +130,19 @@ describe('MarcadoresPage', () => {
       expect(screen.queryByRole('button', { name: 'Próxima página' })).not.toBeInTheDocument();
     });
   });
+
+  describe('search', () => {
+    it('searches on the server and says when nothing matches', async () => {
+      const apiFetch = jest.fn().mockResolvedValueOnce(listOf(categories)).mockResolvedValue(listOf([]));
+      (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+      render(<MarcadoresPage />);
+      await screen.findByText('Bingo');
+
+      await userEvent.type(screen.getByLabelText('Buscar marcadores'), 'xyz');
+
+      await waitFor(() => expect(apiFetch).toHaveBeenLastCalledWith('/categories?q=xyz'));
+      expect(await screen.findByText('Nenhum marcador encontrado com essa busca.')).toBeInTheDocument();
+    });
+  });
 });

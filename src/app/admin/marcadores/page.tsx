@@ -1,13 +1,15 @@
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { TablePagination } from '@/features/admin/components/TablePagination';
 import { CategoryDialog } from '@/features/admin/components/CategoryDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
-import { PageHeader } from '@/features/admin/components/PageHeader';
+import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { Badge } from '@/features/admin/components/Badge';
@@ -15,6 +17,9 @@ import type { Category } from '@/features/admin/types/admin';
 
 export default function MarcadoresPage() {
   const { apiFetch } = useApiClient();
+  const [search, setSearch] = useState('');
+  // A busca roda no banco (`?q=`), então espera uma pausa na digitação.
+  const debouncedSearch = useDebouncedValue(search.trim());
   const {
     data,
     items: categories,
@@ -23,7 +28,7 @@ export default function MarcadoresPage() {
     error,
     refetch,
     pagination,
-  } = usePaginatedResource<Category>('/categories');
+  } = usePaginatedResource<Category>('/categories', { q: debouncedSearch || undefined });
   const remove = useApiMutation('Erro ao excluir marcador.');
   const busy = remove.isPending || isRefreshing;
   const [editing, setEditing] = useState<Category | 'new' | null>(null);
@@ -45,13 +50,26 @@ export default function MarcadoresPage() {
           Novo marcador
         </Button>
       </PageHeader>
+      <FilterBar>
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar por nome"
+          aria-label="Buscar marcadores"
+          className="w-56"
+        />
+      </FilterBar>
       {error && <ErrorAlert>{error}</ErrorAlert>}
       {isLoading && <LoadingState />}
       {data && (
         <AdminList
           busy={busy}
           isEmpty={categories.length === 0}
-          empty="Nenhum marcador ainda. Crie um pra organizar as conversas."
+          empty={
+            debouncedSearch
+              ? 'Nenhum marcador encontrado com essa busca.'
+              : 'Nenhum marcador ainda. Crie um pra organizar as conversas.'
+          }
         >
           {categories.map((category) => (
             <AdminListItem key={category.id}>

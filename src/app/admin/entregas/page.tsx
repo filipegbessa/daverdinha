@@ -5,7 +5,8 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { errorMessage } from '@/features/admin/lib/error-message';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
-import { PageHeader } from '@/features/admin/components/PageHeader';
+import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
+import { EmptyState } from '@/features/admin/components/AdminList';
 import { DeliveryAreasSection } from '@/features/admin/components/DeliveryAreasSection';
 import type { DeliveryAreaAdmin, DeliveryLocation, DeliveryZoneAreas } from '@/features/admin/types/admin';
 import { SectionLabel } from '@/features/admin/components/SectionLabel';
@@ -110,15 +111,7 @@ export default function EntregasPage() {
 
   return (
     <div>
-      <PageHeader title="Locais de entrega">
-        <div className="flex gap-2" role="group" aria-label="Filtrar por status">
-          {FILTERS.map(({ value, label }) => (
-            <ToggleButton key={value} pressed={filter === value} onPressedChange={() => setFilter(value)}>
-              {label}
-            </ToggleButton>
-          ))}
-        </div>
-      </PageHeader>
+      <PageHeader title="Locais de entrega" />
       {isLoading && <LoadingState />}
       {!isLoading && !locations && (
         <ErrorAlert>{loadError ?? 'Não foi possível carregar os locais de entrega.'}</ErrorAlert>
@@ -141,6 +134,21 @@ export default function EntregasPage() {
           <SectionLabel variant="title" id="covered-bairros-title">
             Bairros atendidos
           </SectionLabel>
+          {/* O filtro é só desta lista, então fica junto dela, não no topo da página. */}
+          <FilterBar>
+            <div className="flex gap-2" role="group" aria-label="Filtrar por status">
+              {FILTERS.map(({ value, label }) => (
+                <ToggleButton key={value} pressed={filter === value} onPressedChange={() => setFilter(value)}>
+                  {label}
+                </ToggleButton>
+              ))}
+            </div>
+          </FilterBar>
+          {locations.length > 0 && !locations.some(matchesFilter) && (
+            <div className="mt-3">
+              <EmptyState>Nenhum bairro encontrado com esses filtros.</EmptyState>
+            </div>
+          )}
           <div className="mt-3 space-y-4">
             {Object.entries(byZone).map(([zone, zoneLocations]) => {
               const visible = zoneLocations.filter(matchesFilter);
