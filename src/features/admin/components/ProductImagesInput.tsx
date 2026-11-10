@@ -1,18 +1,17 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { FormField } from '@/features/admin/components/FormField';
+import { IMAGE_UPLOAD } from '@/features/admin/lib/image-upload';
 
-// Os mesmos limites que a API aplica (`products.controller.ts`): conferir
-// aqui só poupa a cliente de esperar o upload pra descobrir o erro.
+// O mesmo limite de quantidade que a API aplica (`products.controller.ts`).
 export const MAX_IMAGES = 6;
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_TYPES: readonly string[] = IMAGE_UPLOAD.mimeTypes;
 
 export function validateImages(files: File[]): string | null {
   if (files.length > MAX_IMAGES) return `Escolha no máximo ${MAX_IMAGES} fotos.`;
   for (const file of files) {
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) return `"${file.name}" precisa ser JPEG, PNG ou WebP.`;
-    if (file.size > MAX_IMAGE_BYTES) return `"${file.name}" passa de 5 MB.`;
+    if (!ALLOWED_TYPES.includes(file.type)) return `"${file.name}" precisa ser ${IMAGE_UPLOAD.typesLabel}.`;
+    if (file.size > IMAGE_UPLOAD.maxBytes) return `"${file.name}" passa de ${IMAGE_UPLOAD.maxLabel}.`;
   }
   return null;
 }
@@ -58,7 +57,7 @@ export function ProductImagesInput({
         label="Fotos"
         hint={
           <>
-            Até {MAX_IMAGES} fotos (JPEG, PNG ou WebP, até 5 MB cada). A primeira é a capa.
+            Até {MAX_IMAGES} fotos ({IMAGE_UPLOAD.typesLabel}, até {IMAGE_UPLOAD.maxLabel} cada). A primeira é a capa.
             {currentImages.length > 0 && ' Escolher novas fotos substitui as atuais.'}
           </>
         }
@@ -67,7 +66,7 @@ export function ProductImagesInput({
         <input
           id="productImages"
           type="file"
-          accept={ALLOWED_IMAGE_TYPES.join(',')}
+          accept={ALLOWED_TYPES.join(',')}
           multiple
           onChange={handleChange}
           className="block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-sand file:px-4 file:py-2 file:font-medium"

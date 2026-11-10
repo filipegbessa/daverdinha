@@ -1,3 +1,5 @@
+import { IMAGE_UPLOAD } from '@/features/admin/lib/image-upload';
+
 /**
  * Espelham os limites do backend (`MEDIA_RULES` na API), que continua sendo
  * quem decide. Aqui é só para o operador descobrir o problema antes de subir
@@ -5,9 +7,9 @@
  */
 export const REPLY_MEDIA_RULES = {
   image: {
-    mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-    maxBytes: 5 * 1024 * 1024,
-    tooLarge: 'A imagem excede o limite de 5 MB.',
+    mimeTypes: IMAGE_UPLOAD.mimeTypes,
+    maxBytes: IMAGE_UPLOAD.maxBytes,
+    tooLarge: `A imagem excede o limite de ${IMAGE_UPLOAD.maxLabel}.`,
   },
   audio: {
     // Exatamente o que a Cloud API do WhatsApp aceita. `audio/webm` — o que o
@@ -57,7 +59,7 @@ export function classifyReplyFile(file: File): ReplyAttachment | { error: string
     (REPLY_MEDIA_RULES[k].mimeTypes as readonly string[]).includes(mimeType),
   );
   if (!kind) {
-    return { error: 'Só imagem (JPEG, PNG ou WebP) ou áudio (OGG, MP3, M4A, AAC ou AMR).' };
+    return { error: `Só imagem (${IMAGE_UPLOAD.typesLabel}) ou áudio (OGG, MP3, M4A, AAC ou AMR).` };
   }
   if (file.size > REPLY_MEDIA_RULES[kind].maxBytes) {
     return { error: REPLY_MEDIA_RULES[kind].tooLarge };
