@@ -7,7 +7,8 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
-const renderPage = async (categoria: string) => render(await Page({ params: Promise.resolve({ categoria }) }));
+const renderPage = async (categoria: string, page?: string) =>
+  render(await Page({ params: Promise.resolve({ categoria }), searchParams: Promise.resolve({ page }) }));
 
 describe('/produtos/[categoria]', () => {
   beforeEach(() => {
@@ -33,5 +34,13 @@ describe('/produtos/[categoria]', () => {
 
   it('is a 404 for an unknown category', async () => {
     await expect(renderPage('nao-existe')).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+
+  it('shows upcoming events and the studio address, with no "sob encomenda" pitch', async () => {
+    await renderPage('mudas');
+
+    expect(screen.getByRole('heading', { name: 'Próximos eventos' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Onde estamos' })).toBeInTheDocument();
+    expect(screen.queryByText(/sob encomenda/)).not.toBeInTheDocument();
   });
 });

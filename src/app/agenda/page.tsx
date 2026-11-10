@@ -5,9 +5,13 @@ import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { EventCard } from '@/features/site/components/EventCard';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
+import { Location } from '@/features/site/components/Location';
+import { Pagination } from '@/features/site/components/Pagination';
+import { ProductsSection } from '@/features/site/components/ProductsSection';
 import { isSample } from '@/features/site/data/samples';
 import { AGENDA_HREF, homeHref } from '@/features/site/lib/paths';
-import { getUpcomingEvents } from '@/features/site/lib/public-api';
+import { getFeaturedProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
+import { paginate } from '@/features/site/lib/pagination';
 import { pageMetadata } from '@/features/site/lib/seo';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 
@@ -19,12 +23,19 @@ export function generateMetadata(): Metadata {
   });
 }
 
-export default async function AgendaPage() {
-  const events = await getUpcomingEvents();
+type Props = { searchParams: Promise<{ page?: string }> };
+
+export default async function AgendaPage({ searchParams }: Props) {
+  const [{ page: pageParam }, allEvents, featured] = await Promise.all([
+    searchParams,
+    getUpcomingEvents(),
+    getFeaturedProducts(),
+  ]);
+  const { items: events, page, totalPages } = paginate(allEvents, pageParam);
   const home = homeHref();
 
   return (
-    <SiteShell home={home} preview={events.some(isSample)}>
+    <SiteShell home={home} preview={allEvents.some(isSample) || featured.some(isSample)}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs
@@ -60,8 +71,12 @@ export default async function AgendaPage() {
               ))}
             </ul>
           )}
+          <Pagination page={page} totalPages={totalPages} basePath={AGENDA_HREF} />
         </div>
       </section>
+
+      <ProductsSection products={featured} cardVariant="compact" />
+      <Location />
     </SiteShell>
   );
 }

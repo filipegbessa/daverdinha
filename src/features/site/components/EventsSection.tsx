@@ -13,10 +13,12 @@ const EVENT_ITEM_WIDTH = 'w-[85%] sm:w-[calc(50%-0.5rem)] lg:w-[calc((100%-2rem)
 export function EventsSection({
   events,
   title = 'Próximos eventos',
+  cardVariant = 'full',
   className,
 }: {
   events: SiteEvent[];
   title?: string;
+  cardVariant?: 'full' | 'compact';
   className?: string;
 }) {
   if (events.length === 0) return null;
@@ -36,7 +38,7 @@ export function EventsSection({
         <div className="mt-8">
           <Carousel label={title} itemClassName={EVENT_ITEM_WIDTH}>
             {events.map((event) => (
-              <EventCard key={event.id} event={event} />
+              <EventCard key={event.id} event={event} variant={cardVariant} />
             ))}
           </Carousel>
         </div>

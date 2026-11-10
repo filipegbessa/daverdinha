@@ -9,13 +9,14 @@ import { Carousel } from '@/features/site/components/Carousel';
 import { CepChecker } from '@/features/site/components/CepChecker';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { JsonLd } from '@/features/site/components/JsonLd';
+import { Location } from '@/features/site/components/Location';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { ProductGallery } from '@/features/site/components/ProductGallery';
 import { isSample } from '@/features/site/data/samples';
 import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
 import { formatPrice } from '@/features/site/lib/format';
 import { categoryHref, homeHref, PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
-import { getActiveProductBySlug, getActiveProducts } from '@/features/site/lib/public-api';
+import { getActiveProductBySlug, getFeaturedProducts } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
 import { productJsonLd } from '@/features/site/lib/structured-data';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
@@ -50,11 +51,11 @@ export default async function ProductPage({ params }: Props) {
   // redireciona (308) em vez de virar 404 — e não perde a posição no Google.
   if (product.category.slug !== categoria) permanentRedirect(productHref(product));
 
-  const [siblings, zones] = await Promise.all([
-    getActiveProducts(product.category.slug),
+  const [bestSellers, zones] = await Promise.all([
+    getFeaturedProducts(product.category.slug),
     getCoveredDeliveryZones(),
   ]);
-  const related = siblings.filter((p) => p.id !== product.id).slice(0, RELATED_LIMIT);
+  const related = bestSellers.filter((p) => p.id !== product.id).slice(0, RELATED_LIMIT);
   const home = homeHref();
   const storeEnabled = isStoreEnabled();
 
@@ -132,7 +133,9 @@ export default async function ProductPage({ params }: Props) {
         <section className="bg-sand px-6 py-14">
           <div className="mx-auto max-w-6xl">
             <div className="flex flex-wrap items-end justify-between gap-4">
-              <h2 className="font-serif text-2xl font-semibold text-ink">Mais {product.category.name.toLowerCase()}</h2>
+              <h2 className="font-serif text-2xl font-semibold text-ink">
+                Mais vendidos em {product.category.name.toLowerCase()}
+              </h2>
               <Link
                 href={categoryHref(product.category.slug)}
                 className="text-sm font-semibold text-moss underline underline-offset-4"
@@ -141,15 +144,17 @@ export default async function ProductPage({ params }: Props) {
               </Link>
             </div>
             <div className="mt-6">
-              <Carousel label={`Mais ${product.category.name.toLowerCase()}`}>
+              <Carousel label={`Mais vendidos em ${product.category.name.toLowerCase()}`}>
                 {related.map((p) => (
-                  <ProductCard key={p.id} product={p} />
+                  <ProductCard key={p.id} product={p} variant="compact" />
                 ))}
               </Carousel>
             </div>
           </div>
         </section>
       )}
+
+      <Location />
     </SiteShell>
   );
 }

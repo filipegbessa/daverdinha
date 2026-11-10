@@ -18,7 +18,13 @@ import type { Product } from '@/features/site/types/catalog';
  * por ele que o Google continua achando as páginas de categoria a partir da
  * home, já que as tags aqui são botões.
  */
-export function ProductsSection({ products }: { products: Product[] }) {
+export function ProductsSection({
+  products,
+  cardVariant = 'full',
+}: {
+  products: Product[];
+  cardVariant?: 'full' | 'compact';
+}) {
   const [active, setActive] = useState<string | null>(null);
   if (products.length === 0) return null;
 
@@ -65,7 +71,7 @@ export function ProductsSection({ products }: { products: Product[] }) {
           {/* A key reinicia o carrossel no começo a cada troca de filtro. */}
           <Carousel key={active ?? 'todos'} label="Produtos em destaque">
             {visible.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} variant={cardVariant} />
             ))}
           </Carousel>
         </div>

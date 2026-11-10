@@ -33,4 +33,17 @@ describe('Location', () => {
     render(<Location />);
     expect(screen.queryByRole('term')).not.toBeInTheDocument();
   });
+
+  it('links to WhatsApp, Instagram and email', () => {
+    render(<Location />);
+    expect(screen.getByRole('link', { name: /WhatsApp/ }).getAttribute('href')).toContain(
+      'https://wa.me/5521986509259',
+    );
+    expect(screen.getByRole('link', { name: '@daverdinha_' }).getAttribute('href')).toBe(
+      'https://www.instagram.com/daverdinha_/',
+    );
+    expect(screen.getByRole('link', { name: 'contato@daverdinha.com.br' }).getAttribute('href')).toBe(
+      'mailto:contato@daverdinha.com.br',
+    );
+  });
 });

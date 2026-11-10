@@ -2,11 +2,15 @@ import type { Metadata } from 'next';
 import { SiteShell } from '@/features/site/components/SiteShell';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { CategoryChips } from '@/features/site/components/CategoryChips';
+import { EventsSection } from '@/features/site/components/EventsSection';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
+import { Location } from '@/features/site/components/Location';
+import { Pagination } from '@/features/site/components/Pagination';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { isSample } from '@/features/site/data/samples';
 import { homeHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
-import { getActiveCategories, getActiveProducts } from '@/features/site/lib/public-api';
+import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
+import { paginate } from '@/features/site/lib/pagination';
 import { pageMetadata } from '@/features/site/lib/seo';
 
 export function generateMetadata(): Metadata {
@@ -17,12 +21,20 @@ export function generateMetadata(): Metadata {
   });
 }
 
-export default async function ProductsPage() {
-  const [categories, products] = await Promise.all([getActiveCategories(), getActiveProducts()]);
+type Props = { searchParams: Promise<{ page?: string }> };
+
+export default async function ProductsPage({ searchParams }: Props) {
+  const [{ page: pageParam }, categories, allProducts, events] = await Promise.all([
+    searchParams,
+    getActiveCategories(),
+    getActiveProducts(),
+    getUpcomingEvents(),
+  ]);
+  const { items: products, page, totalPages } = paginate(allProducts, pageParam);
   const home = homeHref();
 
   return (
-    <SiteShell home={home} preview={products.some(isSample)}>
+    <SiteShell home={home} preview={allProducts.some(isSample) || events.some(isSample)}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs
@@ -50,8 +62,12 @@ export default async function ProductsPage() {
               ))}
             </ul>
           )}
+          <Pagination page={page} totalPages={totalPages} basePath={PRODUCTS_HREF} />
         </div>
       </section>
+
+      <EventsSection events={events} cardVariant="compact" />
+      <Location />
     </SiteShell>
   );
 }

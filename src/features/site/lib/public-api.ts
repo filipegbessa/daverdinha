@@ -52,10 +52,17 @@ export async function getActiveProducts(categorySlug?: string): Promise<Product[
   );
 }
 
-/** Os produtos marcados como destaque no admin: a vitrine da home e as listas das páginas internas. */
-export async function getFeaturedProducts(): Promise<Product[]> {
-  const products = await fetchPublic<Product[]>('/products/active?featured=true');
-  return withPreviewFallback(products, () => SAMPLE_FEATURED_PRODUCTS);
+/**
+ * Os produtos marcados como destaque no admin: a vitrine da home, as listas
+ * das páginas internas e, filtrado por categoria, os "mais vendidos" na
+ * página de um produto.
+ */
+export async function getFeaturedProducts(categorySlug?: string): Promise<Product[]> {
+  const query = categorySlug ? `&category=${encodeURIComponent(categorySlug)}` : '';
+  const products = await fetchPublic<Product[]>(`/products/active?featured=true${query}`);
+  return withPreviewFallback(products, () =>
+    categorySlug ? SAMPLE_FEATURED_PRODUCTS.filter((p) => p.category.slug === categorySlug) : SAMPLE_FEATURED_PRODUCTS,
+  );
 }
 
 /**

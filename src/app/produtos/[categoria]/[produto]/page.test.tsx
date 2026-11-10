@@ -42,6 +42,20 @@ describe('/produtos/[categoria]/[produto]', () => {
     expect(screen.getAllByRole('link', { name: 'Vasos' })[0]).toHaveAttribute('href', '/produtos/vasos');
   });
 
+  it('shows other best-sellers (featured) from the same category, not itself', async () => {
+    await renderPage('vasos', 'vaso-terracota-m');
+
+    const section = screen.getByRole('heading', { name: 'Mais vendidos em vasos' }).closest('section')!;
+    expect(section).toHaveTextContent('Vaso Pintado Folhagem');
+    expect(section).not.toHaveTextContent('Vaso Terracota M');
+  });
+
+  it('has no events section on the product page', async () => {
+    await renderPage('vasos', 'vaso-terracota-m');
+
+    expect(screen.queryByRole('heading', { name: 'Próximos eventos' })).not.toBeInTheDocument();
+  });
+
   it('emits Product structured data', async () => {
     const { container } = await renderPage('vasos', 'vaso-terracota-m');
 

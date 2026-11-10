@@ -38,7 +38,7 @@ export function FullSite({ home, slides, zones, featured, events }: FullSiteData
     <SiteShell home={home} preview={preview}>
       <Hero slides={slides} />
       <ProductsSection products={featured} />
-      <EventsSection events={events} />
+      <EventsSection events={events} cardVariant="compact" />
       <About />
       <DeliveryZones zones={zones} />
       <Location />

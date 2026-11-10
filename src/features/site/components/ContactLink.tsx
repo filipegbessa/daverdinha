@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 
 type ContactLinkProps = Omit<ComponentProps<typeof Link>, "onClick" | "target"> & {
-  channel: "whatsapp" | "instagram";
+  channel: "whatsapp" | "instagram" | "email";
   /** Onde o botão está, pra separar as conversões por tela no GA. */
   location: string;
 };

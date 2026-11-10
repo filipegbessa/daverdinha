@@ -1,18 +1,19 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { MessageCircle } from 'lucide-react';
 import { SiteShell } from '@/features/site/components/SiteShell';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { CategoryChips } from '@/features/site/components/CategoryChips';
-import { ContactLink } from '@/features/site/components/ContactLink';
+import { EventsSection } from '@/features/site/components/EventsSection';
+import { Location } from '@/features/site/components/Location';
+import { Pagination } from '@/features/site/components/Pagination';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { isSample } from '@/features/site/data/samples';
 import { categoryHref, homeHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
-import { getActiveCategories, getActiveProducts } from '@/features/site/lib/public-api';
+import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
+import { paginate } from '@/features/site/lib/pagination';
 import { pageMetadata } from '@/features/site/lib/seo';
-import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 
-type Props = { params: Promise<{ categoria: string }> };
+type Props = { params: Promise<{ categoria: string }>; searchParams: Promise<{ page?: string }> };
 
 async function findCategory(slug: string) {
   const categories = await getActiveCategories();
@@ -37,18 +38,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * fraca pra ranquear. Categoria sem produto ativo é 404, não página vazia
  * indexada.
  */
-export default async function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params, searchParams }: Props) {
   const { categoria } = await params;
-  const [{ categories, category }, products] = await Promise.all([
+  const [{ categories, category }, allProducts, { page: pageParam }, events] = await Promise.all([
     findCategory(categoria),
     getActiveProducts(categoria),
+    searchParams,
+    getUpcomingEvents(),
   ]);
-  if (!category || products.length === 0) notFound();
+  if (!category || allProducts.length === 0) notFound();
 
+  const { items: products, page, totalPages } = paginate(allProducts, pageParam);
   const home = homeHref();
 
   return (
-    <SiteShell home={home} preview={products.some(isSample)}>
+    <SiteShell home={home} preview={allProducts.some(isSample) || events.some(isSample)}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs
@@ -70,23 +74,12 @@ export default async function CategoryPage({ params }: Props) {
               </li>
             ))}
           </ul>
+          <Pagination page={page} totalPages={totalPages} basePath={categoryHref(category.slug)} />
         </div>
       </section>
 
-      <section className="bg-sand px-6 py-12">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
-          <p className="font-serif text-xl text-ink">Não achou o que queria? A gente faz sob encomenda.</p>
-          <ContactLink
-            href={getWhatsAppUrl(`Oi! Queria ver ${category.name.toLowerCase()} sob encomenda 🌱`)}
-            channel="whatsapp"
-            location="category"
-            className="inline-flex items-center gap-2 rounded-full bg-moss px-5 py-2.5 font-semibold text-paper shadow-card hover:bg-moss/90"
-          >
-            <MessageCircle className="size-4" aria-hidden="true" />
-            Falar no WhatsApp
-          </ContactLink>
-        </div>
-      </section>
+      <EventsSection events={events} cardVariant="compact" />
+      <Location />
     </SiteShell>
   );
 }

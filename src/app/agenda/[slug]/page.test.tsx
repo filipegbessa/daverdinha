@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import Page from './page';
 
 jest.mock('next/navigation', () => ({
@@ -41,8 +41,12 @@ describe('/agenda/[slug]', () => {
     await renderPage('oficina-de-terrario');
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Oficina de terrário');
-    expect(screen.getByText(/No ateliê · R\. Capiberibe, 32/)).toBeInTheDocument();
-    expect(screen.getByText('R$ 120,00 · 8 vagas')).toBeInTheDocument();
+    const details = screen.getByRole('list', { name: 'Detalhes do evento' });
+    expect(within(details).getByText('No ateliê')).toBeInTheDocument();
+    expect(
+      within(details).getByText('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030'),
+    ).toBeInTheDocument();
+    expect(within(details).getByText('R$ 120,00 · 8 vagas')).toBeInTheDocument();
     const signup = screen.getByRole('link', { name: 'Quero me inscrever' });
     expect(decodeURIComponent(signup.getAttribute('href')!)).toContain('*Oficina de terrário*');
   });
@@ -62,24 +66,23 @@ describe('/agenda/[slug]', () => {
     expect(screen.queryByRole('link', { name: 'Quero me inscrever' })).not.toBeInTheDocument();
   });
 
-  it('shows where it happens, with a map and directions', async () => {
+  it('shows the place as a tag and the address below, with no separate map section', async () => {
     await renderPage('feirinha-verde-do-santo-cristo');
 
-    expect(screen.getByRole('heading', { name: 'Onde vai ser' })).toBeInTheDocument();
-    expect(screen.getByTitle('Mapa: Praça da Harmonia')).toHaveAttribute(
-      'src',
-      expect.stringContaining(encodeURIComponent('Praça da Harmonia, Gamboa, Rio de Janeiro')),
-    );
-    expect(screen.getByRole('link', { name: 'Como chegar' })).toBeInTheDocument();
+    expect(screen.getByText('Praça da Harmonia')).toBeInTheDocument();
+    expect(screen.getByText('Praça da Harmonia, Gamboa, Rio de Janeiro')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Onde vai ser' })).not.toBeInTheDocument();
+    expect(screen.queryByTitle(/^Mapa: /)).not.toBeInTheDocument();
   });
 
-  it('keeps visitors browsing: other events (not this one) and featured products', async () => {
+  it('keeps visitors browsing: other events (not this one, shown compact) and the studio address', async () => {
     await renderPage('oficina-de-terrario');
 
     const others = screen.getByRole('region', { name: 'Outros eventos' });
     expect(others).not.toHaveTextContent('Oficina de terrário');
     expect(others).toHaveTextContent('Feirinha verde do Santo Cristo');
-    expect(screen.getByRole('region', { name: 'Produtos em destaque' })).toHaveTextContent('Vaso Terracota M');
+    expect(within(others).queryByText('Ver evento')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Onde estamos' })).toBeInTheDocument();
   });
 
   it('is a 404 for an unknown event', async () => {

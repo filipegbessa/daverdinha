@@ -41,6 +41,14 @@ export function Footer({ home }: { home: string }) {
             >
               {contact.instagram.handle}
             </ContactLink>
+            <ContactLink
+              href={`mailto:${contact.email}`}
+              channel="email"
+              location="footer"
+              className="underline underline-offset-4 hover:text-paper"
+            >
+              {contact.email}
+            </ContactLink>
           </p>
         </div>
 

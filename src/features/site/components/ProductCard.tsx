@@ -8,11 +8,36 @@ import { isStoreEnabled } from '@/features/store/lib/store-enabled';
 import type { Product } from '@/features/site/types/catalog';
 
 /**
- * Foto e textos são o link pro produto; o botão de adicionar fica fora do
- * link (botão dentro de link não é HTML válido) e só aparece com a loja
- * ligada. `h-full` + `flex-1` alinham os botões na base numa linha de cards.
+ * `full`: foto grande, usado no catálogo. `compact`: foto pequena ao lado do
+ * texto, sem botão de comprar — mesmo padrão do `EventCard` compacto, usado
+ * nas listas cruzadas (produtos em destaque na agenda, mais vendidos na
+ * página do produto).
  */
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, variant = 'full' }: { product: Product; variant?: 'full' | 'compact' }) {
+  if (variant === 'compact') {
+    return (
+      <Link
+        href={productHref(product)}
+        className="grid h-full grid-cols-[4rem_1fr] gap-4 overflow-hidden rounded-2xl border border-sand-line bg-paper p-4 shadow-card transition-shadow hover:shadow-soft"
+      >
+        <ImagePlaceholder
+          src={product.images[0]}
+          alt={product.name}
+          sizes="64px"
+          className="aspect-square self-start rounded-xl"
+        />
+        <div className="min-w-0 space-y-0.5">
+          <p className="text-xs tracking-wider text-ink-soft uppercase">{product.category.name}</p>
+          <h3 className="font-medium text-berry">{product.name}</h3>
+          <p className="text-sm text-ink tabular-nums">{formatPrice(product.price)}</p>
+          <div className="pt-1">
+            <AvailabilityBadge product={product} />
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-sand-line bg-paper text-left shadow-card transition-shadow hover:shadow-soft">
       <Link href={productHref(product)} className="block flex-1">

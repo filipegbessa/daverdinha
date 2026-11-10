@@ -22,6 +22,7 @@ export const businessInfo = {
       url: 'https://www.instagram.com/daverdinha_/',
       handle: '@daverdinha_',
     },
+    email: 'contato@daverdinha.com.br',
   },
 
   address: {
@@ -80,6 +81,7 @@ export function generateLocalBusinessJsonLd(areaServed: string[] = []): Record<s
     sameAs: [businessInfo.contact.instagram.url],
     areaServed,
     telephone: `+${businessInfo.contact.phone.number}`,
+    email: businessInfo.contact.email,
     address: {
       '@type': 'PostalAddress',
       streetAddress: address.street,
