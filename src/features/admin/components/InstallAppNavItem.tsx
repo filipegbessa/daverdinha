@@ -33,7 +33,7 @@ export function InstallAppNavItem() {
         </p>
       )}
       {error && (
-        <p role="alert" className="px-3 pb-2 text-xs text-red-600">
+        <p role="alert" className="px-3 pb-2 text-xs text-destructive">
           {error}
         </p>
       )}

@@ -134,7 +134,7 @@ export interface OrderItem {
   productRetailerId: string;
   productName: string | null;
   quantity: number;
-  unitPrice: string | null;
+  unitPrice: number | null;
   currency: string | null;
 }
 

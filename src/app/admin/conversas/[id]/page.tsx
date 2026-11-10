@@ -390,7 +390,7 @@ export default function ConversaDetailPage() {
               data-message-kind={kind}
               className={
                 kind === 'order'
-                  ? 'max-w-md rounded border-2 border-amber-400 bg-amber-50 p-3 group'
+                  ? 'max-w-md rounded border-2 border-primary/60 bg-muted p-3 group'
                   : message.direction === 'inbound'
                     ? `max-w-md rounded bg-sand p-3${kind === 'invalid_content' ? ' italic text-ink-soft' : ''} group`
                     : 'ml-auto max-w-md rounded bg-moss/10 p-3 text-right group'
@@ -414,7 +414,7 @@ export default function ConversaDetailPage() {
                 )
               )}
               {kind === 'order' && (
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
                   🛒 Pedido pelo catálogo
                 </p>
               )}

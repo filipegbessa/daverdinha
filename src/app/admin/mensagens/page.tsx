@@ -82,7 +82,7 @@ export default function MensagensPage() {
           Salvar
         </Button>
         {saved && (
-          <p role="status" className="text-sm text-moss">
+          <p role="status" className="text-sm text-muted-foreground">
             Mensagens salvas.
           </p>
         )}

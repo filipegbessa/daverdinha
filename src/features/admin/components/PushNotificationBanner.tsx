@@ -95,7 +95,7 @@ export function PushNotificationBanner() {
         </button>
       </div>
       {error && (
-        <p role="alert" className="w-full text-red-600">
+        <p role="alert" className="w-full text-destructive">
           {error}
         </p>
       )}

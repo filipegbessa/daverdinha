@@ -109,7 +109,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {showUnreadBadge && (
                       <span
                         aria-hidden="true"
-                        className="ml-2 inline-flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-berry px-1.5 text-xs font-semibold text-white"
+                        className="ml-2 inline-flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-berry px-1.5 text-xs font-semibold text-primary-foreground"
                       >
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
