@@ -64,14 +64,14 @@ export default function ConversasPage() {
       key: 'name',
       header: 'Nome',
       sortable: true,
-      sortValue: (conversation) => conversation.name ?? formatPhone(conversation.phone),
+      sortValue: (conversation) => conversation.name || formatPhone(conversation.phone),
       cell: (conversation) => (
         <Link
           href={`/admin/conversas/${conversation.id}`}
           className="flex items-center gap-2 underline underline-offset-4"
         >
           {conversation.unread && <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-berry" />}
-          {conversation.name ?? formatPhone(conversation.phone)}
+          {conversation.name || formatPhone(conversation.phone)}
         </Link>
       ),
     },
@@ -167,7 +167,7 @@ export default function ConversasPage() {
                     {conversation.unread && (
                       <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-berry" />
                     )}
-                    {conversation.name ?? formatPhone(conversation.phone)}
+                    {conversation.name || formatPhone(conversation.phone)}
                   </Link>
                   <p className="mt-1 text-sm text-ink-soft">{formatPhone(conversation.phone)}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-soft">
