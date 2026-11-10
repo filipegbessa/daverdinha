@@ -1,5 +1,6 @@
 'use client';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 /**
  * Prev/next arrows, the current position and the total, shared by every
@@ -37,27 +38,29 @@ export function TablePagination({
         {total} {itemLabel}
       </span>
       <div className="flex items-center gap-2">
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="icon-sm"
           aria-label="Página anterior"
           disabled={isBusy || page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="rounded-md border border-border p-1.5 text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <ChevronLeft className="size-4" aria-hidden="true" />
-        </button>
+        </Button>
         {/* aria-live so a screen reader announces the move; the arrows
             themselves give no feedback that anything changed. */}
         <span aria-live="polite">{isBusy ? 'Carregando...' : `Página ${page} de ${totalPages}`}</span>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="icon-sm"
           aria-label="Próxima página"
           disabled={isBusy || page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="rounded-md border border-border p-1.5 text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <ChevronRight className="size-4" aria-hidden="true" />
-        </button>
+        </Button>
       </div>
     </nav>
   );

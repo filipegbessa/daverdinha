@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { BackLink } from '@/features/admin/components/BackLink';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Camera, CornerUpLeft, Mic, Paperclip, Plus, ShoppingCart, X, type LucideIcon } from 'lucide-react';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { MessageImage } from '@/features/admin/components/MessageImage';
 import { MessageAudio } from '@/features/admin/components/MessageAudio';
@@ -26,15 +27,27 @@ function truncate(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
+type QuotedMessage = { kind?: string; body: string | null };
+
 /**
- * What stands in for a message with no text when it's quoted — a photo without
- * a caption or an audio has nothing else to show.
+ * O que aparece no lugar de uma mensagem citada sem texto: uma foto sem
+ * legenda ou um áudio não têm mais nada pra mostrar.
  */
-function quotePreview(message: { kind?: string; body: string | null }, max: number): string {
-  if (message.body) return truncate(message.body, max);
-  if (message.kind === 'audio') return '🎤 Áudio';
-  if (message.kind === 'image') return '📷 Foto';
-  return '(mensagem sem texto)';
+function QuotePreview({ message, max }: { message: QuotedMessage; max: number }) {
+  if (message.body) return <>{truncate(message.body, max)}</>;
+  if (message.kind === 'audio') return <IconText icon={Mic}>Áudio</IconText>;
+  if (message.kind === 'image') return <IconText icon={Camera}>Foto</IconText>;
+  return <>(mensagem sem texto)</>;
+}
+
+/** Um ícone pequeno antes do texto, alinhado com a linha. */
+function IconText({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <Icon aria-hidden="true" className="size-3.5 flex-none" />
+      {children}
+    </span>
+  );
 }
 
 function formatDuration(totalSeconds: number): string {
@@ -93,7 +106,7 @@ export default function ConversaDetailPage() {
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState('');
   const [replyText, setReplyText] = useState('');
-  const [replyingTo, setReplyingTo] = useState<{ id: string; preview: string } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<(QuotedMessage & { id: string }) | null>(null);
   const [attachment, setAttachment] = useState<ReplyAttachment | null>(null);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const recorder = useVoiceRecorder((file) => {
@@ -240,12 +253,7 @@ export default function ConversaDetailPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <Link
-        href="/admin/conversas"
-        className="mb-2 inline-flex w-fit items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-      >
-        ← Voltar para conversas
-      </Link>
+      <BackLink href="/admin/conversas">Voltar para conversas</BackLink>
       <div className="flex flex-none flex-wrap items-start justify-between gap-4 border-b border-border pb-4">
         <div>
           <h1 className="text-2xl font-semibold">{conversation.name || formatPhone(conversation.phone)}</h1>
@@ -257,7 +265,7 @@ export default function ConversaDetailPage() {
                 onClick={() => setEditingName(true)}
                 className="underline underline-offset-4 hover:text-foreground"
               >
-                {conversation.name ? 'editar nome' : '+ adicionar nome'}
+                {conversation.name ? 'editar nome' : <IconText icon={Plus}>adicionar nome</IconText>}
               </button>
             </div>
           )}
@@ -311,7 +319,7 @@ export default function ConversaDetailPage() {
                 style={badgeColorStyle(cat.color)}
               >
                 {cat.name}
-                <span aria-hidden="true">×</span>
+                <X aria-hidden="true" className="size-3.5" />
               </button>
             );
           })}
@@ -323,7 +331,8 @@ export default function ConversaDetailPage() {
               onClick={() => setCategoryMenuOpen((open) => !open)}
               aria-expanded={categoryMenuOpen}
             >
-              + Marcador
+              <Plus aria-hidden="true" />
+              Marcador
             </Button>
             {categoryMenuOpen && (
               <div
@@ -399,7 +408,7 @@ export default function ConversaDetailPage() {
                   data-testid="reply-quote"
                   className="mb-1 border-l-2 border-muted-foreground/40 pl-2 text-xs text-muted-foreground"
                 >
-                  {quotePreview(message.repliedTo, 80)}
+                  <QuotePreview message={message.repliedTo} max={80} />
                 </p>
               ) : (
                 message.repliedToWamid && (
@@ -407,12 +416,14 @@ export default function ConversaDetailPage() {
                     data-testid="reply-quote-generic"
                     className="mb-1 border-l-2 border-muted-foreground/40 pl-2 text-xs text-muted-foreground"
                   >
-                    ↩ Respondendo a uma mensagem anterior
+                    <IconText icon={CornerUpLeft}>Respondendo a uma mensagem anterior</IconText>
                   </p>
                 )
               )}
               {kind === 'order' && (
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">🛒 Pedido pelo catálogo</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                  <IconText icon={ShoppingCart}>Pedido pelo catálogo</IconText>
+                </p>
               )}
               {kind === 'image' ? (
                 <MessageImage conversationId={id} messageId={message.id} caption={message.body} />
@@ -436,10 +447,10 @@ export default function ConversaDetailPage() {
                   <button
                     type="button"
                     data-testid="reply-to-button"
-                    onClick={() => setReplyingTo({ id: message.id, preview: quotePreview(message, 60) })}
+                    onClick={() => setReplyingTo({ id: message.id, kind: message.kind, body: message.body })}
                     className="text-xs text-muted-foreground underline opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus:opacity-100"
                   >
-                    ↩ responder
+                    <IconText icon={CornerUpLeft}>responder</IconText>
                   </button>
                 )}
               </div>
@@ -456,10 +467,18 @@ export default function ConversaDetailPage() {
                 data-testid="replying-to-banner"
                 className="mb-2 flex items-center justify-between gap-2 border-l-2 border-primary pl-2 text-xs text-muted-foreground"
               >
-                <span>Respondendo a: {replyingTo.preview}</span>
-                <button type="button" onClick={() => setReplyingTo(null)} aria-label="Cancelar resposta citada">
-                  ✕
-                </button>
+                <span>
+                  Respondendo a: <QuotePreview message={replyingTo} max={60} />
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setReplyingTo(null)}
+                  aria-label="Cancelar resposta citada"
+                >
+                  <X aria-hidden="true" />
+                </Button>
               </div>
             )}
             {attachment && (
@@ -468,14 +487,18 @@ export default function ConversaDetailPage() {
                 className="mb-2 flex items-center justify-between gap-2 rounded border border-border p-2 text-xs text-muted-foreground"
               >
                 <div className="min-w-0 flex-1">
-                  <span>
-                    {attachment.kind === 'audio' ? '🎤' : '📎'} {attachment.file.name}
-                  </span>
+                  <IconText icon={attachment.kind === 'audio' ? Mic : Paperclip}>{attachment.file.name}</IconText>
                   {attachment.kind === 'audio' && <AttachmentAudioPreview file={attachment.file} />}
                 </div>
-                <button type="button" onClick={() => setAttachment(null)} aria-label="Remover anexo">
-                  ✕
-                </button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setAttachment(null)}
+                  aria-label="Remover anexo"
+                >
+                  <X aria-hidden="true" />
+                </Button>
               </div>
             )}
             {recorder.state === 'recording' && (
@@ -483,7 +506,13 @@ export default function ConversaDetailPage() {
                 data-testid="recording-banner"
                 className="mb-2 flex items-center justify-between gap-2 rounded border border-destructive/40 p-2 text-xs text-destructive"
               >
-                <span aria-live="polite">● Gravando {formatDuration(recorder.elapsedSeconds)}</span>
+                <span aria-live="polite">
+                  <span
+                    aria-hidden="true"
+                    className="inline-block size-2 rounded-full bg-destructive motion-safe:animate-pulse"
+                  />{' '}
+                  Gravando {formatDuration(recorder.elapsedSeconds)}
+                </span>
                 <span className="flex gap-3">
                   <button type="button" onClick={recorder.cancel} className="underline">
                     Descartar
@@ -503,8 +532,9 @@ export default function ConversaDetailPage() {
               {/* O próprio label é o gatilho: abre o seletor nativamente,
                   sem JS, e evita ter dois controles anunciando a mesma coisa
                   para leitor de tela. */}
-              <label htmlFor="replyImage" className={buttonVariants({ variant: 'outline' })}>
-                📎<span className="sr-only">Anexar imagem ou áudio</span>
+              <label htmlFor="replyImage" className={buttonVariants({ variant: 'outline', size: 'icon' })}>
+                <Paperclip aria-hidden="true" />
+                <span className="sr-only">Anexar imagem ou áudio</span>
               </label>
               <input
                 id="replyImage"
@@ -515,15 +545,17 @@ export default function ConversaDetailPage() {
               />
               {/* Só aparece onde o navegador grava num formato que o WhatsApp
                   aceita — no Chrome antigo, que só grava webm, o operador
-                  ainda pode anexar um arquivo de áudio pelo 📎. */}
+                  ainda pode anexar um arquivo de áudio pelo clipe. */}
               {recorder.supported && (
                 <Button
                   type="button"
                   variant="outline"
+                  size="icon"
                   onClick={() => void recorder.start()}
                   disabled={recorder.state === 'recording' || sendReply.isPending}
                 >
-                  🎤<span className="sr-only">Gravar áudio</span>
+                  <Mic aria-hidden="true" />
+                  <span className="sr-only">Gravar áudio</span>
                 </Button>
               )}
               <label htmlFor="replyText" className="sr-only">

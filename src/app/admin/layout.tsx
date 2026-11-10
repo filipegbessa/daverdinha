@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
+import { Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { PushNotificationBanner } from '@/features/admin/components/PushNotificationBanner';
 import { InstallAppNavItem } from '@/features/admin/components/InstallAppNavItem';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
@@ -55,15 +57,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         <div className="flex flex-none items-center justify-between border-b border-border bg-muted p-4 md:hidden">
           <p className="text-lg font-semibold">Daverdinha</p>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setNavOpen(true)}
             aria-label="Abrir menu"
             aria-expanded={navOpen}
-            className="rounded-lg p-2 text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
-            ☰
-          </button>
+            <Menu aria-hidden="true" />
+          </Button>
         </div>
 
         {navOpen && (
@@ -82,14 +85,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           <div className="mb-8 flex items-center justify-between">
             <p className="text-lg font-semibold">Daverdinha</p>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-sm"
               onClick={() => setNavOpen(false)}
               aria-label="Fechar menu"
-              className="rounded-lg p-1 text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:hidden"
+              className="md:hidden"
             >
-              ✕
-            </button>
+              <X aria-hidden="true" />
+            </Button>
           </div>
           <ul className="flex-1 space-y-1">
             {NAV_ITEMS.map((item) => {

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { BackLink } from '@/features/admin/components/BackLink';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useApiClient } from '@/features/admin/lib/api-client';
@@ -71,12 +71,7 @@ export default function PedidoPage() {
 
   return (
     <div>
-      <Link
-        href="/admin/pedidos"
-        className="mb-2 inline-flex w-fit items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-      >
-        ← Voltar para pedidos
-      </Link>
+      <BackLink href="/admin/pedidos">Voltar para pedidos</BackLink>
       <PageHeader title={`Pedido ${order.code}`}>
         <Badge>{ORDER_STATUS_SINGULAR[order.status]}</Badge>
       </PageHeader>

@@ -64,7 +64,7 @@ describe('ConversaDetailPage', () => {
     render(<ConversaDetailPage />);
 
     expect(await screen.findByRole('heading', { name: '+55 (21) 99999-9999' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '+ adicionar nome' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'adicionar nome' })).toBeInTheDocument();
   });
 
   it('shows a loading state while the request is in flight', async () => {
@@ -391,7 +391,7 @@ describe('ConversaDetailPage', () => {
 
     const bubble = await screen.findByTestId('message-bubble');
     expect(bubble).toHaveAttribute('data-message-kind', 'order');
-    expect(bubble).toHaveTextContent('🛒 Pedido pelo catálogo');
+    expect(bubble).toHaveTextContent('Pedido pelo catálogo');
     expect(bubble).toHaveTextContent('Vaso de Cerâmica x2');
     expect(bubble).toHaveTextContent('R$ 35,00');
   });
@@ -473,7 +473,7 @@ describe('ConversaDetailPage', () => {
 
     render(<ConversaDetailPage />);
 
-    expect(await screen.findByTestId('reply-quote')).toHaveTextContent('🎤 Áudio');
+    expect(await screen.findByTestId('reply-quote')).toHaveTextContent('Áudio');
   });
 
   it('renders an invalid-content message distinctly from a normal text bubble', async () => {
@@ -534,9 +534,7 @@ describe('ConversaDetailPage', () => {
     render(<ConversaDetailPage />);
 
     const bubble = await screen.findByTestId('message-bubble');
-    expect(within(bubble).getByTestId('reply-quote-generic')).toHaveTextContent(
-      '↩ Respondendo a uma mensagem anterior',
-    );
+    expect(within(bubble).getByTestId('reply-quote-generic')).toHaveTextContent('Respondendo a uma mensagem anterior');
     expect(within(bubble).queryByTestId('reply-quote')).not.toBeInTheDocument();
   });
 
@@ -680,7 +678,7 @@ describe('ConversaDetailPage', () => {
     expect(screen.queryByRole('button', { name: /Fechou compra/ })).not.toBeInTheDocument();
   });
 
-  it('lists only unattached categories in the "+ Marcador" menu and attaches one on click', async () => {
+  it('lists only unattached categories in the "Marcador" menu and attaches one on click', async () => {
     const allCategories = [
       { id: 'cat1', name: 'Bingo', color: '#185928' },
       { id: 'cat2', name: 'Fechou compra', color: '#7a3247' },
@@ -696,7 +694,7 @@ describe('ConversaDetailPage', () => {
 
     render(<ConversaDetailPage />);
     await screen.findByRole('button', { name: /Bingo/ });
-    await userEvent.click(screen.getByRole('button', { name: '+ Marcador' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Marcador' }));
 
     const menu = await screen.findByRole('menu', { name: 'Adicionar marcador' });
     expect(within(menu).queryByRole('menuitem', { name: 'Bingo' })).not.toBeInTheDocument();

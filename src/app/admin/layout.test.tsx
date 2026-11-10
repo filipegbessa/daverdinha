@@ -117,7 +117,7 @@ describe('AdminLayout', () => {
       </AdminLayout>,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
-    const backdrop = container.querySelector('[aria-hidden="true"]');
+    const backdrop = container.querySelector('div[aria-hidden="true"]');
     expect(backdrop).not.toBeNull();
     await userEvent.click(backdrop as Element);
 

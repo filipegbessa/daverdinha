@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePushSubscription } from '@/features/admin/lib/use-push-subscription';
 
@@ -85,14 +86,15 @@ export function PushNotificationBanner() {
         <Button type="button" onClick={handleClick} loading={subscribing} loadingText="Ativando..." size="sm">
           Ativar notificações
         </Button>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-sm"
           onClick={handleDismiss}
           aria-label="Fechar aviso de notificações"
-          className="rounded-lg p-1 text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          ✕
-        </button>
+          <X aria-hidden="true" />
+        </Button>
       </div>
       {error && (
         <p role="alert" className="w-full text-destructive">

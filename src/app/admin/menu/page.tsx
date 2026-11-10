@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useApiClient } from '@/features/admin/lib/api-client';
@@ -70,22 +71,26 @@ export default function MenuPage() {
         {items.map((item, index) => (
           <AdminListItem key={item.id}>
             <div className="flex flex-col">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 aria-label={`Mover ${item.topic} pra cima`}
                 disabled={busy || index === 0}
                 onClick={() => move(item, 'up')}
               >
-                ▲
-              </button>
-              <button
+                <ChevronUp aria-hidden="true" />
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 aria-label={`Mover ${item.topic} pra baixo`}
                 disabled={busy || index === items.length - 1}
                 onClick={() => move(item, 'down')}
               >
-                ▼
-              </button>
+                <ChevronDown aria-hidden="true" />
+              </Button>
             </div>
             <span className="flex-1">{item.topic}</span>
             <Switch

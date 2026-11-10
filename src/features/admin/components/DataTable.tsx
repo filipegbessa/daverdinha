@@ -1,4 +1,5 @@
 'use client';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -70,11 +71,18 @@ export function DataTable<T>({ columns, rows, rowKey, renderMobileCard }: DataTa
                       sort?.key === column.key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'
                     }
                   >
-                    <button type="button" onClick={() => handleSortClick(column)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSortClick(column)}
+                      className="inline-flex items-center gap-1"
+                    >
                       {column.header}
-                      {sort?.key === column.key && (
-                        <span aria-hidden="true"> {sort.direction === 'asc' ? '▲' : '▼'}</span>
-                      )}
+                      {sort?.key === column.key &&
+                        (sort.direction === 'asc' ? (
+                          <ArrowUp aria-hidden="true" className="size-3.5" />
+                        ) : (
+                          <ArrowDown aria-hidden="true" className="size-3.5" />
+                        ))}
                     </button>
                   </TableHead>
                 ) : (
