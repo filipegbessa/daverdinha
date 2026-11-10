@@ -2,9 +2,10 @@ import { MessageCircle } from 'lucide-react';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { Footer } from '@/features/site/components/Footer';
-import { Header, WHATSAPP_GREETING } from '@/features/site/components/Header';
+import { Header } from '@/features/site/components/Header';
 import { CartProvider } from '@/features/store/components/CartProvider';
 import { isStoreEnabled } from '@/features/store/lib/store-enabled';
+import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 
 /**
  * A moldura de toda página do site completo: cabeçalho, rodapé e o botão

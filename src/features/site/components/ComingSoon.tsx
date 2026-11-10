@@ -7,6 +7,7 @@ import { businessInfo } from "@/data/business";
 import { getWhatsAppUrl } from "@/features/site/lib/whatsapp";
 import { Eyebrow } from "@/features/site/components/Eyebrow";
 import { ContactLink } from "@/features/site/components/ContactLink";
+import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 
 /**
  * A landing que `/` mostra enquanto `SITE_MODE` não for 'full'.
@@ -39,7 +40,7 @@ export function ComingSoon() {
 
       <div className="flex flex-col items-center gap-3 sm:flex-row">
         <ContactLink
-          href={getWhatsAppUrl("Oi! Vim pelo site da Daverdinha 🌱")}
+          href={getWhatsAppUrl(WHATSAPP_GREETING)}
           channel="whatsapp"
           location="coming_soon"
           className={cn(

@@ -9,8 +9,7 @@ import { MobileNav } from '@/features/site/components/MobileNav';
 import { siteNav } from '@/features/site/components/site-nav';
 import { CartLink } from '@/features/store/components/CartLink';
 import { isStoreEnabled } from '@/features/store/lib/store-enabled';
-
-export const WHATSAPP_GREETING = 'Oi! Vim pelo site da Daverdinha 🌱';
+import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 
 /**
  * Logo pequena com o nome ao lado (o nome é o que o Google e um leitor de

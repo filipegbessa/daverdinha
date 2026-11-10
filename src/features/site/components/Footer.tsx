@@ -3,7 +3,7 @@ import { businessInfo } from '@/data/business';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { siteNav } from '@/features/site/components/site-nav';
-import { WHATSAPP_GREETING } from '@/features/site/components/Header';
+import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 
 /**
  * Nome, endereço e telefone em todas as páginas, escritos igual ao perfil da

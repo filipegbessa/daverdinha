@@ -8,6 +8,7 @@ import { ContactLink } from '@/features/site/components/ContactLink';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import type { HeroSlide } from '@/features/site/types/hero-slide';
+import { HERO_MESSAGE } from '@/features/site/lib/whatsapp-messages';
 
 /**
  * Um slide do topo. O primeiro da lista usa H1 (o título principal da página
@@ -35,7 +36,7 @@ export function HeroSlideView({ slide, isFirst }: { slide: HeroSlide; isFirst: b
             {slide.linkLabel ?? 'Ver produtos'}
           </Link>
           <ContactLink
-            href={getWhatsAppUrl('Oi! Gostaria de saber mais sobre a Daverdinha 🌱')}
+            href={getWhatsAppUrl(HERO_MESSAGE)}
             channel="whatsapp"
             location="hero"
             className={cn(

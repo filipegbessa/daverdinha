@@ -17,6 +17,7 @@ import {
   type CheckoutFormValues,
 } from '@/features/store/lib/checkout-form';
 import type { CheckoutQuote } from '@/features/store/types/store';
+import { checkoutNoDeliveryMessage } from '@/features/site/lib/whatsapp-messages';
 
 const EMPTY: CheckoutFormValues = {
   name: '',
@@ -267,7 +268,7 @@ export function CheckoutForm() {
                     <span className="text-berry">
                       {deliveryUnavailableText(delivery)}{' '}
                       <ContactLink
-                        href={getWhatsAppUrl(`Oi! Queria comprar pelo site, mas a entrega no CEP ${values.cep} não apareceu.`)}
+                        href={getWhatsAppUrl(checkoutNoDeliveryMessage(values.cep))}
                         channel="whatsapp"
                         location="checkout"
                         className="font-semibold underline"

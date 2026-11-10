@@ -5,6 +5,7 @@ import { formatClock, formatPrice } from '@/lib/format';
 import { PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import type { FulfillmentStatus, PublicSiteOrder } from '@/features/store/types/store';
+import { orderStatusMessage } from '@/features/site/lib/whatsapp-messages';
 
 const FULFILLMENT: Record<FulfillmentStatus, string> = {
   awaiting: 'Pedido recebido, logo começamos a preparar.',
@@ -28,7 +29,7 @@ const HEADLINE: Record<PublicSiteOrder['status'], { title: string; icon: typeof 
 export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; reloadHref: string }) {
   const { title, icon: Icon, tone } = HEADLINE[order.status];
   const maxLeadTime = Math.max(0, ...order.items.map((i) => i.leadTimeDays ?? 0));
-  const whatsapp = getWhatsAppUrl(`Oi! Sobre o meu pedido ${order.code} no site.`);
+  const whatsapp = getWhatsAppUrl(orderStatusMessage(order.code));
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">

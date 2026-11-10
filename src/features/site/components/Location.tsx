@@ -2,7 +2,7 @@ import { AtSign, Mail, MessageCircle } from 'lucide-react';
 import { businessInfo } from '@/data/business';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
-import { WHATSAPP_GREETING } from '@/features/site/components/Header';
+import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 import { DirectionsButton, MapEmbed } from '@/features/site/components/MapEmbed';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 

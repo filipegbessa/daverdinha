@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { checkCep, maskCep, onlyDigits, type CepCheckResult } from '@/features/site/lib/cep-check';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
+import { deliveryQuestionMessage, deliveryScheduleMessage } from '@/features/site/lib/whatsapp-messages';
 
 export function CepChecker() {
   const [cep, setCep] = useState('');
@@ -54,7 +55,7 @@ export function CepChecker() {
           <p className="text-moss">
             <strong>Entregamos em {result.bairro}!</strong>{' '}
             <ContactLink
-              href={getWhatsAppUrl(`Oi! Quero combinar uma entrega em ${result.bairro} 🌱`)}
+              href={getWhatsAppUrl(deliveryScheduleMessage(result.bairro))}
               channel="whatsapp"
               location="cep_checker"
               className="font-semibold underline underline-offset-4"
@@ -68,7 +69,7 @@ export function CepChecker() {
             Ainda não entregamos em <strong className="text-ink">{result.bairro}</strong>. Chama a gente que a
             gente vê o que dá pra fazer.{' '}
             <ContactLink
-              href={getWhatsAppUrl(`Oi! Vocês entregam em ${result.bairro}? 🌱`)}
+              href={getWhatsAppUrl(deliveryQuestionMessage(result.bairro))}
               channel="whatsapp"
               location="cep_checker"
               className="font-semibold text-moss underline underline-offset-4"

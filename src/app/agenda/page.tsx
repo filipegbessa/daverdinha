@@ -14,6 +14,7 @@ import { getFeaturedProducts, getUpcomingEvents } from '@/features/site/lib/publ
 import { paginate } from '@/features/site/lib/pagination';
 import { pageMetadata } from '@/features/site/lib/seo';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
+import { UPCOMING_EVENTS_MESSAGE } from '@/features/site/lib/whatsapp-messages';
 
 export function generateMetadata(): Metadata {
   return pageMetadata({
@@ -53,7 +54,7 @@ export default async function AgendaPage({ searchParams }: Props) {
             <div className="mt-10 space-y-4">
               <p className="text-ink-soft">Nenhum evento marcado agora. Quer saber do próximo?</p>
               <ContactLink
-                href={getWhatsAppUrl('Oi! Quero saber dos próximos eventos da Daverdinha 🌱')}
+                href={getWhatsAppUrl(UPCOMING_EVENTS_MESSAGE)}
                 channel="whatsapp"
                 location="agenda"
                 className="inline-flex items-center gap-2 rounded-full bg-moss px-5 py-2.5 font-semibold text-paper hover:bg-moss/90"
