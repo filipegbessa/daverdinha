@@ -1,5 +1,4 @@
-'use client';
-import { cloneElement, isValidElement } from 'react';
+import { describeField, type FieldControl } from '@/lib/field-a11y';
 import { Switch } from '@/components/ui/switch';
 import { ErrorText } from '@/features/admin/components/StatusMessage';
 
@@ -22,15 +21,9 @@ export function FormField({
   hint?: React.ReactNode;
   /** A validation message for this field, shown under it. */
   error?: React.ReactNode;
-  children: React.ReactElement<{ 'aria-describedby'?: string; 'aria-invalid'?: boolean }>;
+  children: FieldControl;
 }) {
-  const hintId = hint ? `${id}-hint` : undefined;
-  const errorId = error ? `${id}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
-  const control =
-    describedBy && isValidElement(children)
-      ? cloneElement(children, { 'aria-describedby': describedBy, ...(error ? { 'aria-invalid': true } : {}) })
-      : children;
+  const { hintId, errorId, control } = describeField(id, { hint, error, control: children });
 
   return (
     <div>

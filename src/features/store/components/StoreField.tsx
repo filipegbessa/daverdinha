@@ -1,4 +1,4 @@
-import { cloneElement, isValidElement } from 'react';
+import { describeField, type FieldControl } from '@/lib/field-a11y';
 
 export const STORE_INPUT =
   'w-full rounded-lg border border-moss-line bg-paper px-4 py-2.5 text-ink placeholder:text-ink-soft/60 focus:border-moss focus:outline-none aria-invalid:border-berry';
@@ -19,15 +19,9 @@ export function StoreField({
   label: React.ReactNode;
   hint?: React.ReactNode;
   error?: string;
-  children: React.ReactElement<{ 'aria-describedby'?: string; 'aria-invalid'?: boolean }>;
+  children: FieldControl;
 }) {
-  const hintId = hint ? `${id}-hint` : undefined;
-  const errorId = error ? `${id}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
-  const control =
-    describedBy && isValidElement(children)
-      ? cloneElement(children, { 'aria-describedby': describedBy, ...(error ? { 'aria-invalid': true } : {}) })
-      : children;
+  const { hintId, errorId, control } = describeField(id, { hint, error, control: children });
 
   return (
     <div>
@@ -41,7 +35,7 @@ export function StoreField({
         </p>
       )}
       {error && (
-        <p id={errorId} className="mt-1 text-sm font-medium text-berry">
+        <p id={errorId} role="alert" className="mt-1 text-sm font-medium text-berry">
           {error}
         </p>
       )}
