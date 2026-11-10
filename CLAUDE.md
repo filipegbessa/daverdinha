@@ -26,7 +26,7 @@ node scripts/generate-assets.mjs    # regenerate logo/favicon/PWA icons from pub
 
 The project has no ESLint. CI (`.github/workflows/ci.yml`) runs `npm test` and then `npm run build` on every PR and on every push to `main`. Vercel deploys `main` automatically, so that CI run is the only check before production. A build needs Clerk keys in the env; CI uses fake keys in the format `pk_test_<base64(domain)$>`.
 
-Tests sit next to the file they cover (`foo.tsx` + `foo.test.tsx`). `jest.setup.ts` polyfills `matchMedia` and `PointerEvent` for jsdom. Tests that need Node instead of jsdom use a `@jest-environment node` docblock (see `src/middleware.test.ts`). Path alias: `@/` → `src/`.
+Tests sit next to the file they cover (`foo.tsx` + `foo.test.tsx`). `jest.setup.ts` polyfills `matchMedia` and `PointerEvent` for jsdom. Tests that need Node instead of jsdom use a `@jest-environment node` docblock (see `src/proxy.test.ts`). Path alias: `@/` → `src/`.
 
 ## Architecture
 
@@ -82,7 +82,7 @@ These keep slipping, so check them before calling an admin change done:
 Image and audio messages fetch a short-lived signed R2 URL on demand (`GET /conversations/:id/messages/:messageId/media` → `{ url }`) through `apiFetch`. The URL is not included in the thread payload. `<img>`/`<audio>` point directly at R2, because those tags can't send an `Authorization` header. If loading fails, `onError` refetches the URL once and then shows an error, so it never loops. A reply with an attachment switches from `/reply` (JSON) to `/reply-image` (multipart), and the caption is optional. Client-side type/size checks mirror the backend limits, but the API has the final say.
 
 ### Routing and SEO
-- `src/middleware.ts` uses Clerk to protect `/admin(.*)`.
+- `src/proxy.ts` (Next 16's name for middleware; always the Node.js runtime) uses Clerk's `clerkMiddleware` to protect `/admin(.*)`.
 - `next.config.ts` adds `X-Robots-Tag: noindex` to `/admin/*`. A `robots.txt` Disallow is deliberately not used for this.
 - `public/sw.js` is a minimal service worker, there for PWA install and push. It has no caching strategy, on purpose.
 
