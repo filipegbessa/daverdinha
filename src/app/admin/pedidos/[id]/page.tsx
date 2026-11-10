@@ -188,6 +188,7 @@ export default function PedidoPage() {
         <ConfirmDialog
           title={`Cancelar o pedido ${order.code}?`}
           confirmLabel="Cancelar pedido"
+          pendingLabel="Cancelando..."
           isPending={cancel.isPending}
           error={cancel.error}
           onConfirm={confirmCancel}

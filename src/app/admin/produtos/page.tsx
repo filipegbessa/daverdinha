@@ -190,6 +190,7 @@ export default function ProdutosPage() {
         <ConfirmDialog
           title={`Remover o produto "${deleting.name}"?`}
           confirmLabel="Remover produto"
+          pendingLabel="Removendo..."
           isPending={mutation.isPending}
           error={mutation.error}
           onConfirm={handleConfirmDelete}
