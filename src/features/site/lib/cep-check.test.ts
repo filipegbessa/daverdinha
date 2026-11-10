@@ -17,10 +17,16 @@ describe('checkCep', () => {
   });
 
   it('asks the API, which answers like the bot does', async () => {
-    apiReturns({ status: 'covered', bairro: 'Saúde' });
+    apiReturns({ status: 'covered', bairro: 'Saúde', fee: 15 });
 
-    await expect(checkCep('20220-030')).resolves.toEqual({ status: 'covered', bairro: 'Saúde' });
+    await expect(checkCep('20220-030')).resolves.toEqual({ status: 'covered', bairro: 'Saúde', fee: 15 });
     expect(global.fetch).toHaveBeenCalledWith('https://api.test/delivery-locations/check?cep=20220030');
+  });
+
+  it('answers fee null when the bairro is in no delivery area yet', async () => {
+    apiReturns({ status: 'covered', bairro: 'Saúde', fee: null });
+
+    await expect(checkCep('20220-030')).resolves.toEqual({ status: 'covered', bairro: 'Saúde', fee: null });
   });
 
   it('passes on a bairro that is not covered, including another city', async () => {

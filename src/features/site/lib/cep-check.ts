@@ -1,5 +1,9 @@
 export type CepCheckResult =
-  | { status: 'covered'; bairro: string }
+  /**
+   * `fee` é o frete da loja pro bairro (o mesmo do checkout), ou `null` quando
+   * o bairro é atendido pelo WhatsApp mas ainda não está numa área de entrega.
+   */
+  | { status: 'covered'; bairro: string; fee: number | null }
   | { status: 'not_covered'; bairro: string }
   | { status: 'unresolved' };
 
@@ -28,10 +32,12 @@ export async function checkCep(cep: string): Promise<CepCheckResult> {
   try {
     const response = await fetch(`${apiUrl}/delivery-locations/check?cep=${digits}`);
     if (!response.ok) return { status: 'unresolved' };
-    const data = (await response.json()) as { status?: string; bairro?: string };
-    if ((data.status === 'covered' || data.status === 'not_covered') && data.bairro) {
-      return { status: data.status, bairro: data.bairro };
+    const data = (await response.json()) as { status?: string; bairro?: string; fee?: unknown };
+    if (!data.bairro) return { status: 'unresolved' };
+    if (data.status === 'covered') {
+      return { status: 'covered', bairro: data.bairro, fee: typeof data.fee === 'number' ? data.fee : null };
     }
+    if (data.status === 'not_covered') return { status: 'not_covered', bairro: data.bairro };
     return { status: 'unresolved' };
   } catch {
     return { status: 'unresolved' };

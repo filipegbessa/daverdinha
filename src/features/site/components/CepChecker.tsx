@@ -5,12 +5,22 @@ import { SiteButton } from '@/features/site/components/SiteButton';
 import { checkCep, maskCep, onlyDigits, type CepCheckResult } from '@/features/site/lib/cep-check';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
-import { deliveryQuestionMessage, deliveryScheduleMessage } from '@/features/site/lib/whatsapp-messages';
+import { deliveryScheduleMessage } from '@/features/site/lib/whatsapp-messages';
+import { isStoreEnabled } from '@/features/store/lib/store-enabled';
+import { formatPrice } from '@/lib/format';
 
+/**
+ * "Entregamos no seu bairro?". Com a loja ligada, a resposta é a mesma do
+ * checkout: entrega com o valor do frete da área, ou "ainda não entregamos"
+ * (bairro fora da lista ou sem área de entrega), sem mandar pro WhatsApp.
+ * Com a loja desligada, a compra é pelo WhatsApp, então o bairro atendido
+ * leva pra combinar a entrega lá.
+ */
 export function CepChecker() {
   const [cep, setCep] = useState('');
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<CepCheckResult | null>(null);
+  const storeEnabled = isStoreEnabled();
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -18,6 +28,9 @@ export function CepChecker() {
     setResult(await checkCep(cep));
     setChecking(false);
   }
+
+  const notDelivered =
+    result?.status === 'not_covered' || (storeEnabled && result?.status === 'covered' && result.fee === null);
 
   return (
     <div>
@@ -49,31 +62,28 @@ export function CepChecker() {
       </form>
 
       <div aria-live="polite" className="mt-3 min-h-12 text-sm">
-        {result?.status === 'covered' && (
+        {result?.status === 'covered' && !notDelivered && (
           <p className="text-moss">
             <strong>Entregamos em {result.bairro}!</strong>{' '}
-            <ContactLink
-              href={getWhatsAppUrl(deliveryScheduleMessage(result.bairro))}
-              channel="whatsapp"
-              location="cep_checker"
-              className="font-semibold underline underline-offset-4"
-            >
-              Combinar pelo WhatsApp
-            </ContactLink>
+            {storeEnabled && result.fee !== null ? (
+              <>
+                Frete: <span className="font-semibold tabular-nums">{formatPrice(result.fee)}</span>.
+              </>
+            ) : (
+              <ContactLink
+                href={getWhatsAppUrl(deliveryScheduleMessage(result.bairro))}
+                channel="whatsapp"
+                location="cep_checker"
+                className="font-semibold underline underline-offset-4"
+              >
+                Combinar pelo WhatsApp
+              </ContactLink>
+            )}
           </p>
         )}
-        {result?.status === 'not_covered' && (
+        {notDelivered && result && 'bairro' in result && (
           <p className="text-ink-soft">
-            Ainda não entregamos em <strong className="text-ink">{result.bairro}</strong>. Chama a gente que a gente vê
-            o que dá pra fazer.{' '}
-            <ContactLink
-              href={getWhatsAppUrl(deliveryQuestionMessage(result.bairro))}
-              channel="whatsapp"
-              location="cep_checker"
-              className="font-semibold text-moss underline underline-offset-4"
-            >
-              Falar no WhatsApp
-            </ContactLink>
+            Ainda não entregamos em <strong className="text-ink">{result.bairro}</strong>.
           </p>
         )}
         {result?.status === 'unresolved' && (

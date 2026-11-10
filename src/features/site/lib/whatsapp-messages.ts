@@ -22,11 +22,6 @@ export function deliveryScheduleMessage(bairro: string): string {
   return `Oi! Quero combinar uma entrega em ${bairro} 🌱`;
 }
 
-/** O CEP não está na lista de bairros atendidos. */
-export function deliveryQuestionMessage(bairro: string): string {
-  return `Oi! Vocês entregam em ${bairro}? 🌱`;
-}
-
 /** O checkout não achou entrega pro CEP. */
 export function checkoutNoDeliveryMessage(cep: string): string {
   return `Oi! Queria comprar pelo site, mas a entrega no CEP ${cep} não apareceu.`;
