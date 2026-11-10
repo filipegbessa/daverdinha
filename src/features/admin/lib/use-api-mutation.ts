@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useState } from 'react';
+import { errorMessage } from '@/features/admin/lib/error-message';
 
 interface UseApiMutationResult {
   /**
@@ -34,7 +35,7 @@ export function useApiMutation(fallbackMessage = 'Não foi possível concluir a 
         await action();
         return true;
       } catch (err) {
-        setError(err instanceof Error ? err.message : fallbackMessage);
+        setError(errorMessage(err, fallbackMessage));
         return false;
       } finally {
         setIsPending(false);
