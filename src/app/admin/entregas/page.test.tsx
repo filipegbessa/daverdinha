@@ -36,6 +36,7 @@ describe('EntregasPage', () => {
     render(<EntregasPage />);
 
     expect(screen.getByText('Carregando...')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Locais de entrega' })).toBeInTheDocument();
   });
 
   it('groups locations by zone', async () => {

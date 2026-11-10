@@ -1,4 +1,5 @@
 'use client';
+import { LoadingState } from '@/features/admin/components/StatusMessage';
 import { useCallback, useState } from 'react';
 import { useMessageMedia } from '@/features/admin/lib/use-message-media';
 
@@ -65,7 +66,7 @@ export function MessageImage({ conversationId, messageId, caption }: MessageImag
           />
         </a>
       ) : (
-        <p className="text-xs text-muted-foreground">Carregando imagem...</p>
+        <LoadingState size="sm" label="Carregando imagem..." />
       )}
 
       {caption && <p className="mt-1 whitespace-pre-line">{caption}</p>}

@@ -1,31 +1,14 @@
-/**
- * Wraps content that is being refreshed (next page, reload after a save, a
- * toggle in flight): it stays on screen, dimmed and marked busy, instead of
- * either vanishing behind "Carregando..." or sitting there looking done.
- */
-export function BusyRegion({
-  busy,
-  className = '',
-  children,
-}: {
-  busy: boolean;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      aria-busy={busy}
-      className={`transition-opacity ${busy ? 'pointer-events-none cursor-wait opacity-50' : ''} ${className}`}
-    >
-      {children}
-    </div>
-  );
+import { BusyRegion } from '@/features/admin/components/StatusMessage';
+
+/** O aviso de lista vazia ("Nenhum produto ainda.", "... com esses filtros."). */
+export function EmptyState({ children }: { children: React.ReactNode }) {
+  return <p className="text-muted-foreground">{children}</p>;
 }
 
 /**
- * The card list the admin uses for menu items, marcadores, produtos and
- * categorias. `empty` shows when there are no items, so no page forgets
- * to say so.
+ * A lista de cards do admin (itens de menu, marcadores, produtos, categorias,
+ * pedidos). `empty` aparece quando não há itens, pra nenhuma página esquecer
+ * de dizer isso; `busy` apaga a lista (ou o aviso) durante uma recarga.
  */
 export function AdminList({
   busy = false,
@@ -38,10 +21,9 @@ export function AdminList({
   isEmpty: boolean;
   children: React.ReactNode;
 }) {
-  if (isEmpty) return <p className="mt-6 text-muted-foreground">{empty}</p>;
   return (
     <BusyRegion busy={busy} className="mt-6">
-      <ul className="space-y-2">{children}</ul>
+      {isEmpty ? <EmptyState>{empty}</EmptyState> : <ul className="space-y-2">{children}</ul>}
     </BusyRegion>
   );
 }

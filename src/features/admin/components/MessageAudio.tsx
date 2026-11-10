@@ -1,4 +1,5 @@
 'use client';
+import { LoadingState } from '@/features/admin/components/StatusMessage';
 import { useMessageMedia } from '@/features/admin/lib/use-message-media';
 import { pauseOtherAudio } from '@/features/admin/lib/exclusive-audio-playback';
 
@@ -40,7 +41,7 @@ export function MessageAudio({ conversationId, messageId }: MessageAudioProps) {
           </a>
         </audio>
       ) : (
-        <p className="text-xs text-muted-foreground">Carregando áudio...</p>
+        <LoadingState size="sm" label="Carregando áudio..." />
       )}
 
       <div className="mt-1 flex gap-3">

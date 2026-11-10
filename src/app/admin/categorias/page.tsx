@@ -51,7 +51,9 @@ export default function CategoriasPage() {
   return (
     <div>
       <PageHeader title="Categorias">
-        <Button onClick={() => setEditing('new')}>Nova categoria</Button>
+        <Button onClick={() => setEditing('new')} disabled={isLoading}>
+          Nova categoria
+        </Button>
       </PageHeader>
       <FilterBar>
         <Input

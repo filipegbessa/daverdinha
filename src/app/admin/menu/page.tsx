@@ -58,58 +58,61 @@ export default function MenuPage() {
     );
   }
 
-  if (isLoading) return <LoadingState />;
-  if (!items) return <ErrorAlert>{error ?? 'Não foi possível carregar os itens de menu.'}</ErrorAlert>;
-
   return (
     <div>
       <PageHeader title="Menu">
-        <Button onClick={() => setEditing('new')}>Novo item</Button>
+        <Button onClick={() => setEditing('new')} disabled={!items}>
+          Novo item
+        </Button>
       </PageHeader>
+      {isLoading && <LoadingState />}
+      {!isLoading && !items && <ErrorAlert>{error ?? 'Não foi possível carregar os itens de menu.'}</ErrorAlert>}
       {mutation.error && <ErrorAlert>{mutation.error}</ErrorAlert>}
-      <AdminList busy={busy} isEmpty={items.length === 0} empty="Nenhum item de menu.">
-        {items.map((item, index) => (
-          <AdminListItem key={item.id}>
-            <div className="flex flex-col">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                aria-label={`Mover ${item.topic} pra cima`}
-                disabled={busy || index === 0}
-                onClick={() => move(item, 'up')}
-              >
-                <ChevronUp aria-hidden="true" />
+      {items && (
+        <AdminList busy={busy} isEmpty={items.length === 0} empty="Nenhum item de menu.">
+          {items.map((item, index) => (
+            <AdminListItem key={item.id}>
+              <div className="flex flex-col">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={`Mover ${item.topic} pra cima`}
+                  disabled={busy || index === 0}
+                  onClick={() => move(item, 'up')}
+                >
+                  <ChevronUp aria-hidden="true" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={`Mover ${item.topic} pra baixo`}
+                  disabled={busy || index === items.length - 1}
+                  onClick={() => move(item, 'down')}
+                >
+                  <ChevronDown aria-hidden="true" />
+                </Button>
+              </div>
+              <span className="flex-1">{item.topic}</span>
+              <Switch
+                checked={item.active}
+                onCheckedChange={() => toggleActive(item)}
+                disabled={busy}
+                aria-label={`Ativar ${item.topic}`}
+              />
+              <Button variant="outline" disabled={busy} onClick={() => setEditing(item)}>
+                Editar
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                aria-label={`Mover ${item.topic} pra baixo`}
-                disabled={busy || index === items.length - 1}
-                onClick={() => move(item, 'down')}
-              >
-                <ChevronDown aria-hidden="true" />
-              </Button>
-            </div>
-            <span className="flex-1">{item.topic}</span>
-            <Switch
-              checked={item.active}
-              onCheckedChange={() => toggleActive(item)}
-              disabled={busy}
-              aria-label={`Ativar ${item.topic}`}
-            />
-            <Button variant="outline" disabled={busy} onClick={() => setEditing(item)}>
-              Editar
-            </Button>
-            {!item.isSystem && (
-              <Button variant="destructive" disabled={busy} onClick={() => setDeleting(item)}>
-                Excluir
-              </Button>
-            )}
-          </AdminListItem>
-        ))}
-      </AdminList>
+              {!item.isSystem && (
+                <Button variant="destructive" disabled={busy} onClick={() => setDeleting(item)}>
+                  Excluir
+                </Button>
+              )}
+            </AdminListItem>
+          ))}
+        </AdminList>
+      )}
       {editing && (
         <MenuItemDialog
           item={editing === 'new' ? null : editing}

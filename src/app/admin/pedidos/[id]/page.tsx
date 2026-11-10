@@ -18,9 +18,8 @@ import {
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { FormField } from '@/features/admin/components/FormField';
 import { PageHeader } from '@/features/admin/components/PageHeader';
-import { BusyRegion } from '@/features/admin/components/AdminList';
 import { Badge } from '@/features/admin/components/Badge';
-import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
+import { BusyRegion, ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { FulfillmentStatus, SiteOrderAdmin } from '@/features/admin/types/admin';
 import { SectionLabel } from '@/features/admin/components/SectionLabel';
 
@@ -44,8 +43,16 @@ export default function PedidoPage() {
   const cancel = useApiMutation('Erro ao cancelar o pedido.');
   const [confirmingCancel, setConfirmingCancel] = useState(false);
 
-  if (isLoading) return <LoadingState />;
-  if (!order) return <ErrorAlert>{error ?? 'Pedido não encontrado.'}</ErrorAlert>;
+  // O título aparece sempre; o carregando ou o erro ficam embaixo dele.
+  if (!order) {
+    return (
+      <div>
+        <BackLink href="/admin/pedidos">Voltar para pedidos</BackLink>
+        <PageHeader title="Pedido" />
+        {isLoading ? <LoadingState /> : <ErrorAlert>{error ?? 'Pedido não encontrado.'}</ErrorAlert>}
+      </div>
+    );
+  }
 
   async function changeFulfillment(value: FulfillmentStatus) {
     const ok = await fulfillment.run(() =>
@@ -72,13 +79,17 @@ export default function PedidoPage() {
   return (
     <div>
       <BackLink href="/admin/pedidos">Voltar para pedidos</BackLink>
-      <PageHeader title={`Pedido ${order.code}`}>
+      <PageHeader
+        title={`Pedido ${order.code}`}
+        description={
+          <>
+            Feito em {formatOrderDate(order.createdAt)}
+            {order.paidAt && ` · pago em ${formatOrderDate(order.paidAt)}`}
+          </>
+        }
+      >
         <Badge>{ORDER_STATUS_SINGULAR[order.status]}</Badge>
       </PageHeader>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Feito em {formatOrderDate(order.createdAt)}
-        {order.paidAt && ` · pago em ${formatOrderDate(order.paidAt)}`}
-      </p>
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
       <BusyRegion busy={isRefreshing || fulfillment.isPending} className="mt-6 grid gap-4 lg:grid-cols-2">

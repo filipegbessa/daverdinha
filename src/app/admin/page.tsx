@@ -26,8 +26,19 @@ export default function DashboardPage() {
   const activeCount = menuItems?.filter((item) => item.active).length ?? null;
 
   // Espera as duas cargas. Antes só a de configurações segurava a renderização.
-  if (isLoading || isLoadingMenuItems) return <LoadingState />;
-  if (!settings) return <ErrorAlert>{error ?? 'Não foi possível carregar os dados do painel.'}</ErrorAlert>;
+  // O título aparece sempre; o carregando ou o erro ficam embaixo dele.
+  if (isLoading || isLoadingMenuItems || !settings) {
+    return (
+      <div>
+        <PageHeader title="Dashboard" />
+        {isLoading || isLoadingMenuItems ? (
+          <LoadingState />
+        ) : (
+          <ErrorAlert>{error ?? 'Não foi possível carregar os dados do painel.'}</ErrorAlert>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>

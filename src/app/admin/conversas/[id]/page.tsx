@@ -5,7 +5,7 @@ import { BackLink } from '@/features/admin/components/BackLink';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Camera, CornerUpLeft, Mic, Paperclip, Plus, ShoppingCart, X, type LucideIcon } from 'lucide-react';
+import { Camera, CornerUpLeft, Loader2, Mic, Paperclip, Plus, ShoppingCart, X, type LucideIcon } from 'lucide-react';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { MessageImage } from '@/features/admin/components/MessageImage';
 import { MessageAudio } from '@/features/admin/components/MessageAudio';
@@ -15,7 +15,8 @@ import { pauseOtherAudio } from '@/features/admin/lib/exclusive-audio-playback';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { useConversationMessages } from '@/features/admin/lib/use-conversation-messages';
-import { ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
+import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
+import { PageHeader } from '@/features/admin/components/PageHeader';
 import { badgeColorStyle, badgeVariants, ColorDot } from '@/features/admin/components/Badge';
 import { cn } from '@/lib/utils';
 import { formatPhone } from '@/features/admin/lib/format-phone';
@@ -239,66 +240,70 @@ export default function ConversaDetailPage() {
 
   const actionError = saveName.error ?? sendReply.error ?? botState.error ?? categoryChange.error;
 
-  if (isLoading) {
-    return <LoadingState />;
-  }
-
-  if (error && !conversation) {
-    return <ErrorText>{error}</ErrorText>;
-  }
-
+  // O título aparece sempre; o carregando ou o erro ficam embaixo dele.
   if (!conversation) {
-    return null;
+    return (
+      <div>
+        <BackLink href="/admin/conversas">Voltar para conversas</BackLink>
+        <PageHeader title="Conversa" />
+        {isLoading || !error ? <LoadingState /> : <ErrorAlert>{error}</ErrorAlert>}
+      </div>
+    );
   }
 
   return (
     <div className="flex h-full flex-col">
       <BackLink href="/admin/conversas">Voltar para conversas</BackLink>
-      <div className="flex flex-none flex-wrap items-start justify-between gap-4 border-b border-border pb-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{conversation.name || formatPhone(conversation.phone)}</h1>
-          {!editingName && (
-            <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-              {conversation.name && <span>{formatPhone(conversation.phone)}</span>}
-              <button
-                type="button"
-                onClick={() => setEditingName(true)}
-                className="underline underline-offset-4 hover:text-foreground"
-              >
-                {conversation.name ? 'editar nome' : <IconText icon={Plus}>adicionar nome</IconText>}
-              </button>
-            </div>
+      <div className="flex-none border-b border-border pb-4">
+        <PageHeader
+          title={conversation.name || formatPhone(conversation.phone)}
+          description={
+            <>
+              {!editingName && (
+                <div className="flex items-center gap-2">
+                  {conversation.name && <span>{formatPhone(conversation.phone)}</span>}
+                  <button
+                    type="button"
+                    onClick={() => setEditingName(true)}
+                    className="underline underline-offset-4 hover:text-foreground"
+                  >
+                    {conversation.name ? 'editar nome' : <IconText icon={Plus}>adicionar nome</IconText>}
+                  </button>
+                </div>
+              )}
+              {editingName && (
+                <form onSubmit={handleSaveName} className="mt-2 flex flex-wrap items-center gap-2 text-foreground">
+                  <label htmlFor="contactName" className="sr-only">
+                    Nome
+                  </label>
+                  <Input
+                    id="contactName"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nome do cliente"
+                    autoFocus
+                  />
+                  <Button type="submit" loading={saveName.isPending}>
+                    Salvar nome
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setEditingName(false)}>
+                    Cancelar
+                  </Button>
+                </form>
+              )}
+            </>
+          }
+        >
+          {conversation.status === 'paused_human' ? (
+            <Button variant="outline" onClick={() => handleBotState('reactivate')} loading={botState.isPending}>
+              Reativar bot
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => handleBotState('pause')} loading={botState.isPending}>
+              Pausar bot
+            </Button>
           )}
-          {editingName && (
-            <form onSubmit={handleSaveName} className="mt-2 flex flex-wrap items-center gap-2">
-              <label htmlFor="contactName" className="sr-only">
-                Nome
-              </label>
-              <Input
-                id="contactName"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nome do cliente"
-                autoFocus
-              />
-              <Button type="submit" loading={saveName.isPending}>
-                Salvar nome
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setEditingName(false)}>
-                Cancelar
-              </Button>
-            </form>
-          )}
-        </div>
-        {conversation.status === 'paused_human' ? (
-          <Button variant="outline" onClick={() => handleBotState('reactivate')} loading={botState.isPending}>
-            Reativar bot
-          </Button>
-        ) : (
-          <Button variant="outline" onClick={() => handleBotState('pause')} loading={botState.isPending}>
-            Pausar bot
-          </Button>
-        )}
+        </PageHeader>
       </div>
 
       {error && <ErrorText className="flex-none">{error}</ErrorText>}
@@ -319,7 +324,11 @@ export default function ConversaDetailPage() {
                 style={badgeColorStyle(cat.color)}
               >
                 {cat.name}
-                <X aria-hidden="true" className="size-3.5" />
+                {isPending ? (
+                  <Loader2 aria-hidden="true" className="size-3.5 motion-safe:animate-spin" />
+                ) : (
+                  <X aria-hidden="true" className="size-3.5" />
+                )}
               </button>
             );
           })}
@@ -363,6 +372,9 @@ export default function ConversaDetailPage() {
                       >
                         <ColorDot color={cat.color} />
                         {cat.name}
+                        {isPending && (
+                          <Loader2 aria-hidden="true" className="ml-auto size-3.5 motion-safe:animate-spin" />
+                        )}
                       </button>
                     );
                   });

@@ -18,6 +18,8 @@ describe('MenuPage', () => {
     render(<MenuPage />);
 
     expect(screen.getByText('Carregando...')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Novo item' })).toBeDisabled();
   });
 
   it('lists every menu item in order', async () => {

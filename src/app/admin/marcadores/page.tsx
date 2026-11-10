@@ -41,7 +41,9 @@ export default function MarcadoresPage() {
   return (
     <div>
       <PageHeader title="Marcadores">
-        <Button onClick={() => setEditing('new')}>Novo marcador</Button>
+        <Button onClick={() => setEditing('new')} disabled={isLoading}>
+          Novo marcador
+        </Button>
       </PageHeader>
       {error && <ErrorAlert>{error}</ErrorAlert>}
       {isLoading && <LoadingState />}

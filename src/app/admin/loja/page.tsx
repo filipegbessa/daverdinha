@@ -46,8 +46,15 @@ export default function LojaPage() {
     }
   }, [data, form]);
 
-  if (isLoading || (!form && !error)) return <LoadingState />;
-  if (!form) return <ErrorAlert>{error ?? 'Não foi possível carregar as configurações da loja.'}</ErrorAlert>;
+  // Sem formulário ainda: o título aparece, com o carregando ou o erro embaixo.
+  if (!form) {
+    return (
+      <div>
+        <PageHeader title="Loja" />
+        {isLoading || !error ? <LoadingState /> : <ErrorAlert>{error}</ErrorAlert>}
+      </div>
+    );
+  }
 
   const missingPickupText = form.pickupAddress.trim() === '' || form.pickupHours.trim() === '';
   const example = installmentsFor(EXAMPLE_TOTAL, form.maxInstallments, minCents);

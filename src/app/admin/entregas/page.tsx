@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { errorMessage } from '@/features/admin/lib/error-message';
@@ -97,12 +98,7 @@ export default function EntregasPage() {
     setPendingZones((prev) => withoutKeys(prev, [zone]));
   }
 
-  if (isLoading) return <LoadingState />;
-  if (!locations) {
-    return <ErrorAlert>{loadError ?? 'Não foi possível carregar os locais de entrega.'}</ErrorAlert>;
-  }
-
-  const byZone = locations.reduce<Record<string, DeliveryLocation[]>>((acc, loc) => {
+  const byZone = (locations ?? []).reduce<Record<string, DeliveryLocation[]>>((acc, loc) => {
     (acc[loc.zone] ??= []).push(loc);
     return acc;
   }, {});
@@ -123,9 +119,13 @@ export default function EntregasPage() {
           ))}
         </div>
       </PageHeader>
+      {isLoading && <LoadingState />}
+      {!isLoading && !locations && (
+        <ErrorAlert>{loadError ?? 'Não foi possível carregar os locais de entrega.'}</ErrorAlert>
+      )}
       {error && <ErrorAlert>{error}</ErrorAlert>}
       {areasError && <ErrorAlert>{areasError}</ErrorAlert>}
-      {zoneAreas && (
+      {locations && zoneAreas && (
         <DeliveryAreasSection
           areas={areas}
           locations={locations}
@@ -136,59 +136,68 @@ export default function EntregasPage() {
           }}
         />
       )}
-      <section aria-labelledby="covered-bairros-title" className="mt-8">
-        <SectionLabel variant="title" id="covered-bairros-title">
-          Bairros atendidos
-        </SectionLabel>
-        <div className="mt-3 space-y-4">
-          {Object.entries(byZone).map(([zone, zoneLocations]) => {
-            const visible = zoneLocations.filter(matchesFilter);
-            const allCovered = zoneLocations.every(isCovered);
-            const noneCovered = !zoneLocations.some(isCovered);
-            const zonePending = pendingZones.has(zone);
+      {locations && (
+        <section aria-labelledby="covered-bairros-title" className="mt-8">
+          <SectionLabel variant="title" id="covered-bairros-title">
+            Bairros atendidos
+          </SectionLabel>
+          <div className="mt-3 space-y-4">
+            {Object.entries(byZone).map(([zone, zoneLocations]) => {
+              const visible = zoneLocations.filter(matchesFilter);
+              const allCovered = zoneLocations.every(isCovered);
+              const noneCovered = !zoneLocations.some(isCovered);
+              const zonePending = pendingZones.has(zone);
 
-            return (
-              <div key={zone} className="overflow-hidden rounded-lg border border-border">
-                <div className="flex items-center gap-2 bg-muted px-3 py-2">
-                  <IndeterminateCheckbox
-                    checked={allCovered}
-                    indeterminate={!allCovered && !noneCovered}
-                    onChange={() => toggleZone(zone, zoneLocations)}
-                    disabled={zonePending}
-                    aria-label={`Marcar toda a região ${zone}`}
-                    aria-busy={zonePending}
-                    className="h-4 w-4 accent-primary disabled:cursor-wait disabled:opacity-50"
-                  />
-                  <SectionLabel>{zone}</SectionLabel>
+              return (
+                <div key={zone} className="overflow-hidden rounded-lg border border-border">
+                  <div className="flex items-center gap-2 bg-muted px-3 py-2">
+                    <IndeterminateCheckbox
+                      checked={allCovered}
+                      indeterminate={!allCovered && !noneCovered}
+                      onChange={() => toggleZone(zone, zoneLocations)}
+                      disabled={zonePending}
+                      aria-label={`Marcar toda a região ${zone}`}
+                      aria-busy={zonePending}
+                      className="h-4 w-4 accent-primary disabled:cursor-wait disabled:opacity-50"
+                    />
+                    <SectionLabel>{zone}</SectionLabel>
+                    {zonePending && <PendingSpinner />}
+                  </div>
+                  <ul className="grid grid-cols-1 gap-x-4 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {visible.map((location) => {
+                      const itemPending = pending.has(location.id);
+                      return (
+                        <li key={location.id} className="flex items-center gap-2 py-1">
+                          <input
+                            type="checkbox"
+                            checked={isCovered(location)}
+                            onChange={() => toggleCovered(location)}
+                            disabled={itemPending}
+                            aria-label={`Atendida ${location.regionName}`}
+                            aria-busy={itemPending}
+                            className="h-4 w-4 accent-primary disabled:cursor-wait disabled:opacity-50"
+                          />
+                          <span className={`text-sm ${itemPending ? 'text-muted-foreground' : ''}`}>
+                            {location.regionName}
+                          </span>
+                          {itemPending && <PendingSpinner />}
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
-                <ul className="grid grid-cols-1 gap-x-4 p-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {visible.map((location) => {
-                    const itemPending = pending.has(location.id);
-                    return (
-                      <li key={location.id} className="flex items-center gap-2 py-1">
-                        <input
-                          type="checkbox"
-                          checked={isCovered(location)}
-                          onChange={() => toggleCovered(location)}
-                          disabled={itemPending}
-                          aria-label={`Atendida ${location.regionName}`}
-                          aria-busy={itemPending}
-                          className="h-4 w-4 accent-primary disabled:cursor-wait disabled:opacity-50"
-                        />
-                        <span className={`text-sm ${itemPending ? 'text-muted-foreground' : ''}`}>
-                          {location.regionName}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
+}
+
+/** O spinner ao lado de um bairro ou região que está salvando. */
+function PendingSpinner() {
+  return <Loader2 aria-hidden="true" className="size-3.5 text-muted-foreground motion-safe:animate-spin" />;
 }
 
 function IndeterminateCheckbox({

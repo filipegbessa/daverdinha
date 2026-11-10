@@ -57,37 +57,42 @@ export default function MensagensPage() {
     if (ok) setSaved(true);
   }
 
-  if (isLoading) return <LoadingState />;
-  if (!form) return <ErrorAlert>{error ?? 'Não foi possível carregar as mensagens.'}</ErrorAlert>;
+  // Até o formulário receber os dados da API, a página ainda está carregando.
+  const loading = isLoading || (!form && !error);
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
+    <div className="max-w-xl">
       <PageHeader title="Mensagens" />
+      {loading && <LoadingState />}
+      {!loading && !form && <ErrorAlert>{error ?? 'Não foi possível carregar as mensagens.'}</ErrorAlert>}
+      {form && (
+        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+          {FIELDS.map(({ name, label, hint }) => (
+            <FormField key={name} id={name} label={label} hint={hint}>
+              <Textarea
+                id={name}
+                value={form[name]}
+                onChange={(e) => {
+                  setSaved(false);
+                  setForm({ ...form, [name]: e.target.value });
+                }}
+              />
+            </FormField>
+          ))}
 
-      {FIELDS.map(({ name, label, hint }) => (
-        <FormField key={name} id={name} label={label} hint={hint}>
-          <Textarea
-            id={name}
-            value={form[name]}
-            onChange={(e) => {
-              setSaved(false);
-              setForm({ ...form, [name]: e.target.value });
-            }}
-          />
-        </FormField>
-      ))}
-
-      <div className="flex items-center gap-3">
-        <Button type="submit" loading={save.isPending} loadingText="Salvando...">
-          Salvar
-        </Button>
-        {saved && (
-          <p role="status" className="text-sm text-muted-foreground">
-            Mensagens salvas.
-          </p>
-        )}
-      </div>
-      {save.error && <ErrorText>{save.error}</ErrorText>}
-    </form>
+          <div className="flex items-center gap-3">
+            <Button type="submit" loading={save.isPending} loadingText="Salvando...">
+              Salvar
+            </Button>
+            {saved && (
+              <p role="status" className="text-sm text-muted-foreground">
+                Mensagens salvas.
+              </p>
+            )}
+          </div>
+          {save.error && <ErrorText>{save.error}</ErrorText>}
+        </form>
+      )}
+    </div>
   );
 }
