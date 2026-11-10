@@ -13,15 +13,8 @@ interface MessageImageProps {
  * A imagem de uma mensagem, buscada sob demanda — ver `useMessageMedia` para
  * o porquê da URL assinada e da nova tentativa quando ela expira.
  */
-export function MessageImage({
-  conversationId,
-  messageId,
-  caption,
-}: MessageImageProps) {
-  const { url, failed, loadUrl, handleError, download } = useMessageMedia(
-    conversationId,
-    messageId,
-  );
+export function MessageImage({ conversationId, messageId, caption }: MessageImageProps) {
+  const { url, failed, loadUrl, handleError, download } = useMessageMedia(conversationId, messageId);
   const [sharing, setSharing] = useState(false);
 
   /**
@@ -52,7 +45,7 @@ export function MessageImage({
 
   if (failed) {
     return (
-      <p data-testid="image-failed" className="italic text-ink-soft">
+      <p data-testid="image-failed" className="italic text-muted-foreground">
         Não foi possível carregar a imagem.
       </p>
     );
@@ -72,17 +65,13 @@ export function MessageImage({
           />
         </a>
       ) : (
-        <p className="text-xs text-ink-soft">Carregando imagem...</p>
+        <p className="text-xs text-muted-foreground">Carregando imagem...</p>
       )}
 
       {caption && <p className="mt-1 whitespace-pre-line">{caption}</p>}
 
       <div className="mt-1 flex gap-3">
-        <button
-          type="button"
-          onClick={() => void download()}
-          className="text-xs text-ink-soft underline"
-        >
+        <button type="button" onClick={() => void download()} className="text-xs text-muted-foreground underline">
           Baixar
         </button>
         {/* Escondido onde a folha nativa não existe — desktop e Firefox. */}
@@ -91,7 +80,7 @@ export function MessageImage({
             type="button"
             onClick={() => void share()}
             disabled={sharing}
-            className="text-xs text-ink-soft underline"
+            className="text-xs text-muted-foreground underline"
           >
             Compartilhar
           </button>

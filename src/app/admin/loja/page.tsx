@@ -92,7 +92,7 @@ export default function LojaPage() {
             onCheckedChange={(checked) => update('pickupEnabled', checked)}
           />
           {!form.pickupEnabled && (
-            <p className="text-sm text-ink-soft">O checkout não oferece retirada enquanto estiver desligada.</p>
+            <p className="text-sm text-muted-foreground">O checkout não oferece retirada enquanto estiver desligada.</p>
           )}
           <FormField
             id="pickupAddress"
@@ -160,7 +160,7 @@ export default function LojaPage() {
               />
             </FormField>
           </div>
-          <p className="text-sm text-ink-soft">
+          <p className="text-sm text-muted-foreground">
             Sem juros pro cliente: a taxa do parcelamento é descontada do valor que você recebe.{' '}
             <span aria-live="polite">
               Um pedido de {formatCurrency(EXAMPLE_TOTAL, 'BRL')}{' '}
@@ -176,7 +176,7 @@ export default function LojaPage() {
             Salvar
           </Button>
           {saved && (
-            <p role="status" className="text-sm text-moss">
+            <p role="status" className="text-sm text-muted-foreground">
               Configurações salvas.
             </p>
           )}

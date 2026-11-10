@@ -69,7 +69,7 @@ export function ProductImagesInput({
           accept={ALLOWED_TYPES.join(',')}
           multiple
           onChange={handleChange}
-          className="block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-sand file:px-4 file:py-2 file:font-medium"
+          className="block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-4 file:py-2 file:font-medium"
         />
       </FormField>
       {shown.length > 0 && (
@@ -80,10 +80,12 @@ export function ProductImagesInput({
               <img
                 src={src}
                 alt={`Foto ${index + 1}`}
-                className="size-16 rounded-lg border border-sand-line object-cover"
+                className="size-16 rounded-lg border border-border object-cover"
               />
               {index === 0 && (
-                <span className="absolute bottom-0.5 left-0.5 rounded bg-ink/70 px-1 text-[10px] text-paper">capa</span>
+                <span className="absolute bottom-0.5 left-0.5 rounded bg-foreground/70 px-1 text-[10px] text-primary-foreground">
+                  capa
+                </span>
               )}
             </li>
           ))}

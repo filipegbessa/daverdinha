@@ -53,7 +53,7 @@ export function CategoryDialog({
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}
-            className="h-10 w-14 cursor-pointer rounded border border-sand-line bg-paper p-1"
+            className="h-10 w-14 cursor-pointer rounded border border-border bg-background p-1"
           />
           {/* A live preview of the chip, because the same colour reads very
               differently as a 40px swatch and as a label behind text. */}

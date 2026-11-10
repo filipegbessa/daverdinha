@@ -88,7 +88,7 @@ export default function CategoriasPage() {
             <AdminListItem key={category.id}>
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{category.name}</p>
-                <p className="text-sm text-ink-soft">
+                <p className="text-sm text-muted-foreground">
                   {category.active ? 'Aparece no site' : 'Oculta'}
                   {category.order > 0 && ` · Ordem ${category.order}`}
                   {` · ${category._count.products} produto(s)`}

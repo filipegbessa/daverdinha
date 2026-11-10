@@ -38,7 +38,7 @@ export function AdminList({
   isEmpty: boolean;
   children: React.ReactNode;
 }) {
-  if (isEmpty) return <p className="mt-6 text-ink-soft">{empty}</p>;
+  if (isEmpty) return <p className="mt-6 text-muted-foreground">{empty}</p>;
   return (
     <BusyRegion busy={busy} className="mt-6">
       <ul className="space-y-2">{children}</ul>
@@ -47,5 +47,5 @@ export function AdminList({
 }
 
 export function AdminListItem({ children }: { children: React.ReactNode }) {
-  return <li className="flex flex-wrap items-center gap-3 rounded-lg border border-sand-line p-3">{children}</li>;
+  return <li className="flex flex-wrap items-center gap-3 rounded-lg border border-border p-3">{children}</li>;
 }

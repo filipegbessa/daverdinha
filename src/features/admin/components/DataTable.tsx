@@ -99,10 +99,10 @@ export function DataTable<T>({ columns, rows, rowKey, renderMobileCard }: DataTa
           renderMobileCard ? (
             <li key={rowKey(row)}>{renderMobileCard(row)}</li>
           ) : (
-            <li key={rowKey(row)} data-testid="data-table-mobile-card" className="rounded-md border border-sand-line p-3">
+            <li key={rowKey(row)} data-testid="data-table-mobile-card" className="rounded-md border border-border p-3">
               {columns.map((column) => (
                 <div key={column.key} className="flex items-baseline justify-between gap-2 text-sm">
-                  <span className="text-ink-soft">{column.header}</span>
+                  <span className="text-muted-foreground">{column.header}</span>
                   <span>{column.cell(row)}</span>
                 </div>
               ))}

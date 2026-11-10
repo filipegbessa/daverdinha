@@ -79,8 +79,8 @@ export function PushNotificationBanner() {
   if (permission !== 'default' && !error) return null;
 
   return (
-    <div className="flex flex-none flex-wrap items-center justify-between gap-3 border-b border-moss-line bg-sand px-4 py-2 text-sm">
-      <p className="text-ink-soft">Ative as notificações pra saber na hora quando chegar uma mensagem nova.</p>
+    <div className="flex flex-none flex-wrap items-center justify-between gap-3 border-b border-border bg-muted px-4 py-2 text-sm">
+      <p className="text-muted-foreground">Ative as notificações pra saber na hora quando chegar uma mensagem nova.</p>
       <div className="flex items-center gap-2">
         <Button type="button" onClick={handleClick} loading={subscribing} loadingText="Ativando..." size="sm">
           Ativar notificações
@@ -89,7 +89,7 @@ export function PushNotificationBanner() {
           type="button"
           onClick={handleDismiss}
           aria-label="Fechar aviso de notificações"
-          className="rounded-lg p-1 text-ink-soft hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
+          className="rounded-lg p-1 text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           ✕
         </button>

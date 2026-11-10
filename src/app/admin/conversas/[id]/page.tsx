@@ -241,20 +241,20 @@ export default function ConversaDetailPage() {
     <div className="flex h-full flex-col">
       <Link
         href="/admin/conversas"
-        className="mb-2 inline-flex w-fit items-center gap-1 text-sm text-ink-soft underline underline-offset-4 hover:text-ink"
+        className="mb-2 inline-flex w-fit items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
       >
         ← Voltar para conversas
       </Link>
-      <div className="flex flex-none flex-wrap items-start justify-between gap-4 border-b border-sand-line pb-4">
+      <div className="flex flex-none flex-wrap items-start justify-between gap-4 border-b border-border pb-4">
         <div>
           <h1 className="text-2xl font-semibold">{conversation.name || formatPhone(conversation.phone)}</h1>
           {!editingName && (
-            <div className="mt-1 flex items-center gap-2 text-sm text-ink-soft">
+            <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
               {conversation.name && <span>{formatPhone(conversation.phone)}</span>}
               <button
                 type="button"
                 onClick={() => setEditingName(true)}
-                className="underline underline-offset-4 hover:text-ink"
+                className="underline underline-offset-4 hover:text-foreground"
               >
                 {conversation.name ? 'editar nome' : '+ adicionar nome'}
               </button>
@@ -295,7 +295,7 @@ export default function ConversaDetailPage() {
       {error && <ErrorText className="flex-none">{error}</ErrorText>}
 
       {allCategories && allCategories.length > 0 && (
-        <div className="flex flex-none flex-wrap items-center gap-2 border-b border-sand-line py-3">
+        <div className="flex flex-none flex-wrap items-center gap-2 border-b border-border py-3">
           {conversation.categories.map((cat) => {
             const isPending = pendingCategory?.id === cat.id;
             return (
@@ -330,14 +330,14 @@ export default function ConversaDetailPage() {
               <div
                 role="menu"
                 aria-label="Adicionar marcador"
-                className="absolute left-0 top-full z-10 mt-1 w-48 rounded-md border border-sand-line bg-paper p-1 shadow-md"
+                className="absolute left-0 top-full z-10 mt-1 w-48 rounded-md border border-border bg-background p-1 shadow-md"
               >
                 {(() => {
                   const available = allCategories.filter(
                     (cat) => !conversation.categories.some((c) => c.id === cat.id),
                   );
                   if (available.length === 0) {
-                    return <p className="px-2 py-1.5 text-sm text-ink-soft">Todas já adicionadas.</p>;
+                    return <p className="px-2 py-1.5 text-sm text-muted-foreground">Todas já adicionadas.</p>;
                   }
                   return available.map((cat) => {
                     const isPending = pendingCategory?.id === cat.id;
@@ -349,7 +349,7 @@ export default function ConversaDetailPage() {
                         onClick={() => handleToggleCategory(cat.id, false)}
                         disabled={isPending}
                         aria-busy={isPending}
-                        className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-sand ${
+                        className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-muted ${
                           isPending ? 'cursor-wait opacity-50' : ''
                         }`}
                       >
@@ -395,19 +395,22 @@ export default function ConversaDetailPage() {
                 kind === 'order'
                   ? 'max-w-md rounded border-2 border-primary/60 bg-muted p-3 group'
                   : message.direction === 'inbound'
-                    ? `max-w-md rounded bg-sand p-3${kind === 'invalid_content' ? ' italic text-ink-soft' : ''} group`
-                    : 'ml-auto max-w-md rounded bg-moss/10 p-3 text-right group'
+                    ? `max-w-md rounded bg-muted p-3${kind === 'invalid_content' ? ' italic text-muted-foreground' : ''} group`
+                    : 'ml-auto max-w-md rounded bg-primary/10 p-3 text-right group'
               }
             >
               {message.repliedTo ? (
-                <p data-testid="reply-quote" className="mb-1 border-l-2 border-ink-soft/40 pl-2 text-xs text-ink-soft">
+                <p
+                  data-testid="reply-quote"
+                  className="mb-1 border-l-2 border-muted-foreground/40 pl-2 text-xs text-muted-foreground"
+                >
                   {quotePreview(message.repliedTo, 80)}
                 </p>
               ) : (
                 message.repliedToWamid && (
                   <p
                     data-testid="reply-quote-generic"
-                    className="mb-1 border-l-2 border-ink-soft/40 pl-2 text-xs text-ink-soft"
+                    className="mb-1 border-l-2 border-muted-foreground/40 pl-2 text-xs text-muted-foreground"
                   >
                     ↩ Respondendo a uma mensagem anterior
                   </p>
@@ -433,13 +436,13 @@ export default function ConversaDetailPage() {
                 <p className={kind === 'order' ? 'mt-1 whitespace-pre-line' : undefined}>{message.body}</p>
               )}
               <div className="mt-1 flex items-center justify-between gap-2">
-                <p className="text-xs text-ink-soft">{formatDateTime(message.createdAt)}</p>
+                <p className="text-xs text-muted-foreground">{formatDateTime(message.createdAt)}</p>
                 {message.whatsappMessageId && (
                   <button
                     type="button"
                     data-testid="reply-to-button"
                     onClick={() => setReplyingTo({ id: message.id, preview: quotePreview(message, 60) })}
-                    className="text-xs text-ink-soft underline opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus:opacity-100"
+                    className="text-xs text-muted-foreground underline opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus:opacity-100"
                   >
                     ↩ responder
                   </button>
@@ -450,13 +453,13 @@ export default function ConversaDetailPage() {
         })}
       </div>
 
-      <div className="flex-none border-t border-sand-line pt-3">
+      <div className="flex-none border-t border-border pt-3">
         {conversation.status === 'paused_human' ? (
           <form onSubmit={handleReply}>
             {replyingTo && (
               <div
                 data-testid="replying-to-banner"
-                className="mb-2 flex items-center justify-between gap-2 border-l-2 border-moss pl-2 text-xs text-ink-soft"
+                className="mb-2 flex items-center justify-between gap-2 border-l-2 border-primary pl-2 text-xs text-muted-foreground"
               >
                 <span>Respondendo a: {replyingTo.preview}</span>
                 <button type="button" onClick={() => setReplyingTo(null)} aria-label="Cancelar resposta citada">
@@ -467,7 +470,7 @@ export default function ConversaDetailPage() {
             {attachment && (
               <div
                 data-testid="attachment-preview"
-                className="mb-2 flex items-center justify-between gap-2 rounded border border-sand-line p-2 text-xs text-ink-soft"
+                className="mb-2 flex items-center justify-between gap-2 rounded border border-border p-2 text-xs text-muted-foreground"
               >
                 <div className="min-w-0 flex-1">
                   <span>
@@ -483,7 +486,7 @@ export default function ConversaDetailPage() {
             {recorder.state === 'recording' && (
               <div
                 data-testid="recording-banner"
-                className="mb-2 flex items-center justify-between gap-2 rounded border border-berry/40 p-2 text-xs text-berry"
+                className="mb-2 flex items-center justify-between gap-2 rounded border border-destructive/40 p-2 text-xs text-destructive"
               >
                 <span aria-live="polite">● Gravando {formatDuration(recorder.elapsedSeconds)}</span>
                 <span className="flex gap-3">
@@ -497,7 +500,7 @@ export default function ConversaDetailPage() {
               </div>
             )}
             {(attachmentError ?? recorder.error) && (
-              <p role="alert" className="mb-2 text-xs text-berry">
+              <p role="alert" className="mb-2 text-xs text-destructive">
                 {attachmentError ?? recorder.error}
               </p>
             )}
@@ -560,7 +563,7 @@ export default function ConversaDetailPage() {
             </div>
           </form>
         ) : (
-          <p className="text-sm text-ink-soft">O bot está respondendo essa conversa automaticamente.</p>
+          <p className="text-sm text-muted-foreground">O bot está respondendo essa conversa automaticamente.</p>
         )}
         {actionError && <ErrorText>{actionError}</ErrorText>}
       </div>

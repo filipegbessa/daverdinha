@@ -49,7 +49,7 @@ export function DeliveryAreasSection({
       <h2 id="delivery-areas-title" className="text-lg font-semibold">
         Áreas de entrega do site
       </h2>
-      <p className="text-sm text-ink-soft">
+      <p className="text-sm text-muted-foreground">
         O valor da entrega no site é o da área do bairro. O bot usa só a lista de bairros atendidos, mais abaixo.
       </p>
       <div className="mt-3 space-y-4">
@@ -57,7 +57,7 @@ export function DeliveryAreasSection({
           const zoneAreas = areas.filter((a) => a.zone === zone);
           const unassigned = locations.filter((l) => l.zone === zone && l.covered && !l.areaId);
           return (
-            <div key={zone} className="rounded-lg border border-sand-line p-3">
+            <div key={zone} className="rounded-lg border border-border p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <SectionLabel>{zone}</SectionLabel>
                 <Button
@@ -74,7 +74,7 @@ export function DeliveryAreasSection({
                   <AdminListItem key={area.id}>
                     <span className="min-w-0 flex-1">
                       <span className="font-medium">{area.name}</span>
-                      <span className="text-sm text-ink-soft">
+                      <span className="text-sm text-muted-foreground">
                         {' '}
                         · {formatCurrency(area.fee, 'BRL')} · {area.locations.length}{' '}
                         {area.locations.length === 1 ? 'bairro' : 'bairros'}
@@ -90,7 +90,7 @@ export function DeliveryAreasSection({
                 ))}
               </AdminList>
               {unassigned.length > 0 && (
-                <p className="mt-3 text-sm text-berry">
+                <p className="mt-3 text-sm text-destructive">
                   Sem entrega pelo site até entrarem numa área: {unassigned.map((l) => l.regionName).join(', ')}.
                 </p>
               )}

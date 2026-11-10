@@ -122,7 +122,7 @@ export default function EntregasPage() {
               aria-pressed={filter === value}
               onClick={() => setFilter(value)}
               className={`rounded border px-3 py-1 text-sm ${
-                filter === value ? 'border-primary bg-primary/10' : 'border-sand-line'
+                filter === value ? 'border-primary bg-primary/10' : 'border-border'
               }`}
             >
               {label}
@@ -155,8 +155,8 @@ export default function EntregasPage() {
             const zonePending = pendingZones.has(zone);
 
             return (
-              <div key={zone} className="overflow-hidden rounded-lg border border-sand-line">
-                <div className="flex items-center gap-2 bg-sand px-3 py-2">
+              <div key={zone} className="overflow-hidden rounded-lg border border-border">
+                <div className="flex items-center gap-2 bg-muted px-3 py-2">
                   <IndeterminateCheckbox
                     checked={allCovered}
                     indeterminate={!allCovered && !noneCovered}
@@ -164,7 +164,7 @@ export default function EntregasPage() {
                     disabled={zonePending}
                     aria-label={`Marcar toda a região ${zone}`}
                     aria-busy={zonePending}
-                    className="h-4 w-4 accent-berry disabled:cursor-wait disabled:opacity-50"
+                    className="h-4 w-4 accent-primary disabled:cursor-wait disabled:opacity-50"
                   />
                   <SectionLabel>{zone}</SectionLabel>
                 </div>
@@ -180,9 +180,11 @@ export default function EntregasPage() {
                           disabled={itemPending}
                           aria-label={`Atendida ${location.regionName}`}
                           aria-busy={itemPending}
-                          className="h-4 w-4 accent-berry disabled:cursor-wait disabled:opacity-50"
+                          className="h-4 w-4 accent-primary disabled:cursor-wait disabled:opacity-50"
                         />
-                        <span className={`text-sm ${itemPending ? 'text-ink-soft' : ''}`}>{location.regionName}</span>
+                        <span className={`text-sm ${itemPending ? 'text-muted-foreground' : ''}`}>
+                          {location.regionName}
+                        </span>
                       </li>
                     );
                   })}

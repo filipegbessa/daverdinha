@@ -71,8 +71,8 @@ export default function PedidosPage() {
             <AdminListItem key={order.id}>
               <Link href={`/admin/pedidos/${order.id}`} className="min-w-0 flex-1 hover:underline">
                 <span className="font-medium">{order.code}</span>
-                <span className="text-ink-soft"> · {order.customer.name}</span>
-                <span className="block text-sm text-ink-soft">
+                <span className="text-muted-foreground"> · {order.customer.name}</span>
+                <span className="block text-sm text-muted-foreground">
                   {formatOrderDate(order.createdAt)} · {deliveryLabel(order)}
                   {order.status === 'paid' && ` · ${FULFILLMENT_LABELS[order.fulfillmentStatus]}`}
                 </span>

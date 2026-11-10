@@ -50,17 +50,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [unreadCount]);
 
   return (
-    <div className="flex h-screen flex-col bg-paper text-ink">
+    <div className="flex h-screen flex-col bg-background text-foreground">
       <PushNotificationBanner />
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <div className="flex flex-none items-center justify-between border-b border-moss-line bg-sand p-4 md:hidden">
-          <p className="font-serif text-lg font-semibold text-moss">Daverdinha</p>
+        <div className="flex flex-none items-center justify-between border-b border-border bg-muted p-4 md:hidden">
+          <p className="text-lg font-semibold">Daverdinha</p>
           <button
             type="button"
             onClick={() => setNavOpen(true)}
             aria-label="Abrir menu"
             aria-expanded={navOpen}
-            className="rounded-lg p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
+            className="rounded-lg p-2 text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             ☰
           </button>
@@ -68,7 +68,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {navOpen && (
           <div
-            className="fixed inset-0 z-30 bg-ink/40 md:hidden"
+            className="fixed inset-0 z-30 bg-foreground/40 md:hidden"
             onClick={() => setNavOpen(false)}
             aria-hidden="true"
           />
@@ -76,17 +76,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <nav
           aria-label="Navegação do admin"
-          className={`fixed inset-y-0 left-0 z-40 flex w-56 flex-none -translate-x-full flex-col border-r border-moss-line bg-sand p-6 transition-transform duration-200 md:static md:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 z-40 flex w-56 flex-none -translate-x-full flex-col border-r border-border bg-muted p-6 transition-transform duration-200 md:static md:translate-x-0 ${
             navOpen ? 'translate-x-0' : ''
           }`}
         >
           <div className="mb-8 flex items-center justify-between">
-            <p className="font-serif text-lg font-semibold text-moss">Daverdinha</p>
+            <p className="text-lg font-semibold">Daverdinha</p>
             <button
               type="button"
               onClick={() => setNavOpen(false)}
               aria-label="Fechar menu"
-              className="rounded-lg p-1 text-ink-soft hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss md:hidden"
+              className="rounded-lg p-1 text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:hidden"
             >
               ✕
             </button>
@@ -101,15 +101,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     href={item.href}
                     aria-current={active ? 'page' : undefined}
                     onClick={() => setNavOpen(false)}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss ${
-                      active ? 'bg-moss font-medium text-paper' : 'text-ink-soft hover:bg-paper hover:text-ink'
+                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                      active
+                        ? 'bg-primary font-medium text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-background hover:text-foreground'
                     }`}
                   >
                     <span>{item.label}</span>
                     {showUnreadBadge && (
                       <span
                         aria-hidden="true"
-                        className="ml-2 inline-flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-berry px-1.5 text-xs font-semibold text-primary-foreground"
+                        className="ml-2 inline-flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-primary-foreground"
                       >
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
@@ -120,7 +122,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
             <InstallAppNavItem />
           </ul>
-          <div className="mt-8 border-t border-moss-line pt-4">
+          <div className="mt-8 border-t border-border pt-4">
             <UserButton />
           </div>
         </nav>

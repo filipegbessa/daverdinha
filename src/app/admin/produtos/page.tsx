@@ -142,24 +142,24 @@ export default function ProdutosPage() {
                 <img
                   src={product.images[0]}
                   alt=""
-                  className="size-12 flex-none rounded-lg border border-sand-line object-cover"
+                  className="size-12 flex-none rounded-lg border border-border object-cover"
                 />
               ) : (
                 <span
                   aria-hidden="true"
-                  className="size-12 flex-none rounded-lg border border-dashed border-sand-line bg-sand"
+                  className="size-12 flex-none rounded-lg border border-dashed border-border bg-muted"
                 />
               )}
               <div className="min-w-0 flex-1">
                 <p className="font-medium">
                   {product.name}
                   {product.featured && (
-                    <span className="ml-2 rounded-full bg-moss/10 px-2 py-0.5 text-xs font-semibold text-moss">
+                    <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                       Destaque
                     </span>
                   )}
                 </p>
-                <p className="text-sm text-ink-soft">
+                <p className="text-sm text-muted-foreground">
                   {product.category.name} · {formatCurrency(product.price, 'BRL')}
                   {product.images.length === 0 && ' · sem foto'}
                   {` · ${stockLabel(product)}`}

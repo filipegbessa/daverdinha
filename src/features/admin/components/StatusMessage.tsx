@@ -1,13 +1,12 @@
 /**
- * The two states every admin screen ends up in while talking to the API.
- * Extracted because each page had grown its own copy, and the copies had
- * already drifted — half of them rendered errors in `text-berry`, the other
- * half in a raw `text-red-600` that isn't in the palette at all.
+ * Os dois estados de toda tela do admin enquanto fala com a API. Cores só
+ * dos tokens neutros do shadcn (`destructive`, `muted-foreground`): o admin
+ * não usa a paleta do site.
  */
 
 export function LoadingState({ label = 'Carregando...' }: { label?: string }) {
   return (
-    <p role="status" className="mt-6 text-ink-soft">
+    <p role="status" className="mt-6 text-muted-foreground">
       {label}
     </p>
   );
@@ -15,7 +14,10 @@ export function LoadingState({ label = 'Carregando...' }: { label?: string }) {
 
 export function ErrorAlert({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <p role="alert" className={`mt-4 rounded border border-berry bg-berry/10 p-3 text-berry ${className}`}>
+    <p
+      role="alert"
+      className={`mt-4 rounded border border-destructive bg-destructive/10 p-3 text-destructive ${className}`}
+    >
       {children}
     </p>
   );
@@ -32,7 +34,7 @@ export function ErrorText({
   id?: string;
 }) {
   return (
-    <p id={id} role="alert" className={`mt-2 text-berry ${className}`}>
+    <p id={id} role="alert" className={`mt-2 text-destructive ${className}`}>
       {children}
     </p>
   );

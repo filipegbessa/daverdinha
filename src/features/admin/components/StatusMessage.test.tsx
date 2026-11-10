@@ -23,6 +23,6 @@ describe('StatusMessage', () => {
 
   it('keeps every error on the palette instead of a raw red', () => {
     render(<ErrorAlert>Deu ruim</ErrorAlert>);
-    expect(screen.getByRole('alert')).toHaveClass('text-berry');
+    expect(screen.getByRole('alert')).toHaveClass('text-destructive');
   });
 });

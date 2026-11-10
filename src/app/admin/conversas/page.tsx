@@ -70,7 +70,7 @@ export default function ConversasPage() {
           href={`/admin/conversas/${conversation.id}`}
           className="flex items-center gap-2 underline underline-offset-4"
         >
-          {conversation.unread && <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-berry" />}
+          {conversation.unread && <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-destructive" />}
           {conversation.name || formatPhone(conversation.phone)}
         </Link>
       ),
@@ -131,7 +131,7 @@ export default function ConversasPage() {
           variant="outline"
           aria-pressed={onlyUnread}
           onClick={() => setOnlyUnread((value) => !value)}
-          className={onlyUnread ? 'border-moss bg-moss/10' : ''}
+          className={onlyUnread ? 'border-primary bg-primary/10' : ''}
         >
           Não lidas
         </Button>
@@ -159,18 +159,18 @@ export default function ConversasPage() {
               rows={conversations}
               rowKey={(conversation) => conversation.id}
               renderMobileCard={(conversation) => (
-                <div className="rounded-md border border-sand-line p-3">
+                <div className="rounded-md border border-border p-3">
                   <Link
                     href={`/admin/conversas/${conversation.id}`}
                     className="flex items-center gap-2 font-medium underline underline-offset-4"
                   >
                     {conversation.unread && (
-                      <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-berry" />
+                      <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-destructive" />
                     )}
                     {conversation.name || formatPhone(conversation.phone)}
                   </Link>
-                  <p className="mt-1 text-sm text-ink-soft">{formatPhone(conversation.phone)}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-soft">
+                  <p className="mt-1 text-sm text-muted-foreground">{formatPhone(conversation.phone)}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                     <span>{STATUS_LABEL[conversation.status]}</span>
                     <span>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</span>
                     <span>{formatDateTime(conversation.updatedAt)}</span>
@@ -191,7 +191,7 @@ export default function ConversasPage() {
               )}
             />
           </BusyRegion>
-          {conversations.length === 0 && <p className="mt-6 text-ink-soft">Nenhuma conversa encontrada.</p>}
+          {conversations.length === 0 && <p className="mt-6 text-muted-foreground">Nenhuma conversa encontrada.</p>}
           {pagination && <TablePagination {...pagination} itemLabel="conversas" />}
         </>
       )}

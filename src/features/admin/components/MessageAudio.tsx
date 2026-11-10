@@ -17,7 +17,7 @@ export function MessageAudio({ conversationId, messageId }: MessageAudioProps) {
 
   if (failed) {
     return (
-      <p data-testid="audio-failed" className="italic text-ink-soft">
+      <p data-testid="audio-failed" className="italic text-muted-foreground">
         Não foi possível carregar o áudio.
       </p>
     );
@@ -40,11 +40,11 @@ export function MessageAudio({ conversationId, messageId }: MessageAudioProps) {
           </a>
         </audio>
       ) : (
-        <p className="text-xs text-ink-soft">Carregando áudio...</p>
+        <p className="text-xs text-muted-foreground">Carregando áudio...</p>
       )}
 
       <div className="mt-1 flex gap-3">
-        <button type="button" onClick={() => void download()} className="text-xs text-ink-soft underline">
+        <button type="button" onClick={() => void download()} className="text-xs text-muted-foreground underline">
           Baixar
         </button>
       </div>

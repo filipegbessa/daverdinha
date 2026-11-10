@@ -45,7 +45,7 @@ export function StorageUsageNotice({ mediaBytesUsed }: { mediaBytesUsed: number 
   }
 
   return (
-    <p role="status" className="mt-4 rounded border border-sand-line bg-sand p-3 text-ink-soft">
+    <p role="status" className="mt-4 rounded border border-border bg-muted p-3 text-muted-foreground">
       Armazenamento de imagens: {usedGb} GB de {capGb} GB usados.
     </p>
   );

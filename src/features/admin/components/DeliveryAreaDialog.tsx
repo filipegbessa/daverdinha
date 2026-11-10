@@ -99,7 +99,7 @@ export function DeliveryAreaDialog({
           placeholder="Buscar bairro"
           aria-label="Buscar bairro"
         />
-        <ul className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-sand-line p-2">
+        <ul className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-border p-2">
           {visible.map((location) => {
             const otherArea = location.areaId && location.areaId !== area?.id ? areaNames[location.areaId] : undefined;
             const notes = [!location.covered && 'não atendido', otherArea && `hoje em ${otherArea}`].filter(Boolean);
@@ -110,17 +110,17 @@ export function DeliveryAreaDialog({
                     type="checkbox"
                     checked={selected.has(location.id)}
                     onChange={() => toggle(location.id)}
-                    className="h-4 w-4 accent-berry"
+                    className="h-4 w-4 accent-primary"
                   />
                   {location.regionName}
-                  {notes.length > 0 && <span className="text-ink-soft">({notes.join(', ')})</span>}
+                  {notes.length > 0 && <span className="text-muted-foreground">({notes.join(', ')})</span>}
                 </label>
               </li>
             );
           })}
-          {visible.length === 0 && <li className="py-1 text-sm text-ink-soft">Nenhum bairro encontrado.</li>}
+          {visible.length === 0 && <li className="py-1 text-sm text-muted-foreground">Nenhum bairro encontrado.</li>}
         </ul>
-        <p className="mt-1 text-sm text-ink-soft">
+        <p className="mt-1 text-sm text-muted-foreground">
           Marcar um bairro que está em outra área move ele pra esta. Bairro não atendido só recebe entrega depois de
           marcado como atendido.
         </p>

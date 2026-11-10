@@ -31,7 +31,7 @@ export function TablePagination({
     <nav
       aria-label="Paginação"
       aria-busy={isBusy}
-      className="mt-4 flex items-center justify-between gap-4 text-sm text-ink-soft"
+      className="mt-4 flex items-center justify-between gap-4 text-sm text-muted-foreground"
     >
       <span>
         {total} {itemLabel}
@@ -42,21 +42,19 @@ export function TablePagination({
           aria-label="Página anterior"
           disabled={isBusy || page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="rounded-md border border-sand-line p-1.5 text-ink hover:bg-sand disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
+          className="rounded-md border border-border p-1.5 text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <ChevronLeft className="size-4" aria-hidden="true" />
         </button>
         {/* aria-live so a screen reader announces the move; the arrows
             themselves give no feedback that anything changed. */}
-        <span aria-live="polite">
-          {isBusy ? 'Carregando...' : `Página ${page} de ${totalPages}`}
-        </span>
+        <span aria-live="polite">{isBusy ? 'Carregando...' : `Página ${page} de ${totalPages}`}</span>
         <button
           type="button"
           aria-label="Próxima página"
           disabled={isBusy || page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="rounded-md border border-sand-line p-1.5 text-ink hover:bg-sand disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
+          className="rounded-md border border-border p-1.5 text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <ChevronRight className="size-4" aria-hidden="true" />
         </button>

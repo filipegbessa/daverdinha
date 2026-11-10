@@ -25,7 +25,12 @@ export function ProductCategoryDialog({
   const [active, setActive] = useState(category?.active ?? true);
 
   async function handleSubmit() {
-    const body = JSON.stringify({ name: name.trim(), description: description.trim(), order: Number(order) || 0, active });
+    const body = JSON.stringify({
+      name: name.trim(),
+      description: description.trim(),
+      order: Number(order) || 0,
+      active,
+    });
     const ok = await save.run(() =>
       category
         ? apiFetch(`/product-categories/${category.id}`, { method: 'PATCH', body })
@@ -46,7 +51,7 @@ export function ProductCategoryDialog({
         <Input id="productCategoryName" value={name} onChange={(e) => setName(e.target.value)} required />
       </FormField>
       {category && (
-        <p className="text-sm text-ink-soft">
+        <p className="text-sm text-muted-foreground">
           Endereço no site: <span className="font-mono">/produtos/{category.slug}</span>. Ele não muda ao renomear.
         </p>
       )}

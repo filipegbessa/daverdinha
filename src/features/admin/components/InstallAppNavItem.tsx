@@ -23,12 +23,12 @@ export function InstallAppNavItem() {
         type="button"
         onClick={handleClick}
         disabled={installing}
-        className="block w-full rounded-lg px-3 py-2 text-left text-sm text-ink-soft transition-colors hover:bg-paper hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss disabled:pointer-events-none disabled:opacity-50"
+        className="block w-full rounded-lg px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50"
       >
         {installing ? 'Instalando...' : 'Instalar app'}
       </button>
       {showIosInstructions && (
-        <p className="px-3 pb-2 text-xs text-ink-soft">
+        <p className="px-3 pb-2 text-xs text-muted-foreground">
           Toque em Compartilhar e depois em &quot;Adicionar à Tela de Início&quot;.
         </p>
       )}

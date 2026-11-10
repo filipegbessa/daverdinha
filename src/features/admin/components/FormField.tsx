@@ -32,7 +32,7 @@ export function FormField({
       </label>
       {control}
       {hint && (
-        <p id={hintId} className="mt-1 text-sm text-ink-soft">
+        <p id={hintId} className="mt-1 text-sm text-muted-foreground">
           {hint}
         </p>
       )}

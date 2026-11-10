@@ -137,7 +137,7 @@ export function ProductDialog({
         <Input id="productName" value={name} onChange={(e) => setName(e.target.value)} required />
       </FormField>
       {product && (
-        <p className="text-sm text-ink-soft">
+        <p className="text-sm text-muted-foreground">
           Endereço no site:{' '}
           <span className="font-mono">
             /produtos/{product.category.slug}/{product.slug}
@@ -207,7 +207,7 @@ export function ProductDialog({
                 setMadeToOrder(e.target.checked);
                 setFieldErrors({});
               }}
-              className="h-4 w-4 accent-berry"
+              className="h-4 w-4 accent-primary"
             />
             Sob encomenda
           </label>

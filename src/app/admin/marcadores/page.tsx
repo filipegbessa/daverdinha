@@ -60,7 +60,7 @@ export default function MarcadoresPage() {
                 {category.name}
               </span>
               <span className="flex-1" />
-              <span className="text-sm text-ink-soft">{category.conversationCount ?? 0} conversa(s)</span>
+              <span className="text-sm text-muted-foreground">{category.conversationCount ?? 0} conversa(s)</span>
               <Button variant="outline" disabled={busy} onClick={() => setEditing(category)}>
                 Editar
               </Button>

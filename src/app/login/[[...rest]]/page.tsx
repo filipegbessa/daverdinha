@@ -6,7 +6,7 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-paper">
+    <div className="flex min-h-screen items-center justify-center bg-muted">
       <SignIn path="/login" routing="path" forceRedirectUrl="/admin" />
     </div>
   );

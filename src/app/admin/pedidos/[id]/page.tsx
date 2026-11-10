@@ -25,7 +25,7 @@ import { SectionLabel } from '@/features/admin/components/SectionLabel';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-sand-line p-4">
+    <section className="rounded-lg border border-border p-4">
       <SectionLabel as="h2" className="mb-2">
         {title}
       </SectionLabel>
@@ -72,16 +72,16 @@ export default function PedidoPage() {
     <div>
       <Link
         href="/admin/pedidos"
-        className="mb-2 inline-flex w-fit items-center gap-1 text-sm text-ink-soft underline underline-offset-4 hover:text-ink"
+        className="mb-2 inline-flex w-fit items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
       >
         ← Voltar para pedidos
       </Link>
       <PageHeader title={`Pedido ${order.code}`}>
-        <span className="rounded-full bg-sand px-3 py-1 text-sm font-semibold">
+        <span className="rounded-full bg-muted px-3 py-1 text-sm font-semibold">
           {ORDER_STATUS_SINGULAR[order.status]}
         </span>
       </PageHeader>
-      <p className="mt-1 text-sm text-ink-soft">
+      <p className="mt-1 text-sm text-muted-foreground">
         Feito em {formatOrderDate(order.createdAt)}
         {order.paidAt && ` · pago em ${formatOrderDate(order.paidAt)}`}
       </p>
@@ -91,12 +91,17 @@ export default function PedidoPage() {
         <Section title="Cliente">
           <p className="font-medium">{order.customer.name}</p>
           <p>
-            <a href={`https://wa.me/${phoneDigits}`} target="_blank" rel="noreferrer" className="text-moss underline">
+            <a
+              href={`https://wa.me/${phoneDigits}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary underline"
+            >
               {formatPhone(phoneDigits)}
             </a>
           </p>
           <p>
-            <a href={`mailto:${order.customer.email}`} className="text-moss underline">
+            <a href={`mailto:${order.customer.email}`} className="text-primary underline">
               {order.customer.email}
             </a>
           </p>
@@ -112,7 +117,7 @@ export default function PedidoPage() {
               <p>
                 {order.address.bairro} · CEP {order.address.cep}
               </p>
-              <p className="text-sm text-ink-soft">
+              <p className="text-sm text-muted-foreground">
                 {order.address.zone} · área {order.address.area}
               </p>
             </>
@@ -120,9 +125,11 @@ export default function PedidoPage() {
             <p>O cliente retira no ateliê.</p>
           )}
           {maxLeadTime > 0 && (
-            <p className="mt-2 text-sm text-ink-soft">Tem item sob encomenda: até {maxLeadTime} dias de confecção.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Tem item sob encomenda: até {maxLeadTime} dias de confecção.
+            </p>
           )}
-          {order.notes && <p className="mt-2 rounded bg-sand p-2 text-sm">Observação: {order.notes}</p>}
+          {order.notes && <p className="mt-2 rounded bg-muted p-2 text-sm">Observação: {order.notes}</p>}
         </Section>
 
         <Section title="Itens">
@@ -132,14 +139,16 @@ export default function PedidoPage() {
                 <span>
                   {item.quantity}× {item.name}
                   {item.leadTimeDays && (
-                    <span className="block text-sm text-ink-soft">Sob encomenda · até {item.leadTimeDays} dias</span>
+                    <span className="block text-sm text-muted-foreground">
+                      Sob encomenda · até {item.leadTimeDays} dias
+                    </span>
                   )}
                 </span>
                 <span className="tabular-nums">{formatCurrency(item.unitPrice * item.quantity, 'BRL')}</span>
               </li>
             ))}
           </ul>
-          <div className="mt-3 space-y-1 border-t border-sand-line pt-2 text-sm">
+          <div className="mt-3 space-y-1 border-t border-border pt-2 text-sm">
             <p className="flex justify-between">
               <span>Subtotal</span>
               <span className="tabular-nums">{formatCurrency(order.subtotal, 'BRL')}</span>
@@ -173,9 +182,9 @@ export default function PedidoPage() {
               </NativeSelect>
             </FormField>
           ) : (
-            <p className="text-sm text-ink-soft">O preparo só começa depois do pagamento.</p>
+            <p className="text-sm text-muted-foreground">O preparo só começa depois do pagamento.</p>
           )}
-          <p className="mt-3 text-sm text-ink-soft">
+          <p className="mt-3 text-sm text-muted-foreground">
             Pagamento: {order.payment.status ?? 'sem resposta do gateway ainda'}
             {order.payment.chargeId && ` · ${order.payment.chargeId}`}
           </p>

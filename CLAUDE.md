@@ -30,6 +30,13 @@ Tests sit next to the file they cover (`foo.tsx` + `foo.test.tsx`). `jest.setup.
 
 ## Architecture
 
+### Two UIs, two design systems
+The site (public pages + store) and the admin are separate UIs. Each has its own palette and its own components, and neither imports the other's visual components:
+
+- **Admin** (`src/app/admin/**`, `src/app/login`, `src/features/admin/**`) is generic and neutral. Colors come only from the shadcn semantic tokens in `globals.css` (`primary`, `secondary`, `muted`, `muted-foreground`, `destructive`, `border`, `background`, `foreground`, `ring`), never from the site palette (`moss`, `berry`, `sand`, `paper`, `ink`…). Components: `src/components/ui/` (shadcn) + `src/features/admin/components/`.
+- **Site** (`src/app/*` outside admin/login, `src/features/site/**`, `src/features/store/**`) uses the brand palette from `tailwind.config.ts` and its own components in `src/features/site/components/`. It does not use `src/components/ui/`.
+- Both follow the same rule: one component per UI element, with `variant`/`size` props. Add a variant (not a new component) only when something differs a lot, and don't copy class strings between files.
+
 ### Environment variables
 - `NEXT_PUBLIC_API_URL`: base URL of `daverdinha-api`. Both the admin and the public delivery-zones section read from it.
 - `SITE_MODE`: server-only, read through `src/lib/site-mode.ts`. Only the exact string `full` renders the full institutional site. Any other value, including unset or a typo, renders the `ComingSoon` landing. That is the fail-safe default, because the catalog and agenda have no backend yet. `/` is static, so changing the variable takes effect only after a redeploy. The `soon` landing makes no API calls. The flag also defines "pre-launch" for the rest of the site (see "Public site pages" below).
@@ -58,7 +65,7 @@ Every admin page is a client component. All of them use these pieces instead of 
 - `features/admin/lib/api-client.ts` (`useApiClient().apiFetch`): adds the Clerk bearer token, sets JSON content-type except for `FormData`, and throws with the API's `message`.
 - `use-api-resource.ts`: reads, with `data`/`isLoading`/`isRefreshing`/`error`/`refetch` and optional polling. `isLoading` is only the first load; `isRefreshing` is a new page, new filters or a `refetch()` over data already on screen. Background polls set neither. Passing `path = null` skips the fetch.
 - `use-api-mutation.ts`: writes. It resolves to `true`/`false` instead of throwing, so callers need no try/catch.
-- `components/StatusMessage.tsx` and `components/ConfirmDialog.tsx`: loading/error states and delete confirmation. Errors use the palette's `text-berry` class, never raw `text-red-*`.
+- `components/StatusMessage.tsx` and `components/ConfirmDialog.tsx`: loading/error states and delete confirmation. Errors use `text-destructive`, never raw `text-red-*` nor the site palette.
 - `use-paginated-resource.ts` + `TablePagination`: one hook per paginated list (`usePaginatedResource('/products', { q, category })`). It builds the query string, resets to page 1 when a filter changes, clamps a page number past the end, and returns `pagination` to spread into `<TablePagination {...pagination} itemLabel="…" />`. Filters go to the server as query params; search goes through `use-debounced-value`. It wraps `use-pagination.ts`, which pages shouldn't use directly.
 - `use-conversation-messages.ts`: loads the latest 50 messages, then polls only for new ones (`?since=`) and pages back with `?before=`. `since` is inclusive on the server, so the merge dedupes by `id`.
 

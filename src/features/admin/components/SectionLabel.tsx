@@ -11,7 +11,7 @@ export function SectionLabel({
   id?: string;
 }) {
   return (
-    <Tag id={id} className={`text-sm font-semibold tracking-wide text-berry uppercase ${className}`.trim()}>
+    <Tag id={id} className={`text-sm font-semibold tracking-wide text-muted-foreground uppercase ${className}`.trim()}>
       {children}
     </Tag>
   );
