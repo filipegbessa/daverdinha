@@ -123,13 +123,14 @@ describe('ProdutosPage', () => {
     expect(screen.getByRole('option', { name: 'Vasos' })).toBeInTheDocument();
   });
 
-  it('deletes after confirmation', async () => {
+  it('removes after confirmation, saying the record is kept for old orders', async () => {
     const apiFetch = mockApi();
 
     render(<ProdutosPage />);
-    const [deleteFirst] = await screen.findAllByRole('button', { name: 'Excluir' });
-    await userEvent.click(deleteFirst);
-    await userEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
+    const [removeFirst] = await screen.findAllByRole('button', { name: 'Remover' });
+    await userEvent.click(removeFirst);
+    expect(screen.getByText(/O cadastro fica guardado para os pedidos antigos/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Remover produto' }));
 
     expect(apiFetch).toHaveBeenCalledWith('/products/p1', { method: 'DELETE' });
   });

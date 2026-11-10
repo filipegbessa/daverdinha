@@ -168,7 +168,7 @@ export default function ProdutosPage() {
                 Editar
               </Button>
               <Button variant="destructive" disabled={busy} onClick={() => setDeleting(product)}>
-                Excluir
+                Remover
               </Button>
             </AdminListItem>
           ))}
@@ -188,7 +188,8 @@ export default function ProdutosPage() {
       )}
       {deleting && (
         <ConfirmDialog
-          title={`Excluir o produto "${deleting.name}"?`}
+          title={`Remover o produto "${deleting.name}"?`}
+          confirmLabel="Remover produto"
           isPending={mutation.isPending}
           error={mutation.error}
           onConfirm={handleConfirmDelete}
@@ -197,7 +198,10 @@ export default function ProdutosPage() {
             mutation.clearError();
           }}
         >
-          <p>O produto e as fotos dele saem do site. Pra só esconder, desligue a chave ao lado. Não dá pra desfazer.</p>
+          <p>
+            O produto sai do site e desta lista. O cadastro fica guardado para os pedidos antigos continuarem
+            mostrando o que foi vendido. Pra só esconder por um tempo, desligue a chave ao lado. Não dá pra desfazer.
+          </p>
         </ConfirmDialog>
       )}
     </div>
