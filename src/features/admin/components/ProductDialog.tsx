@@ -138,8 +138,11 @@ export function ProductDialog({
       </FormField>
       {product && (
         <p className="text-sm text-ink-soft">
-          Endereço no site: <span className="font-mono">/produtos/{product.category.slug}/{product.slug}</span>.
-          Ele não muda ao renomear.
+          Endereço no site:{' '}
+          <span className="font-mono">
+            /produtos/{product.category.slug}/{product.slug}
+          </span>
+          . Ele não muda ao renomear.
         </p>
       )}
       <FormField id="productDescription" label="Descrição">
@@ -162,7 +165,12 @@ export function ProductDialog({
           />
         </FormField>
         <FormField id="productCategory" label="Categoria">
-          <NativeSelect id="productCategory" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+          <NativeSelect
+            id="productCategory"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            required
+          >
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}

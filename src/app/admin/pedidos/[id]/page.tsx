@@ -38,9 +38,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function PedidoPage() {
   const { id } = useParams<{ id: string }>();
   const { apiFetch } = useApiClient();
-  const { data: order, isLoading, isRefreshing, error, refetch } = useApiResource<SiteOrderAdmin>(
-    `/site-orders/${id}`,
-  );
+  const { data: order, isLoading, isRefreshing, error, refetch } = useApiResource<SiteOrderAdmin>(`/site-orders/${id}`);
   const fulfillment = useApiMutation('Erro ao atualizar o preparo.');
   const cancel = useApiMutation('Erro ao cancelar o pedido.');
   const [confirmingCancel, setConfirmingCancel] = useState(false);
@@ -79,7 +77,9 @@ export default function PedidoPage() {
         ← Voltar para pedidos
       </Link>
       <PageHeader title={`Pedido ${order.code}`}>
-        <span className="rounded-full bg-sand px-3 py-1 text-sm font-semibold">{ORDER_STATUS_SINGULAR[order.status]}</span>
+        <span className="rounded-full bg-sand px-3 py-1 text-sm font-semibold">
+          {ORDER_STATUS_SINGULAR[order.status]}
+        </span>
       </PageHeader>
       <p className="mt-1 text-sm text-ink-soft">
         Feito em {formatOrderDate(order.createdAt)}
@@ -202,8 +202,8 @@ export default function PedidoPage() {
         >
           {order.status === 'paid' ? (
             <p>
-              Os itens voltam pro estoque. O estorno do pagamento é feito no painel do Pagar.me: este botão não
-              devolve o dinheiro.
+              Os itens voltam pro estoque. O estorno do pagamento é feito no painel do Pagar.me: este botão não devolve
+              o dinheiro.
             </p>
           ) : (
             <p>O pedido ainda não foi pago. Os itens reservados voltam pra loja.</p>

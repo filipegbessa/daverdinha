@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
-import { FullSite } from "@/features/site/components/FullSite";
-import { JsonLd } from "@/features/site/components/JsonLd";
-import { businessInfo, generateLocalBusinessJsonLd } from "@/data/business";
-import { loadFullSite } from "@/features/site/lib/load-full-site";
+import type { Metadata } from 'next';
+import { FullSite } from '@/features/site/components/FullSite';
+import { JsonLd } from '@/features/site/components/JsonLd';
+import { businessInfo, generateLocalBusinessJsonLd } from '@/data/business';
+import { loadFullSite } from '@/features/site/lib/load-full-site';
 
 const OG_IMAGE = {
-  url: "/logo.png",
+  url: '/logo.png',
   width: 1200,
   height: 1200,
-  alt: "Daverdinha — Ateliê de Plantas",
+  alt: 'Daverdinha — Ateliê de Plantas',
 };
 
 /**
@@ -19,7 +19,7 @@ const OG_IMAGE = {
  * propósito: com ele o Google não leria este noindex.
  */
 export function generateMetadata(): Metadata {
-  const title = "Daverdinha — Ateliê de plantas no Rio de Janeiro";
+  const title = 'Daverdinha — Ateliê de plantas no Rio de Janeiro';
   const description = businessInfo.description;
 
   return {
@@ -29,7 +29,7 @@ export function generateMetadata(): Metadata {
     openGraph: {
       title,
       description,
-      type: "website",
+      type: 'website',
       url: process.env.SITE_URL,
       images: [OG_IMAGE],
     },

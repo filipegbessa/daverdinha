@@ -160,9 +160,7 @@ describe('ConversaDetailPage', () => {
     await screen.findByRole('button', { name: 'Pausar bot' });
     await userEvent.click(screen.getByRole('button', { name: 'Pausar bot' }));
 
-    await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/pause', { method: 'POST' }),
-    );
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/pause', { method: 'POST' }));
   });
 
   it('disables the Pausar bot button while the request is in flight', async () => {
@@ -280,9 +278,7 @@ describe('ConversaDetailPage', () => {
     await screen.findByRole('button', { name: 'Reativar bot' });
     await userEvent.click(screen.getByRole('button', { name: 'Reativar bot' }));
 
-    await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/reactivate', { method: 'POST' }),
-    );
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/reactivate', { method: 'POST' }));
   });
 
   it('disables the Reativar bot button while the request is in flight', async () => {
@@ -437,10 +433,7 @@ describe('ConversaDetailPage', () => {
 
     const bubble = await screen.findByTestId('message-bubble');
     expect(bubble).toHaveAttribute('data-message-kind', 'image');
-    expect(await screen.findByTestId('message-image')).toHaveAttribute(
-      'src',
-      'https://r2.example/signed',
-    );
+    expect(await screen.findByTestId('message-image')).toHaveAttribute('src', 'https://r2.example/signed');
     expect(bubble).toHaveTextContent('segue o comprovante');
   });
 
@@ -805,9 +798,7 @@ describe('ConversaDetailPage', () => {
           expect.objectContaining({ method: 'POST' }),
         ),
       );
-      const [, init] = apiFetch.mock.calls.find(
-        ([path]: [string]) => path === '/conversations/c1/reply-image',
-      );
+      const [, init] = apiFetch.mock.calls.find(([path]: [string]) => path === '/conversations/c1/reply-image');
       // Uma mensagem só: a legenda viaja com a imagem, não como reply à parte.
       expect(init.body).toBeInstanceOf(FormData);
       expect(init.body.get('caption')).toBe('o vaso novo');
@@ -822,12 +813,7 @@ describe('ConversaDetailPage', () => {
       // Sem digitar nada: a imagem já é a mensagem.
       await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
 
-      await waitFor(() =>
-        expect(apiFetch).toHaveBeenCalledWith(
-          '/conversations/c1/reply-image',
-          expect.anything(),
-        ),
-      );
+      await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/reply-image', expect.anything()));
     });
 
     it('still posts plain text when nothing is attached', async () => {
@@ -857,20 +843,13 @@ describe('ConversaDetailPage', () => {
       // `applyAccept: false` porque o `accept` do input já barraria o PDF no
       // seletor — e é justamente o caso em que ele não barra (arrastar e
       // soltar, "todos os arquivos") que a checagem em JS cobre.
-      await userEvent.upload(
-        screen.getByLabelText(/Anexar imagem/),
-        pngFile('doc.pdf', 'application/pdf'),
-        { applyAccept: false },
-      );
+      await userEvent.upload(screen.getByLabelText(/Anexar imagem/), pngFile('doc.pdf', 'application/pdf'), {
+        applyAccept: false,
+      });
 
-      expect(await screen.findByRole('alert')).toHaveTextContent(
-        'Só imagem (JPEG, PNG ou WebP) ou áudio',
-      );
+      expect(await screen.findByRole('alert')).toHaveTextContent('Só imagem (JPEG, PNG ou WebP) ou áudio');
       expect(screen.queryByTestId('attachment-preview')).not.toBeInTheDocument();
-      expect(apiFetch).not.toHaveBeenCalledWith(
-        '/conversations/c1/reply-image',
-        expect.anything(),
-      );
+      expect(apiFetch).not.toHaveBeenCalledWith('/conversations/c1/reply-image', expect.anything());
     });
 
     it('refuses a file past the size ceiling', async () => {
@@ -958,10 +937,7 @@ describe('ConversaDetailPage', () => {
       const apiFetch = renderPaused();
       await screen.findByLabelText('Responder');
 
-      await userEvent.upload(
-        screen.getByLabelText(/Anexar imagem ou áudio/),
-        audioFile('nota.m4a', 'audio/x-m4a'),
-      );
+      await userEvent.upload(screen.getByLabelText(/Anexar imagem ou áudio/), audioFile('nota.m4a', 'audio/x-m4a'));
       await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
 
       await waitFor(() => expect(postedTo(apiFetch, '/conversations/c1/reply-audio')).toBeDefined());
@@ -974,11 +950,9 @@ describe('ConversaDetailPage', () => {
       const apiFetch = renderPaused();
       await screen.findByLabelText('Responder');
 
-      await userEvent.upload(
-        screen.getByLabelText(/Anexar imagem ou áudio/),
-        audioFile('voz.webm', 'audio/webm'),
-        { applyAccept: false },
-      );
+      await userEvent.upload(screen.getByLabelText(/Anexar imagem ou áudio/), audioFile('voz.webm', 'audio/webm'), {
+        applyAccept: false,
+      });
 
       expect(await screen.findByRole('alert')).toHaveTextContent('Só imagem');
       expect(postedTo(apiFetch, '/conversations/c1/reply-audio')).toBeUndefined();

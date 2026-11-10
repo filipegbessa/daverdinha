@@ -18,8 +18,13 @@ type StatusFilter = 'all' | 'active' | 'inactive';
 
 export default function CategoriasPage() {
   const { apiFetch } = useApiClient();
-  const { data: categories, isLoading, isRefreshing, error, refetch } =
-    useApiResource<ProductCategoryAdmin[]>('/product-categories');
+  const {
+    data: categories,
+    isLoading,
+    isRefreshing,
+    error,
+    refetch,
+  } = useApiResource<ProductCategoryAdmin[]>('/product-categories');
   const remove = useApiMutation('Erro ao excluir categoria.');
   const busy = remove.isPending || isRefreshing;
   const [editing, setEditing] = useState<ProductCategoryAdmin | 'new' | null>(null);
@@ -31,8 +36,7 @@ export default function CategoriasPage() {
   const query = normalizeSearch(search);
   const visible = (categories ?? []).filter(
     (category) =>
-      normalizeSearch(category.name).includes(query) &&
-      (status === 'all' || category.active === (status === 'active')),
+      normalizeSearch(category.name).includes(query) && (status === 'all' || category.active === (status === 'active')),
   );
 
   async function handleConfirmDelete() {

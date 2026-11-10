@@ -34,13 +34,20 @@ export default function ProdutosPage() {
   const [featured, setFeatured] = useState('');
   const debouncedSearch = useDebouncedValue(search.trim());
   const hasFilters = Boolean(debouncedSearch || categoryId || active || featured);
-  const { data, items: products, isLoading, isRefreshing, error, refetch, pagination } =
-    usePaginatedResource<ProductAdmin>('/products', {
-      q: debouncedSearch || undefined,
-      categoryId: categoryId || undefined,
-      active: active || undefined,
-      featured: featured || undefined,
-    });
+  const {
+    data,
+    items: products,
+    isLoading,
+    isRefreshing,
+    error,
+    refetch,
+    pagination,
+  } = usePaginatedResource<ProductAdmin>('/products', {
+    q: debouncedSearch || undefined,
+    categoryId: categoryId || undefined,
+    active: active || undefined,
+    featured: featured || undefined,
+  });
   const { data: categories } = useApiResource<ProductCategoryAdmin[]>('/product-categories');
 
   const mutation = useApiMutation('Erro ao atualizar produto.');
@@ -200,8 +207,8 @@ export default function ProdutosPage() {
           }}
         >
           <p>
-            O produto sai do site e desta lista. O cadastro fica guardado para os pedidos antigos continuarem
-            mostrando o que foi vendido. Pra só esconder por um tempo, desligue a chave ao lado. Não dá pra desfazer.
+            O produto sai do site e desta lista. O cadastro fica guardado para os pedidos antigos continuarem mostrando
+            o que foi vendido. Pra só esconder por um tempo, desligue a chave ao lado. Não dá pra desfazer.
           </p>
         </ConfirmDialog>
       )}

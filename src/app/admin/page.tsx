@@ -10,12 +10,7 @@ import type { BotSettings, MenuItem } from '@/features/admin/types/admin';
 
 export default function DashboardPage() {
   const { apiFetch } = useApiClient();
-  const {
-    data: settings,
-    isLoading,
-    error,
-    refetch,
-  } = useApiResource<BotSettings>('/bot-settings');
+  const { data: settings, isLoading, error, refetch } = useApiResource<BotSettings>('/bot-settings');
   const {
     data: menuItems,
     isLoading: isLoadingMenuItems,

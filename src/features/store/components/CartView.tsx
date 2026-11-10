@@ -62,19 +62,18 @@ export function CartView() {
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   if (!ready) {
-    return <p role="status" className="text-ink-soft">
+    return (
+      <p role="status" className="text-ink-soft">
         Carregando seu carrinho...
-      </p>;
+      </p>
+    );
   }
 
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-sand-line bg-sand/60 p-8 text-center">
         <p className="font-serif text-xl text-ink">Seu carrinho está vazio.</p>
-        <Link
-          href={PRODUCTS_HREF}
-          className="mt-4 inline-block font-semibold text-moss underline underline-offset-4"
-        >
+        <Link href={PRODUCTS_HREF} className="mt-4 inline-block font-semibold text-moss underline underline-offset-4">
           Ver produtos
         </Link>
       </div>

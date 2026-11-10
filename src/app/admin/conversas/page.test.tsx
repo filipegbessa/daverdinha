@@ -33,9 +33,7 @@ const conversations = [
  * Routes by path prefix. The page reads '/conversations' (now with a query
  * string carrying the filters) and '/categories' through the same apiFetch.
  */
-function mockApi(
-  options: { items?: unknown[]; total?: number; totalPages?: number; categories?: unknown[] } = {},
-) {
+function mockApi(options: { items?: unknown[]; total?: number; totalPages?: number; categories?: unknown[] } = {}) {
   return mockAdminApi((path) => {
     if (path.startsWith('/categories')) {
       const items = options.categories ?? [];

@@ -65,8 +65,8 @@ export function CepChecker() {
         )}
         {result?.status === 'not_covered' && (
           <p className="text-ink-soft">
-            Ainda não entregamos em <strong className="text-ink">{result.bairro}</strong>. Chama a gente que a
-            gente vê o que dá pra fazer.{' '}
+            Ainda não entregamos em <strong className="text-ink">{result.bairro}</strong>. Chama a gente que a gente vê
+            o que dá pra fazer.{' '}
             <ContactLink
               href={getWhatsAppUrl(deliveryQuestionMessage(result.bairro))}
               channel="whatsapp"

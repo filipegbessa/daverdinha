@@ -13,11 +13,7 @@ const emptySettings = { botEnabled: false, welcomeMessage: '' };
  * re-reads one after a toggle, so an ordered `mockResolvedValueOnce` chain
  * would break on any change to how often the page refetches.
  */
-function mockApi(handlers: {
-  settings?: () => unknown;
-  menuItems?: () => unknown;
-  patch?: () => unknown;
-}) {
+function mockApi(handlers: { settings?: () => unknown; menuItems?: () => unknown; patch?: () => unknown }) {
   return mockAdminApi((path, options) => {
     if (options?.method === 'PATCH') return handlers.patch?.();
     if (path === '/menu-items') return handlers.menuItems?.() ?? [];
@@ -70,7 +66,9 @@ describe('DashboardPage', () => {
       releaseMenuItems([{ id: '1', active: true }]);
     });
 
-    await waitFor(() => expect(screen.getByRole('switch', { name: 'Atendimento automático do bot' })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('switch', { name: 'Atendimento automático do bot' })).toBeInTheDocument(),
+    );
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -134,9 +132,7 @@ describe('DashboardPage', () => {
 
     render(<DashboardPage />);
 
-    await waitFor(() =>
-      expect(screen.getByText(/Armazenamento de imagens: 7\.2 GB de 8\.0 GB/)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/Armazenamento de imagens: 7\.2 GB de 8\.0 GB/)).toBeInTheDocument());
   });
 
   it('does not show the storage notice for a plain settings fixture without mediaBytesUsed', async () => {
@@ -154,9 +150,7 @@ describe('DashboardPage', () => {
 
     render(<DashboardPage />);
 
-    await waitFor(() =>
-      expect(screen.getByText('Não foi possível carregar os dados do painel.')).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText('Não foi possível carregar os dados do painel.')).toBeInTheDocument());
     expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
   });
 });

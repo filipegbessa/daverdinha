@@ -102,9 +102,11 @@ export function CheckoutForm() {
   }, [quote, values.deliveryMethod]);
 
   if (!ready || items.length === 0) {
-    return <p role="status" className="text-ink-soft">
+    return (
+      <p role="status" className="text-ink-soft">
         Carregando seu carrinho...
-      </p>;
+      </p>
+    );
   }
 
   function set<K extends keyof CheckoutFormValues>(key: K, value: CheckoutFormValues[K]) {
@@ -179,7 +181,12 @@ export function CheckoutForm() {
             />
           </StoreField>
           <div className="grid gap-4 sm:grid-cols-2">
-            <StoreField id="checkoutEmail" label="E-mail" hint="Pra receber o comprovante do pagamento." error={errors.email}>
+            <StoreField
+              id="checkoutEmail"
+              label="E-mail"
+              hint="Pra receber o comprovante do pagamento."
+              error={errors.email}
+            >
               <input
                 id="checkoutEmail"
                 type="email"
@@ -330,7 +337,11 @@ export function CheckoutForm() {
         {quoteFailed && !quote && (
           <p className="text-sm text-berry">
             Não foi possível carregar os preços.{' '}
-            <button type="button" onClick={() => setQuoteAttempt((n) => n + 1)} className="cursor-pointer font-semibold underline">
+            <button
+              type="button"
+              onClick={() => setQuoteAttempt((n) => n + 1)}
+              className="cursor-pointer font-semibold underline"
+            >
               Tentar de novo
             </button>
           </p>

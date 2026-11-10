@@ -24,14 +24,16 @@ describe('MensagensPage', () => {
     expect(screen.getByDisplayValue(settings.mediaReceivedMessage)).toBeInTheDocument();
     expect(screen.getByDisplayValue(settings.orderReceivedMessage)).toBeInTheDocument();
     expect(screen.getByText('Enviada assim que a conversa começa.')).toBeInTheDocument();
+    expect(screen.getByText('Enviada quando o cliente erra a opção do menu 3 vezes seguidas.')).toBeInTheDocument();
     expect(
-      screen.getByText('Enviada quando o cliente erra a opção do menu 3 vezes seguidas.'),
+      screen.getByText(
+        'Enviada quando o cliente manda áudio, figurinha, vídeo ou outro conteúdo que o bot não entende. O bot continua a conversa normalmente depois.',
+      ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Enviada quando o cliente manda áudio, figurinha, vídeo ou outro conteúdo que o bot não entende. O bot continua a conversa normalmente depois.'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Enviada quando o cliente faz um pedido pelo catálogo do WhatsApp, antes de transferir para um atendente.'),
+      screen.getByText(
+        'Enviada quando o cliente faz um pedido pelo catálogo do WhatsApp, antes de transferir para um atendente.',
+      ),
     ).toBeInTheDocument();
   });
 

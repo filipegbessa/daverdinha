@@ -8,11 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { MessageImage } from '@/features/admin/components/MessageImage';
 import { MessageAudio } from '@/features/admin/components/MessageAudio';
-import {
-  ACCEPTED_REPLY_TYPES,
-  classifyReplyFile,
-  type ReplyAttachment,
-} from '@/features/admin/lib/reply-media';
+import { ACCEPTED_REPLY_TYPES, classifyReplyFile, type ReplyAttachment } from '@/features/admin/lib/reply-media';
 import { useVoiceRecorder } from '@/features/admin/lib/use-voice-recorder';
 import { pauseOtherAudio } from '@/features/admin/lib/exclusive-audio-playback';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
@@ -376,7 +372,14 @@ export default function ConversaDetailPage() {
       <div ref={messagesRef} className="my-4 flex-1 space-y-2 overflow-y-auto">
         {hasMore && (
           <div className="flex justify-center pb-2">
-            <Button type="button" variant="outline" size="sm" onClick={loadOlder} loading={isLoadingOlder} loadingText="Carregando...">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={loadOlder}
+              loading={isLoadingOlder}
+              loadingText="Carregando..."
+            >
               Carregar mensagens anteriores
             </Button>
           </div>
@@ -397,10 +400,7 @@ export default function ConversaDetailPage() {
               }
             >
               {message.repliedTo ? (
-                <p
-                  data-testid="reply-quote"
-                  className="mb-1 border-l-2 border-ink-soft/40 pl-2 text-xs text-ink-soft"
-                >
+                <p data-testid="reply-quote" className="mb-1 border-l-2 border-ink-soft/40 pl-2 text-xs text-ink-soft">
                   {quotePreview(message.repliedTo, 80)}
                 </p>
               ) : (
@@ -414,16 +414,10 @@ export default function ConversaDetailPage() {
                 )
               )}
               {kind === 'order' && (
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                  🛒 Pedido pelo catálogo
-                </p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">🛒 Pedido pelo catálogo</p>
               )}
               {kind === 'image' ? (
-                <MessageImage
-                  conversationId={id}
-                  messageId={message.id}
-                  caption={message.body}
-                />
+                <MessageImage conversationId={id} messageId={message.id} caption={message.body} />
               ) : kind === 'audio' ? (
                 <MessageAudio conversationId={id} messageId={message.id} />
               ) : kind === 'order' && message.order && message.order.items.length > 0 ? (
@@ -444,9 +438,7 @@ export default function ConversaDetailPage() {
                   <button
                     type="button"
                     data-testid="reply-to-button"
-                    onClick={() =>
-                      setReplyingTo({ id: message.id, preview: quotePreview(message, 60) })
-                    }
+                    onClick={() => setReplyingTo({ id: message.id, preview: quotePreview(message, 60) })}
                     className="text-xs text-ink-soft underline opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus:opacity-100"
                   >
                     ↩ responder

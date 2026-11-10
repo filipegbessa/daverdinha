@@ -15,8 +15,15 @@ import type { Category } from '@/features/admin/types/admin';
 
 export default function MarcadoresPage() {
   const { apiFetch } = useApiClient();
-  const { data, items: categories, isLoading, isRefreshing, error, refetch, pagination } =
-    usePaginatedResource<Category>('/categories');
+  const {
+    data,
+    items: categories,
+    isLoading,
+    isRefreshing,
+    error,
+    refetch,
+    pagination,
+  } = usePaginatedResource<Category>('/categories');
   const remove = useApiMutation('Erro ao excluir marcador.');
   const busy = remove.isPending || isRefreshing;
   const [editing, setEditing] = useState<Category | 'new' | null>(null);

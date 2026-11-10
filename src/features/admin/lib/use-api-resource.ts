@@ -32,10 +32,7 @@ interface UseApiResourceResult<T> {
  * has already loaded once — only the first load and an explicit `refetch()`
  * do). `refetch()` triggers an immediate fetch outside the poll interval.
  */
-export function useApiResource<T>(
-  path: string | null,
-  options?: UseApiResourceOptions,
-): UseApiResourceResult<T> {
+export function useApiResource<T>(path: string | null, options?: UseApiResourceOptions): UseApiResourceResult<T> {
   const { apiFetch } = useApiClient();
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(path !== null);

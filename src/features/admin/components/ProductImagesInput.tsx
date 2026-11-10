@@ -77,7 +77,11 @@ export function ProductImagesInput({
           {shown.map((src, index) => (
             <li key={src} className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element -- miniatura de blob: local, fora do otimizador do Next */}
-              <img src={src} alt={`Foto ${index + 1}`} className="size-16 rounded-lg border border-sand-line object-cover" />
+              <img
+                src={src}
+                alt={`Foto ${index + 1}`}
+                className="size-16 rounded-lg border border-sand-line object-cover"
+              />
               {index === 0 && (
                 <span className="absolute bottom-0.5 left-0.5 rounded bg-ink/70 px-1 text-[10px] text-paper">capa</span>
               )}

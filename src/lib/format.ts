@@ -28,7 +28,9 @@ export function formatCurrency(amount: string | number, currency: string): strin
   if (Number.isNaN(value)) return `${currency} ${amount}`;
   // Intl separa "R$" do número com um espaço inquebrável; normaliza pra um
   // espaço comum, que é o que alguém digitaria ao procurar o texto.
-  return currencyFormat(currency).format(value).replace(/\u00a0/g, ' ');
+  return currencyFormat(currency)
+    .format(value)
+    .replace(/\u00a0/g, ' ');
 }
 
 /** Preço em reais, o do catálogo e do carrinho. */

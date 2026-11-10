@@ -46,8 +46,8 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
         {order.status === 'pending_payment' && (
           <div className="space-y-4 rounded-2xl border border-sand-line bg-sand/60 p-5">
             <p>
-              Você tem até <strong>{formatClock(order.expiresAt)}</strong> pra pagar. Depois disso o pedido é
-              cancelado e os itens voltam pra loja.
+              Você tem até <strong>{formatClock(order.expiresAt)}</strong> pra pagar. Depois disso o pedido é cancelado
+              e os itens voltam pra loja.
             </p>
             <div className="flex flex-wrap gap-3">
               {order.paymentUrl && (
@@ -82,8 +82,8 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
             )}
             {maxLeadTime > 0 && (
               <p className="text-sm text-ink-soft">
-                Tem item sob encomenda: a {order.deliveryMethod === 'pickup' ? 'retirada' : 'entrega'} acontece
-                depois da confecção, em até {maxLeadTime} dias.
+                Tem item sob encomenda: a {order.deliveryMethod === 'pickup' ? 'retirada' : 'entrega'} acontece depois
+                da confecção, em até {maxLeadTime} dias.
               </p>
             )}
           </div>

@@ -1,26 +1,24 @@
-import type { Metadata } from "next";
-import { FullSite } from "@/features/site/components/FullSite";
-import { ComingSoon } from "@/features/site/components/ComingSoon";
-import { businessInfo, generateLocalBusinessJsonLd } from "@/data/business";
-import { JsonLd } from "@/features/site/components/JsonLd";
-import { loadFullSite } from "@/features/site/lib/load-full-site";
-import { getSiteMode } from "@/lib/site-mode";
+import type { Metadata } from 'next';
+import { FullSite } from '@/features/site/components/FullSite';
+import { ComingSoon } from '@/features/site/components/ComingSoon';
+import { businessInfo, generateLocalBusinessJsonLd } from '@/data/business';
+import { JsonLd } from '@/features/site/components/JsonLd';
+import { loadFullSite } from '@/features/site/lib/load-full-site';
+import { getSiteMode } from '@/lib/site-mode';
 
 const OG_IMAGE = {
-  url: "/logo.png",
+  url: '/logo.png',
   width: 1200,
   height: 1200,
-  alt: "Daverdinha — Ateliê de Plantas",
+  alt: 'Daverdinha — Ateliê de Plantas',
 };
 
 export function generateMetadata(): Metadata {
-  const soon = getSiteMode() === "soon";
+  const soon = getSiteMode() === 'soon';
 
-  const title = soon
-    ? "Daverdinha — Em breve"
-    : "Daverdinha — Ateliê de plantas no Rio de Janeiro";
+  const title = soon ? 'Daverdinha — Em breve' : 'Daverdinha — Ateliê de plantas no Rio de Janeiro';
   const description = soon
-    ? "Nosso site está em construção. Enquanto isso, fale com a gente pelo WhatsApp ou pelo Instagram."
+    ? 'Nosso site está em construção. Enquanto isso, fale com a gente pelo WhatsApp ou pelo Instagram.'
     : businessInfo.description;
 
   return {
@@ -32,7 +30,7 @@ export function generateMetadata(): Metadata {
     openGraph: {
       title,
       description,
-      type: "website",
+      type: 'website',
       url: process.env.SITE_URL,
       images: [OG_IMAGE],
     },
@@ -44,7 +42,7 @@ export default async function Page() {
 
   // A API só é consultada no modo 'full'. Uma página que só diz "em breve" não
   // tem por que cair junto com o backend do bot.
-  const data = mode === "full" ? await loadFullSite() : null;
+  const data = mode === 'full' ? await loadFullSite() : null;
   const zones = data?.zones ?? [];
 
   return (

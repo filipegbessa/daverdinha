@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import type { ComponentProps } from "react";
+import Link from 'next/link';
+import type { ComponentProps } from 'react';
 
-type ContactLinkProps = Omit<ComponentProps<typeof Link>, "onClick" | "target"> & {
-  channel: "whatsapp" | "instagram" | "email";
+type ContactLinkProps = Omit<ComponentProps<typeof Link>, 'onClick' | 'target'> & {
+  channel: 'whatsapp' | 'instagram' | 'email';
   /** Onde o botão está, pra separar as conversões por tela no GA. */
   location: string;
 };
@@ -22,10 +22,6 @@ type ContactLinkProps = Omit<ComponentProps<typeof Link>, "onClick" | "target"> 
  */
 export function ContactLink({ channel, location, ...props }: ContactLinkProps) {
   return (
-    <Link
-      {...props}
-      target="_blank"
-      onClick={() => window.gtag?.("event", "contact_click", { channel, location })}
-    />
+    <Link {...props} target="_blank" onClick={() => window.gtag?.('event', 'contact_click', { channel, location })} />
   );
 }

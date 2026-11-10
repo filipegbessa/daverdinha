@@ -28,9 +28,7 @@ describe('MessageImage', () => {
 
     const img = await screen.findByTestId('message-image');
     expect(img).toHaveAttribute('src', 'https://r2.example/signed');
-    expect(apiFetch).toHaveBeenCalledWith(
-      '/conversations/c1/messages/m1/media',
-    );
+    expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/messages/m1/media');
   });
 
   it('shows the caption the customer wrote', async () => {
@@ -45,16 +43,10 @@ describe('MessageImage', () => {
     mockApi();
 
     const { rerender } = render(<MessageImage {...props} caption="o vaso" />);
-    expect(await screen.findByTestId('message-image')).toHaveAttribute(
-      'alt',
-      'o vaso',
-    );
+    expect(await screen.findByTestId('message-image')).toHaveAttribute('alt', 'o vaso');
 
     rerender(<MessageImage {...props} caption={null} />);
-    expect(await screen.findByTestId('message-image')).toHaveAttribute(
-      'alt',
-      'Imagem enviada pelo cliente',
-    );
+    expect(await screen.findByTestId('message-image')).toHaveAttribute('alt', 'Imagem enviada pelo cliente');
   });
 
   // A URL assinada vale 5 minutos, e isso passa fácil com a aba aberta.
@@ -70,12 +62,7 @@ describe('MessageImage', () => {
 
     img.dispatchEvent(new Event('error'));
 
-    await waitFor(() =>
-      expect(screen.getByTestId('message-image')).toHaveAttribute(
-        'src',
-        'https://r2.example/fresh',
-      ),
-    );
+    await waitFor(() => expect(screen.getByTestId('message-image')).toHaveAttribute('src', 'https://r2.example/fresh'));
   });
 
   it('gives up after one retry instead of looping', async () => {
@@ -83,9 +70,7 @@ describe('MessageImage', () => {
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<MessageImage {...props} />);
-    (await screen.findByTestId('message-image')).dispatchEvent(
-      new Event('error'),
-    );
+    (await screen.findByTestId('message-image')).dispatchEvent(new Event('error'));
 
     await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
     screen.getByTestId('message-image').dispatchEvent(new Event('error'));
@@ -101,26 +86,20 @@ describe('MessageImage', () => {
     // para conferir o destino.
     let anchor: HTMLAnchorElement | undefined;
     const create = document.createElement.bind(document);
-    jest
-      .spyOn(document, 'createElement')
-      .mockImplementation((tag: string, options?: ElementCreationOptions) => {
-        const element = create(tag, options);
-        if (tag === 'a') {
-          anchor = element as HTMLAnchorElement;
-          anchor.click = jest.fn();
-        }
-        return element;
-      });
+    jest.spyOn(document, 'createElement').mockImplementation((tag: string, options?: ElementCreationOptions) => {
+      const element = create(tag, options);
+      if (tag === 'a') {
+        anchor = element as HTMLAnchorElement;
+        anchor.click = jest.fn();
+      }
+      return element;
+    });
 
     render(<MessageImage {...props} />);
     await screen.findByTestId('message-image');
     await userEvent.click(screen.getByRole('button', { name: 'Baixar' }));
 
-    await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith(
-        '/conversations/c1/messages/m1/media?download=1',
-      ),
-    );
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/conversations/c1/messages/m1/media?download=1'));
     await waitFor(() => expect(anchor?.click).toHaveBeenCalled());
     expect(anchor).toHaveAttribute('href', 'https://r2.example/attachment');
   });
@@ -132,17 +111,13 @@ describe('MessageImage', () => {
       render(<MessageImage {...props} />);
       await screen.findByTestId('message-image');
 
-      expect(
-        screen.queryByRole('button', { name: 'Compartilhar' }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Compartilhar' })).not.toBeInTheDocument();
     });
 
     it('hands the file to the native sheet, which is what reaches Drive', async () => {
       mockApi();
       const share = jest.fn().mockResolvedValue(undefined);
-      (navigator as { canShare?: unknown }).canShare = jest
-        .fn()
-        .mockReturnValue(true);
+      (navigator as { canShare?: unknown }).canShare = jest.fn().mockReturnValue(true);
       (navigator as { share?: unknown }).share = share;
       global.fetch = jest
         .fn()
@@ -150,9 +125,7 @@ describe('MessageImage', () => {
 
       render(<MessageImage {...props} />);
       await screen.findByTestId('message-image');
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Compartilhar' }),
-      );
+      await userEvent.click(screen.getByRole('button', { name: 'Compartilhar' }));
 
       await waitFor(() => expect(share).toHaveBeenCalled());
       const [{ files }] = share.mock.calls[0] as [{ files: File[] }];
@@ -163,24 +136,14 @@ describe('MessageImage', () => {
     // nativa cai no mesmo catch. Nenhum dos dois é erro para mostrar na tela.
     it('fails quietly, leaving the image and the download button alone', async () => {
       mockApi();
-      (navigator as { canShare?: unknown }).canShare = jest
-        .fn()
-        .mockReturnValue(true);
-      global.fetch = jest
-        .fn()
-        .mockRejectedValue(new Error('CORS')) as unknown as typeof fetch;
+      (navigator as { canShare?: unknown }).canShare = jest.fn().mockReturnValue(true);
+      global.fetch = jest.fn().mockRejectedValue(new Error('CORS')) as unknown as typeof fetch;
 
       render(<MessageImage {...props} />);
       await screen.findByTestId('message-image');
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Compartilhar' }),
-      );
+      await userEvent.click(screen.getByRole('button', { name: 'Compartilhar' }));
 
-      await waitFor(() =>
-        expect(
-          screen.getByRole('button', { name: 'Compartilhar' }),
-        ).not.toBeDisabled(),
-      );
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Compartilhar' })).not.toBeDisabled());
       expect(screen.getByTestId('message-image')).toBeInTheDocument();
       expect(screen.queryByTestId('image-failed')).not.toBeInTheDocument();
     });

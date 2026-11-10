@@ -7,7 +7,6 @@ import { paginated } from '@/features/admin/test-fixtures/mock-api';
 
 jest.mock('@/features/admin/lib/api-client');
 
-
 describe('PedidosPage', () => {
   it('opens on paid orders with code, buyer, delivery, preparation and total', async () => {
     const apiFetch = jest.fn().mockResolvedValue(paginated([order]));

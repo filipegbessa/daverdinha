@@ -1,16 +1,16 @@
-import { Hero } from "@/features/site/components/Hero";
-import { About } from "@/features/site/components/About";
-import { ProductsSection } from "@/features/site/components/ProductsSection";
-import { EventsSection } from "@/features/site/components/EventsSection";
-import { DeliveryZones } from "@/features/site/components/DeliveryZones";
-import { Location } from "@/features/site/components/Location";
-import { Faq } from "@/features/site/components/Faq";
-import { SiteShell } from "@/features/site/components/SiteShell";
-import { isSample } from "@/features/site/data/samples";
-import type { DeliveryZone } from "@/features/site/lib/delivery-zones";
-import type { Product } from "@/features/site/types/catalog";
-import type { SiteEvent } from "@/features/site/types/event";
-import type { HeroSlide } from "@/features/site/types/hero-slide";
+import { Hero } from '@/features/site/components/Hero';
+import { About } from '@/features/site/components/About';
+import { ProductsSection } from '@/features/site/components/ProductsSection';
+import { EventsSection } from '@/features/site/components/EventsSection';
+import { DeliveryZones } from '@/features/site/components/DeliveryZones';
+import { Location } from '@/features/site/components/Location';
+import { Faq } from '@/features/site/components/Faq';
+import { SiteShell } from '@/features/site/components/SiteShell';
+import { isSample } from '@/features/site/data/samples';
+import type { DeliveryZone } from '@/features/site/lib/delivery-zones';
+import type { Product } from '@/features/site/types/catalog';
+import type { SiteEvent } from '@/features/site/types/event';
+import type { HeroSlide } from '@/features/site/types/hero-slide';
 
 export interface FullSiteData {
   home: string;

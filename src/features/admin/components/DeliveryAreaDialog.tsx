@@ -36,9 +36,7 @@ export function DeliveryAreaDialog({
   const save = useApiMutation('Erro ao salvar a área de entrega.');
   const [name, setName] = useState(area?.name ?? '');
   const [feeCents, setFeeCents] = useState(() => Math.round((area?.fee ?? 0) * 100));
-  const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(area?.locations.map((l) => l.id) ?? []),
-  );
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(area?.locations.map((l) => l.id) ?? []));
   const [search, setSearch] = useState('');
 
   const visible = useMemo(() => {
@@ -60,7 +58,10 @@ export function DeliveryAreaDialog({
       const body = { name: name.trim(), fee: feeCents / 100 };
       const saved = (await (area
         ? apiFetch(`/delivery-areas/${area.id}`, { method: 'PATCH', body: JSON.stringify(body) })
-        : apiFetch('/delivery-areas', { method: 'POST', body: JSON.stringify({ zone, ...body }) }))) as DeliveryAreaAdmin;
+        : apiFetch('/delivery-areas', {
+            method: 'POST',
+            body: JSON.stringify({ zone, ...body }),
+          }))) as DeliveryAreaAdmin;
       await apiFetch(`/delivery-areas/${saved.id}/locations`, {
         method: 'PUT',
         body: JSON.stringify({ locationIds: [...selected] }),
@@ -100,8 +101,7 @@ export function DeliveryAreaDialog({
         />
         <ul className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-sand-line p-2">
           {visible.map((location) => {
-            const otherArea =
-              location.areaId && location.areaId !== area?.id ? areaNames[location.areaId] : undefined;
+            const otherArea = location.areaId && location.areaId !== area?.id ? areaNames[location.areaId] : undefined;
             const notes = [!location.covered && 'não atendido', otherArea && `hoje em ${otherArea}`].filter(Boolean);
             return (
               <li key={location.id}>
@@ -121,8 +121,8 @@ export function DeliveryAreaDialog({
           {visible.length === 0 && <li className="py-1 text-sm text-ink-soft">Nenhum bairro encontrado.</li>}
         </ul>
         <p className="mt-1 text-sm text-ink-soft">
-          Marcar um bairro que está em outra área move ele pra esta. Bairro não atendido só recebe entrega
-          depois de marcado como atendido.
+          Marcar um bairro que está em outra área move ele pra esta. Bairro não atendido só recebe entrega depois de
+          marcado como atendido.
         </p>
       </fieldset>
     </FormDialog>

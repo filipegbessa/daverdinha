@@ -1,12 +1,12 @@
-import Image from "next/image";
-import Link from "next/link";
-import { AtSign, MapPin, MessageCircle } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { businessInfo } from "@/data/business";
-import { getWhatsAppUrl } from "@/features/site/lib/whatsapp";
-import { Eyebrow } from "@/features/site/components/Eyebrow";
-import { ContactLink } from "@/features/site/components/ContactLink";
+import Image from 'next/image';
+import Link from 'next/link';
+import { AtSign, MapPin, MessageCircle } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { businessInfo } from '@/data/business';
+import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
+import { Eyebrow } from '@/features/site/components/Eyebrow';
+import { ContactLink } from '@/features/site/components/ContactLink';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 
 /**
@@ -32,9 +32,7 @@ export function ComingSoon() {
 
       <div className="max-w-md">
         <Eyebrow>Em breve</Eyebrow>
-        <h1 className="mt-3 font-serif text-3xl font-semibold text-ink md:text-4xl">
-          Nosso site está chegando
-        </h1>
+        <h1 className="mt-3 font-serif text-3xl font-semibold text-ink md:text-4xl">Nosso site está chegando</h1>
         <p className="mt-3 text-ink-soft">{businessInfo.description}</p>
       </div>
 
@@ -44,8 +42,8 @@ export function ComingSoon() {
           channel="whatsapp"
           location="coming_soon"
           className={cn(
-            buttonVariants({ variant: "default", size: "lg" }),
-            "gap-2 rounded-full bg-moss shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft",
+            buttonVariants({ variant: 'default', size: 'lg' }),
+            'gap-2 rounded-full bg-moss shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft',
           )}
         >
           <MessageCircle className="size-4" aria-hidden="true" />
@@ -56,8 +54,8 @@ export function ComingSoon() {
           channel="instagram"
           location="coming_soon"
           className={cn(
-            buttonVariants({ variant: "outline", size: "lg" }),
-            "gap-2 rounded-full border-moss-line text-ink hover:bg-moss/10",
+            buttonVariants({ variant: 'outline', size: 'lg' }),
+            'gap-2 rounded-full border-moss-line text-ink hover:bg-moss/10',
           )}
         >
           <AtSign className="size-4 text-moss" aria-hidden="true" />
@@ -66,24 +64,16 @@ export function ComingSoon() {
       </div>
 
       <p className="flex max-w-sm items-center justify-center gap-1.5 text-sm text-ink-soft">
-        <MapPin
-          className="size-4 shrink-0 text-berry"
-          strokeWidth={1.75}
-          aria-hidden="true"
-        />
+        <MapPin className="size-4 shrink-0 text-berry" strokeWidth={1.75} aria-hidden="true" />
         {businessInfo.address.formatted}
       </p>
 
       <div className="mt-4 flex flex-col items-center gap-1 border-t border-moss-line pt-6 text-xs text-ink-soft">
-        <Link
-          href="/politica-de-privacidade"
-          className="underline underline-offset-4"
-        >
+        <Link href="/politica-de-privacidade" className="underline underline-offset-4">
           Política de Privacidade
         </Link>
         <p>
-          © {new Date().getFullYear()} Daverdinha · {businessInfo.legal.razaoSocial} · CNPJ{" "}
-          {businessInfo.legal.cnpj}
+          © {new Date().getFullYear()} Daverdinha · {businessInfo.legal.razaoSocial} · CNPJ {businessInfo.legal.cnpj}
         </p>
       </div>
     </main>

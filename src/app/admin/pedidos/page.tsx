@@ -26,10 +26,14 @@ export default function PedidosPage() {
   const [status, setStatus] = useState<SiteOrderStatus>('paid');
   const [search, setSearch] = useState('');
   const q = useDebouncedValue(search.trim());
-  const { data, items: orders, isLoading, isRefreshing, error, pagination } = usePaginatedResource<SiteOrderAdmin>(
-    '/site-orders',
-    { status, q: q || undefined },
-  );
+  const {
+    data,
+    items: orders,
+    isLoading,
+    isRefreshing,
+    error,
+    pagination,
+  } = usePaginatedResource<SiteOrderAdmin>('/site-orders', { status, q: q || undefined });
 
   return (
     <div>

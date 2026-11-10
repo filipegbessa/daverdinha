@@ -38,10 +38,14 @@ export default function ConversasPage() {
   // Filtering moved to the server: applying it in the browser would only ever
   // filter the window that happened to be loaded, silently hiding matches
   // that sit outside it.
-  const { data, items: conversations, isLoading, isRefreshing, error, pagination } = usePaginatedResource<
-    Conversation,
-    ConversationList
-  >(
+  const {
+    data,
+    items: conversations,
+    isLoading,
+    isRefreshing,
+    error,
+    pagination,
+  } = usePaginatedResource<Conversation, ConversationList>(
     '/conversations',
     {
       q: debouncedSearch || undefined,
@@ -115,35 +119,35 @@ export default function ConversasPage() {
   return (
     <div>
       <PageHeader title="Conversas">
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nome ou telefone"
-            aria-label="Buscar conversas"
-            className="w-64"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            aria-pressed={onlyUnread}
-            onClick={() => setOnlyUnread((value) => !value)}
-            className={onlyUnread ? 'border-moss bg-moss/10' : ''}
-          >
-            Não lidas
-          </Button>
-          <NativeSelect
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            aria-label="Filtrar por marcador"
-            className="w-auto"
-          >
-            <option value="all">Todos os marcadores</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </NativeSelect>
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar por nome ou telefone"
+          aria-label="Buscar conversas"
+          className="w-64"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          aria-pressed={onlyUnread}
+          onClick={() => setOnlyUnread((value) => !value)}
+          className={onlyUnread ? 'border-moss bg-moss/10' : ''}
+        >
+          Não lidas
+        </Button>
+        <NativeSelect
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          aria-label="Filtrar por marcador"
+          className="w-auto"
+        >
+          <option value="all">Todos os marcadores</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </NativeSelect>
       </PageHeader>
       {isLoading && <LoadingState />}
       {!isLoading && error && <ErrorAlert>{error}</ErrorAlert>}
