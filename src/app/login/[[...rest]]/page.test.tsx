@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import LoginPage from './page';
+import LoginPage, { metadata } from './page';
 
 jest.mock('@clerk/nextjs', () => ({
   SignIn: (props: { path: string; routing: string; forceRedirectUrl: string }) => (
@@ -13,5 +13,9 @@ describe('LoginPage', () => {
     const signIn = screen.getByTestId('clerk-sign-in');
     expect(signIn).toHaveAttribute('data-path', '/login');
     expect(signIn).toHaveAttribute('data-after', '/admin');
+  });
+
+  it('keeps the login page out of search engines', () => {
+    expect(metadata.robots).toEqual({ index: false, follow: false });
   });
 });

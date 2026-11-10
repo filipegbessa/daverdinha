@@ -1,4 +1,8 @@
+import type { Metadata } from 'next';
 import { SignIn } from '@clerk/nextjs';
+
+// A entrada do admin não tem por que aparecer no Google.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function LoginPage() {
   return (
