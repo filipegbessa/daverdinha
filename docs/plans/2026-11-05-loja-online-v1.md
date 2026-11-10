@@ -318,6 +318,7 @@ Tela por status (`PublicSiteOrder.status`):
 - [ ] **Step 2: Implementar e rodar.**
 - [ ] **Step 3: Homologação ponta a ponta** (sandbox do Pagar.me, preview da Vercel com `NEXT_PUBLIC_STORE_ENABLED=true`): comprar com entrega e com retirada; cartão à vista e parcelado; pedido abaixo da parcela mínima (só à vista); cartão recusado e depois aprovado; Pix que vence; voltar do Pagar.me sem pagar e pagar pela página do pedido; produto esgotado no meio da compra; carrinho com item sob encomenda (selo e prazo do começo ao fim); CEP de bairro sem área; retirada desligada; celular (375 px) e desktop; push de pedido novo chegando no admin.
 - [ ] **Step 4: Lançamento** — a cliente cadastra as áreas de entrega e confere a retirada no admin; `NEXT_PUBLIC_STORE_ENABLED=true` em produção (depois das variáveis do Pagar.me de produção na API); marcar `purchase` como evento-chave no GA4; primeira compra real de valor baixo, estornada pelo painel.
+  - [ ] trocar o redirecionamento de contato@daverdinha.com.br para o e-mail da cliente
 - [ ] **Step 5: Commit** — `feat(site): add store policies and launch checks`
 
 ---

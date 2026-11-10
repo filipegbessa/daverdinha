@@ -24,7 +24,7 @@ Semântica exata: só `SITE_MODE=full` abre o site completo. Ausente, vazia ou c
 
 A landing é **indexável de propósito**: `robots.ts` segue liberando `/`, `sitemap.ts` também não foi alterado — ele já lista a home — e o JSON-LD de `LocalBusiness` continua sendo emitido (com `areaServed: []`, já que nada foi confirmado pela API), pra quem buscar "Daverdinha" achar o negócio e os contatos. Ela também **não chama a API** — não depende da `daverdinha-api` estar de pé.
 
-Os canais de contato são WhatsApp e Instagram; não há e-mail porque o negócio não tem um.
+Os canais de contato são WhatsApp, Instagram e o e-mail `contato@daverdinha.com.br` (mostrado em Localização e no JSON-LD). Hoje esse endereço só redireciona pra caixa pessoal do desenvolvedor; no lançamento o redirecionamento passa pra caixa da cliente.
 
 ### Loja online (`NEXT_PUBLIC_STORE_ENABLED`)
 
