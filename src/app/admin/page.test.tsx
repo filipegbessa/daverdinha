@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DashboardPage from './page';
 import { useApiClient } from '@/features/admin/lib/api-client';
+import { mockApi as mockAdminApi } from '@/features/admin/test-fixtures/mock-api';
 
 jest.mock('@/features/admin/lib/api-client');
 
@@ -17,13 +18,11 @@ function mockApi(handlers: {
   menuItems?: () => unknown;
   patch?: () => unknown;
 }) {
-  const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-    if (options?.method === 'PATCH') return Promise.resolve(handlers.patch?.());
-    if (path === '/menu-items') return Promise.resolve(handlers.menuItems?.() ?? []);
-    return Promise.resolve(handlers.settings?.() ?? emptySettings);
+  return mockAdminApi((path, options) => {
+    if (options?.method === 'PATCH') return handlers.patch?.();
+    if (path === '/menu-items') return handlers.menuItems?.() ?? [];
+    return handlers.settings?.() ?? emptySettings;
   });
-  (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
-  return apiFetch;
 }
 
 describe('DashboardPage', () => {

@@ -2,13 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MessageImage } from './MessageImage';
 import { useApiClient } from '@/features/admin/lib/api-client';
+import { mockApi as mockAdminApi } from '@/features/admin/test-fixtures/mock-api';
 
 jest.mock('@/features/admin/lib/api-client');
 
 function mockApi(url = 'https://r2.example/signed') {
-  const apiFetch = jest.fn().mockResolvedValue({ url });
-  (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
-  return apiFetch;
+  return mockAdminApi(() => ({ url }));
 }
 
 const props = { conversationId: 'c1', messageId: 'm1', caption: null };

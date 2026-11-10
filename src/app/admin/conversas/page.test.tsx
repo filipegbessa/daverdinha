@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ConversasPage from './page';
 import { useApiClient } from '@/features/admin/lib/api-client';
+import { mockApi as mockAdminApi, paginated } from '@/features/admin/test-fixtures/mock-api';
 
 jest.mock('@/features/admin/lib/api-client');
 
@@ -35,23 +36,21 @@ const conversations = [
 function mockApi(
   options: { items?: unknown[]; total?: number; totalPages?: number; categories?: unknown[] } = {},
 ) {
-  const apiFetch = jest.fn((path: string) => {
+  return mockAdminApi((path) => {
     if (path.startsWith('/categories')) {
       const items = options.categories ?? [];
-      return Promise.resolve({ items, page: 1, perPage: 100, total: items.length, totalPages: 1 });
+      return paginated(items, { perPage: 100 });
     }
     const items = options.items ?? conversations;
-    return Promise.resolve({
-      items,
-      page: Number(new URLSearchParams(path.split('?')[1] ?? '').get('page') ?? 1),
-      perPage: 20,
-      total: options.total ?? items.length,
-      totalPages: options.totalPages ?? 1,
+    return {
+      ...paginated(items, {
+        page: Number(new URLSearchParams(path.split('?')[1] ?? '').get('page') ?? 1),
+        total: options.total ?? items.length,
+        totalPages: options.totalPages ?? 1,
+      }),
       unreadTotal: 1,
-    });
+    };
   });
-  (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
-  return apiFetch;
 }
 
 /** The '/conversations...' paths requested so far, in order. */

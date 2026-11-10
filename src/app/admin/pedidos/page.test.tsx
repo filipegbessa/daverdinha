@@ -3,15 +3,14 @@ import userEvent from '@testing-library/user-event';
 import PedidosPage from './page';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { order } from '@/features/admin/test-fixtures/site-order';
+import { paginated } from '@/features/admin/test-fixtures/mock-api';
 
 jest.mock('@/features/admin/lib/api-client');
 
 
-const page = (items: unknown[]) => ({ items, page: 1, perPage: 20, total: items.length, totalPages: 1 });
-
 describe('PedidosPage', () => {
   it('opens on paid orders with code, buyer, delivery, preparation and total', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(page([order]));
+    const apiFetch = jest.fn().mockResolvedValue(paginated([order]));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<PedidosPage />);
@@ -24,7 +23,7 @@ describe('PedidosPage', () => {
   });
 
   it('filters by status and searches by code or name on the server', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(page([]));
+    const apiFetch = jest.fn().mockResolvedValue(paginated([]));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
 
     render(<PedidosPage />);

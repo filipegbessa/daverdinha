@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import LojaPage from './page';
-import { useApiClient } from '@/features/admin/lib/api-client';
+import { mockApi as mockAdminApi } from '@/features/admin/test-fixtures/mock-api';
 
 jest.mock('@/features/admin/lib/api-client');
 
@@ -15,9 +15,7 @@ const settings = {
 };
 
 function mockApi(save: () => Promise<unknown> = async () => settings) {
-  const apiFetch = jest.fn((path: string, init?: RequestInit) => (init ? save() : Promise.resolve(settings)));
-  (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
-  return apiFetch;
+  return mockAdminApi((path, init) => (init ? save() : settings));
 }
 
 describe('LojaPage', () => {

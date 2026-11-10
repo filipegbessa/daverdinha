@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ProdutosPage from './page';
-import { useApiClient } from '@/features/admin/lib/api-client';
+import { mockApi as mockAdminApi, paginated } from '@/features/admin/test-fixtures/mock-api';
 
 jest.mock('@/features/admin/lib/api-client');
 
@@ -60,19 +60,15 @@ const products = [
   },
 ];
 
-const page = (items: unknown[]) => ({ items, page: 1, perPage: 20, total: items.length, totalPages: 1 });
-
 /** Responde por rota, já que a página busca produtos e categorias em paralelo. */
 function mockApi(overrides: (path: string, init?: RequestInit) => unknown = () => undefined) {
-  const apiFetch = jest.fn(async (path: string, init?: RequestInit) => {
+  return mockAdminApi((path, init) => {
     const override = overrides(path, init);
     if (override !== undefined) return override;
     if (path.startsWith('/product-categories')) return categories;
-    if (path.startsWith('/products') && !init) return page(products);
+    if (path.startsWith('/products') && !init) return paginated(products);
     return undefined;
   });
-  (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
-  return apiFetch;
 }
 
 describe('ProdutosPage', () => {
@@ -136,7 +132,7 @@ describe('ProdutosPage', () => {
   });
 
   it('sends search and filters to the API and says when nothing matches', async () => {
-    const apiFetch = mockApi((path) => (path.startsWith('/products?') ? page([]) : undefined));
+    const apiFetch = mockApi((path) => (path.startsWith('/products?') ? paginated([]) : undefined));
 
     render(<ProdutosPage />);
     await screen.findByText('Vaso M');

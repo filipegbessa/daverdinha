@@ -1,16 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PedidoPage from './page';
-import { useApiClient } from '@/features/admin/lib/api-client';
 import { order } from '@/features/admin/test-fixtures/site-order';
+import { mockApi as mockAdminApi } from '@/features/admin/test-fixtures/mock-api';
 
 jest.mock('@/features/admin/lib/api-client');
 jest.mock('next/navigation', () => ({ useParams: () => ({ id: 'o1' }) }));
 
 function mockApi(current = order) {
-  const apiFetch = jest.fn((path: string, init?: RequestInit) => (init ? Promise.resolve(current) : Promise.resolve(current)));
-  (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
-  return apiFetch;
+  return mockAdminApi(() => current);
 }
 
 describe('PedidoPage', () => {
