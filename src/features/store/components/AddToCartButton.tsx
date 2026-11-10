@@ -1,12 +1,10 @@
 'use client';
 import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
+import { SiteButton } from '@/features/site/components/SiteButton';
 import { isSample } from '@/features/site/data/samples';
 import { useAddToCart } from '@/features/store/lib/use-add-to-cart';
 import type { Product } from '@/features/site/types/catalog';
-
-const BUTTON =
-  'inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 font-semibold shadow-card transition-shadow sm:w-auto';
 
 /**
  * O botão principal da página do produto com a loja ligada. Esgotado não vai
@@ -20,22 +18,18 @@ export function AddToCartButton({ product }: { product: Product }) {
 
   if (product.availability === 'sold_out') {
     return (
-      <button type="button" disabled className={`${BUTTON} cursor-not-allowed bg-sand-line text-ink-soft`}>
+      <SiteButton disabled className="w-full sm:w-auto">
         Esgotado
-      </button>
+      </SiteButton>
     );
   }
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-      <button
-        type="button"
-        onClick={addToCart}
-        className={`${BUTTON} cursor-pointer bg-moss text-paper hover:bg-moss/90 hover:shadow-soft`}
-      >
+      <SiteButton onClick={addToCart} className="w-full sm:w-auto">
         <ShoppingBag className="size-5" aria-hidden="true" />
         Adicionar ao carrinho
-      </button>
+      </SiteButton>
       <p aria-live="polite" className="text-sm text-ink-soft">
         {added && (
           <>

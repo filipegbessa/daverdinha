@@ -1,7 +1,5 @@
-import Link from 'next/link';
 import { MessageCircle } from 'lucide-react';
-import { buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButton';
 import { PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
@@ -26,23 +24,14 @@ export function HeroSlideView({ slide, isFirst }: { slide: HeroSlide; isFirst: b
         </Heading>
         <p className="mx-auto mt-4 max-w-xl text-base text-ink-soft sm:text-lg md:mx-0">{slide.description}</p>
         <div className="mt-7 flex flex-wrap justify-center gap-3 md:justify-start">
-          <Link
-            href={slide.linkUrl ?? PRODUCTS_HREF}
-            className={cn(
-              buttonVariants({ variant: 'default', size: 'lg' }),
-              'rounded-full bg-moss shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft',
-            )}
-          >
+          <SiteButton href={slide.linkUrl ?? PRODUCTS_HREF} size="sm">
             {slide.linkLabel ?? 'Ver produtos'}
-          </Link>
+          </SiteButton>
           <ContactLink
             href={getWhatsAppUrl(HERO_MESSAGE)}
             channel="whatsapp"
             location="hero"
-            className={cn(
-              buttonVariants({ variant: 'outline', size: 'lg' }),
-              'gap-2 rounded-full border-moss text-moss hover:bg-moss/10',
-            )}
+            className={siteButtonClass({ variant: 'secondary', size: 'sm' })}
           >
             <MessageCircle className="size-4" aria-hidden="true" />
             Falar no WhatsApp

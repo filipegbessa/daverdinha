@@ -5,6 +5,7 @@ import { businessInfo } from '@/data/business';
 import { SiteShell } from '@/features/site/components/SiteShell';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { ContactLink } from '@/features/site/components/ContactLink';
+import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButton';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import { JsonLd } from '@/features/site/components/JsonLd';
 import { eventPlace } from '@/features/site/components/EventCard';
@@ -104,21 +105,16 @@ export default async function EventPage({ params }: Props) {
 
               {!past &&
                 (event.ctaUrl ? (
-                  <a
-                    href={event.ctaUrl}
-                    target="_blank"
-                    rel="noopener"
-                    className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-moss px-6 py-3.5 font-semibold text-paper shadow-card hover:bg-moss/90 sm:w-auto"
-                  >
+                  <SiteButton href={event.ctaUrl} target="_blank" rel="noopener" className="mt-8 w-full sm:w-auto">
                     <ExternalLink className="size-5" aria-hidden="true" />
                     Fazer inscrição
-                  </a>
+                  </SiteButton>
                 ) : (
                   <ContactLink
                     href={getWhatsAppUrl(signupMessage(event))}
                     channel="whatsapp"
                     location="event"
-                    className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-moss px-6 py-3.5 font-semibold text-paper shadow-card hover:bg-moss/90 sm:w-auto"
+                    className={siteButtonClass({ className: 'mt-8 w-full sm:w-auto' })}
                   >
                     <MessageCircle className="size-5" aria-hidden="true" />
                     Quero me inscrever

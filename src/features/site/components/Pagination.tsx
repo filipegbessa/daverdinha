@@ -1,5 +1,12 @@
-import Link from 'next/link';
+import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButton';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+/** O lado sem página (primeira/última): mesmo formato do botão, apagado. */
+const DISABLED = siteButtonClass({
+  variant: 'secondary',
+  size: 'sm',
+  className: 'gap-1 cursor-default text-ink-soft opacity-40 hover:bg-transparent',
+});
 
 /**
  * Anterior/próxima por link (sem JS), igual ao resto do site público. Some
@@ -13,15 +20,12 @@ export function Pagination({ page, totalPages, basePath }: { page: number; total
   return (
     <nav aria-label="Paginação" className="mt-10 flex items-center justify-center gap-6 text-sm text-ink">
       {page > 1 ? (
-        <Link
-          href={hrefFor(page - 1)}
-          className="flex items-center gap-1 rounded-full border border-moss-line px-3 py-1.5 font-semibold hover:bg-moss/10"
-        >
+        <SiteButton href={hrefFor(page - 1)} variant="secondary" size="sm" className="gap-1 text-ink">
           <ChevronLeft className="size-4" aria-hidden="true" />
           Anterior
-        </Link>
+        </SiteButton>
       ) : (
-        <span className="flex items-center gap-1 px-3 py-1.5 text-ink-soft opacity-40">
+        <span aria-disabled="true" className={DISABLED}>
           <ChevronLeft className="size-4" aria-hidden="true" />
           Anterior
         </span>
@@ -30,15 +34,12 @@ export function Pagination({ page, totalPages, basePath }: { page: number; total
         Página {page} de {totalPages}
       </span>
       {page < totalPages ? (
-        <Link
-          href={hrefFor(page + 1)}
-          className="flex items-center gap-1 rounded-full border border-moss-line px-3 py-1.5 font-semibold hover:bg-moss/10"
-        >
+        <SiteButton href={hrefFor(page + 1)} variant="secondary" size="sm" className="gap-1 text-ink">
           Próxima
           <ChevronRight className="size-4" aria-hidden="true" />
-        </Link>
+        </SiteButton>
       ) : (
-        <span className="flex items-center gap-1 px-3 py-1.5 text-ink-soft opacity-40">
+        <span aria-disabled="true" className={DISABLED}>
           Próxima
           <ChevronRight className="size-4" aria-hidden="true" />
         </span>

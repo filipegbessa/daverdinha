@@ -1,5 +1,5 @@
 import { Navigation } from 'lucide-react';
-import { buttonVariants } from '@/components/ui/button';
+import { SiteButton } from '@/features/site/components/SiteButton';
 import { cn } from '@/lib/utils';
 
 /** Mapa do Google pra um endereço. Só carrega quando o visitante rola até ele (`loading="lazy"`). */
@@ -17,18 +17,15 @@ export function MapEmbed({ address, title, className }: { address: string; title
 /** Abre a rota no Google Maps até o destino. */
 export function DirectionsButton({ destination, className }: { destination: string; className?: string }) {
   return (
-    <a
+    <SiteButton
       href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`}
       target="_blank"
       rel="noopener"
-      className={cn(
-        buttonVariants({ variant: 'default', size: 'lg' }),
-        'gap-2 rounded-full bg-moss shadow-card hover:bg-moss/90',
-        className,
-      )}
+      size="sm"
+      className={className}
     >
       <Navigation className="size-4" aria-hidden="true" />
       Como chegar
-    </a>
+    </SiteButton>
   );
 }

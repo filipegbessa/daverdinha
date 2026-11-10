@@ -1,10 +1,8 @@
 'use client';
 import { Check, ShoppingBag } from 'lucide-react';
+import { SiteButton } from '@/features/site/components/SiteButton';
 import { useAddToCart } from '@/features/store/lib/use-add-to-cart';
 import type { Product } from '@/features/site/types/catalog';
-
-const BUTTON =
-  'inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition-colors';
 
 /**
  * O "adicionar" do card de produto (home, `/produtos`, categoria e
@@ -18,19 +16,19 @@ export function QuickAddButton({ product }: { product: Product }) {
 
   if (product.availability === 'sold_out') {
     return (
-      <button type="button" disabled className={`${BUTTON} cursor-not-allowed bg-sand-line text-ink-soft`}>
+      <SiteButton size="sm" disabled className="w-full">
         Esgotado
-      </button>
+      </SiteButton>
     );
   }
 
   return (
     <>
-      <button
-        type="button"
+      <SiteButton
+        size="sm"
         onClick={addToCart}
         aria-label={`Adicionar ${product.name} ao carrinho`}
-        className={`${BUTTON} cursor-pointer bg-moss text-paper hover:bg-moss/90`}
+        className="w-full gap-1.5"
       >
         {added ? (
           <Check className="size-4" aria-hidden="true" />
@@ -38,7 +36,7 @@ export function QuickAddButton({ product }: { product: Product }) {
           <ShoppingBag className="size-4" aria-hidden="true" />
         )}
         {added ? 'Adicionado' : 'Adicionar'}
-      </button>
+      </SiteButton>
       <p aria-live="polite" className="mt-1.5 text-xs text-ink-soft empty:hidden">
         {added && <span className="sr-only">{product.name} adicionado ao carrinho.</span>}
         {full && 'Seu carrinho já tem o máximo de produtos diferentes.'}

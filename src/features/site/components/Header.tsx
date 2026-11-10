@@ -1,8 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { MessageCircle } from 'lucide-react';
-import { buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { siteButtonClass } from '@/features/site/components/SiteButton';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { MobileNav } from '@/features/site/components/MobileNav';
@@ -48,10 +47,7 @@ export function Header({ home }: { home: string }) {
             href={getWhatsAppUrl(WHATSAPP_GREETING)}
             channel="whatsapp"
             location="header"
-            className={cn(
-              buttonVariants({ variant: 'default', size: 'default' }),
-              'hidden gap-2 rounded-full bg-moss shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft sm:inline-flex',
-            )}
+            className={siteButtonClass({ size: 'sm', className: 'hidden sm:inline-flex' })}
           >
             <MessageCircle className="size-4" aria-hidden="true" />
             Falar no WhatsApp

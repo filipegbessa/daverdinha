@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
+import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButton';
 import { formatPrice } from '@/lib/format';
 import { PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
@@ -194,18 +195,14 @@ export function CartView() {
                 })),
               })
             }
-            className="mt-5 flex w-full items-center justify-center rounded-full bg-moss px-6 py-3.5 font-semibold text-paper shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft"
+            className={siteButtonClass({ className: 'mt-5 w-full' })}
           >
             Finalizar compra
           </Link>
         ) : (
-          <button
-            type="button"
-            disabled
-            className="mt-5 flex w-full cursor-not-allowed items-center justify-center rounded-full bg-sand-line px-6 py-3.5 font-semibold text-ink-soft"
-          >
+          <SiteButton disabled className="mt-5 w-full">
             Finalizar compra
-          </button>
+          </SiteButton>
         )}
       </aside>
     </div>

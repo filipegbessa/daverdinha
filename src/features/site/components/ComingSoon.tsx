@@ -1,8 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { AtSign, MapPin, MessageCircle } from 'lucide-react';
-import { buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { siteButtonClass } from '@/features/site/components/SiteButton';
 import { businessInfo } from '@/data/business';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
@@ -41,10 +40,7 @@ export function ComingSoon() {
           href={getWhatsAppUrl(WHATSAPP_GREETING)}
           channel="whatsapp"
           location="coming_soon"
-          className={cn(
-            buttonVariants({ variant: 'default', size: 'lg' }),
-            'gap-2 rounded-full bg-moss shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft',
-          )}
+          className={siteButtonClass({ size: 'sm' })}
         >
           <MessageCircle className="size-4" aria-hidden="true" />
           Falar no WhatsApp
@@ -53,10 +49,7 @@ export function ComingSoon() {
           href={businessInfo.contact.instagram.url}
           channel="instagram"
           location="coming_soon"
-          className={cn(
-            buttonVariants({ variant: 'outline', size: 'lg' }),
-            'gap-2 rounded-full border-moss-line text-ink hover:bg-moss/10',
-          )}
+          className={siteButtonClass({ variant: 'secondary', size: 'sm' })}
         >
           <AtSign className="size-4 text-moss" aria-hidden="true" />
           {businessInfo.contact.instagram.handle}

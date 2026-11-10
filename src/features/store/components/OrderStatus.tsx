@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CheckCircle2, Clock, MessageCircle, XCircle } from 'lucide-react';
 import { ContactLink } from '@/features/site/components/ContactLink';
+import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButton';
 import { formatClock, formatPrice } from '@/lib/format';
 import { PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
@@ -50,19 +51,9 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
               e os itens voltam pra loja.
             </p>
             <div className="flex flex-wrap gap-3">
-              {order.paymentUrl && (
-                <a
-                  href={order.paymentUrl}
-                  className="inline-flex items-center justify-center rounded-full bg-moss px-6 py-3 font-semibold text-paper shadow-card hover:bg-moss/90"
-                >
-                  Pagar agora
-                </a>
-              )}
+              {order.paymentUrl && <SiteButton href={order.paymentUrl}>Pagar agora</SiteButton>}
               {/* Recarrega a página: a API confere o pagamento quando o pedido é lido. */}
-              <a
-                href={reloadHref}
-                className="inline-flex items-center justify-center rounded-full border border-moss-line px-6 py-3 font-semibold text-ink hover:bg-moss/10"
-              >
+              <a href={reloadHref} className={siteButtonClass({ variant: 'secondary' })}>
                 Já paguei
               </a>
             </div>

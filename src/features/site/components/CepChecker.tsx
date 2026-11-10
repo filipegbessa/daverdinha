@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { SiteButton } from '@/features/site/components/SiteButton';
 import { checkCep, maskCep, onlyDigits, type CepCheckResult } from '@/features/site/lib/cep-check';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
@@ -37,16 +37,15 @@ export function CepChecker() {
           }}
           className="min-w-0 flex-1 rounded-full border border-moss-line bg-paper px-5 py-2.5 text-ink tabular-nums placeholder:text-ink-soft/60 focus:border-moss focus:outline-none"
         />
-        <Button
+        <SiteButton
           type="submit"
-          size="lg"
+          size="sm"
           loading={checking}
           loadingText="Verificando..."
           disabled={onlyDigits(cep).length !== 8}
-          className="cursor-pointer rounded-full bg-moss hover:bg-moss/90 disabled:cursor-not-allowed"
         >
           Verificar
-        </Button>
+        </SiteButton>
       </form>
 
       <div aria-live="polite" className="mt-3 min-h-12 text-sm">

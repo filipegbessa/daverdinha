@@ -3,6 +3,7 @@ import { MessageCircle } from 'lucide-react';
 import { SiteShell } from '@/features/site/components/SiteShell';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { ContactLink } from '@/features/site/components/ContactLink';
+import { siteButtonClass } from '@/features/site/components/SiteButton';
 import { EventCard } from '@/features/site/components/EventCard';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
 import { Location } from '@/features/site/components/Location';
@@ -57,7 +58,7 @@ export default async function AgendaPage({ searchParams }: Props) {
                 href={getWhatsAppUrl(UPCOMING_EVENTS_MESSAGE)}
                 channel="whatsapp"
                 location="agenda"
-                className="inline-flex items-center gap-2 rounded-full bg-moss px-5 py-2.5 font-semibold text-paper hover:bg-moss/90"
+                className={siteButtonClass({ size: 'sm' })}
               >
                 <MessageCircle className="size-4" aria-hidden="true" />
                 Me avise pelo WhatsApp

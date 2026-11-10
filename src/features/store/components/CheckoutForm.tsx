@@ -6,6 +6,7 @@ import { onlyDigits, maskCep } from '@/features/site/lib/cep-check';
 import { formatPrice } from '@/lib/format';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
+import { SiteButton } from '@/features/site/components/SiteButton';
 import { useCart } from '@/features/store/components/CartProvider';
 import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField';
 import { createCheckout, quoteCart } from '@/features/store/lib/store-api';
@@ -431,14 +432,15 @@ export function CheckoutForm() {
           </p>
         )}
 
-        <button
+        <SiteButton
           type="submit"
           disabled={!canSubmit}
-          aria-busy={submitting}
-          className="flex w-full cursor-pointer items-center justify-center rounded-full bg-moss px-6 py-3.5 font-semibold text-paper shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft disabled:cursor-not-allowed disabled:bg-sand-line disabled:text-ink-soft"
+          loading={submitting}
+          loadingText="Abrindo o pagamento..."
+          className="w-full"
         >
-          {submitting ? 'Abrindo o pagamento...' : 'Ir para o pagamento'}
-        </button>
+          Ir para o pagamento
+        </SiteButton>
       </aside>
     </form>
   );

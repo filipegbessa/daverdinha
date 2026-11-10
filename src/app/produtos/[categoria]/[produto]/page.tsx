@@ -8,6 +8,7 @@ import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { Carousel } from '@/features/site/components/Carousel';
 import { CepChecker } from '@/features/site/components/CepChecker';
 import { ContactLink } from '@/features/site/components/ContactLink';
+import { siteButtonClass } from '@/features/site/components/SiteButton';
 import { JsonLd } from '@/features/site/components/JsonLd';
 import { Location } from '@/features/site/components/Location';
 import { ProductCard } from '@/features/site/components/ProductCard';
@@ -98,7 +99,7 @@ export default async function ProductPage({ params }: Props) {
                     href={getWhatsAppUrl(orderMessage(product))}
                     channel="whatsapp"
                     location="product"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-moss-line px-6 py-3 font-semibold text-ink transition-colors hover:bg-moss/10 sm:w-auto"
+                    className={siteButtonClass({ variant: 'secondary', className: 'w-full sm:w-auto' })}
                   >
                     <MessageCircle className="size-5" aria-hidden="true" />
                     Pedir pelo WhatsApp
@@ -109,7 +110,7 @@ export default async function ProductPage({ params }: Props) {
                   href={getWhatsAppUrl(orderMessage(product))}
                   channel="whatsapp"
                   location="product"
-                  className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-moss px-6 py-3.5 font-semibold text-paper shadow-card transition-shadow hover:bg-moss/90 hover:shadow-soft sm:w-auto"
+                  className={siteButtonClass({ className: 'mt-8 w-full sm:w-auto' })}
                 >
                   <MessageCircle className="size-5" aria-hidden="true" />
                   Pedir pelo WhatsApp
