@@ -12,23 +12,30 @@ export function prelaunchRobots(): Pick<Metadata, 'robots'> {
   return getSiteMode() === 'full' ? {} : { robots: { index: false, follow: false } };
 }
 
-/** Metadados de uma página interna: título, descrição, canonical e prévia de link. */
+/**
+ * Metadados de uma página interna: título, descrição, canonical e prévia de
+ * link. `indexBeforeLaunch` é pra página que já é pública antes do
+ * lançamento (a política de privacidade, linkada pela página "em breve" e
+ * listada no sitemap desde sempre).
+ */
 export function pageMetadata({
   title,
   description,
   path,
   image,
+  indexBeforeLaunch = false,
 }: {
   title: string;
   description: string;
   path: string;
   image?: string;
+  indexBeforeLaunch?: boolean;
 }): Metadata {
   return {
     title,
     description,
     alternates: { canonical: path },
-    ...prelaunchRobots(),
+    ...(indexBeforeLaunch ? {} : prelaunchRobots()),
     openGraph: {
       title,
       description,
