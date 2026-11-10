@@ -21,6 +21,7 @@ export default function CategoriasPage() {
   const { data: categories, isLoading, isRefreshing, error, refetch } =
     useApiResource<ProductCategoryAdmin[]>('/product-categories');
   const remove = useApiMutation('Erro ao excluir categoria.');
+  const busy = remove.isPending || isRefreshing;
   const [editing, setEditing] = useState<ProductCategoryAdmin | 'new' | null>(null);
   const [deleting, setDeleting] = useState<ProductCategoryAdmin | null>(null);
   const [search, setSearch] = useState('');
@@ -71,7 +72,7 @@ export default function CategoriasPage() {
       {isLoading && <LoadingState />}
       {categories && (
         <AdminList
-          busy={isRefreshing}
+          busy={busy}
           isEmpty={visible.length === 0}
           empty={
             categories.length === 0
@@ -89,10 +90,10 @@ export default function CategoriasPage() {
                   {` · ${category._count.products} produto(s)`}
                 </p>
               </div>
-              <Button variant="outline" onClick={() => setEditing(category)}>
+              <Button variant="outline" disabled={busy} onClick={() => setEditing(category)}>
                 Editar
               </Button>
-              <Button variant="destructive" onClick={() => setDeleting(category)}>
+              <Button variant="destructive" disabled={busy} onClick={() => setDeleting(category)}>
                 Excluir
               </Button>
             </AdminListItem>

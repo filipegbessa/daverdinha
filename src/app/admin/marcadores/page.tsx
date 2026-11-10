@@ -18,6 +18,7 @@ export default function MarcadoresPage() {
   const { data, items: categories, isLoading, isRefreshing, error, refetch, pagination } =
     usePaginatedResource<Category>('/categories');
   const remove = useApiMutation('Erro ao excluir marcador.');
+  const busy = remove.isPending || isRefreshing;
   const [editing, setEditing] = useState<Category | 'new' | null>(null);
   const [deleting, setDeleting] = useState<Category | null>(null);
 
@@ -39,7 +40,7 @@ export default function MarcadoresPage() {
       {isLoading && <LoadingState />}
       {data && (
         <AdminList
-          busy={isRefreshing}
+          busy={busy}
           isEmpty={categories.length === 0}
           empty="Nenhum marcador ainda. Crie um pra organizar as conversas."
         >
@@ -53,10 +54,10 @@ export default function MarcadoresPage() {
               </span>
               <span className="flex-1" />
               <span className="text-sm text-ink-soft">{category.conversationCount ?? 0} conversa(s)</span>
-              <Button variant="outline" onClick={() => setEditing(category)}>
+              <Button variant="outline" disabled={busy} onClick={() => setEditing(category)}>
                 Editar
               </Button>
-              <Button variant="destructive" onClick={() => setDeleting(category)}>
+              <Button variant="destructive" disabled={busy} onClick={() => setDeleting(category)}>
                 Excluir
               </Button>
             </AdminListItem>
