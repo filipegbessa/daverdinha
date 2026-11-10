@@ -15,7 +15,8 @@ import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { useConversationMessages } from '@/features/admin/lib/use-conversation-messages';
 import { ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
-import { readableTextColor } from '@/features/admin/lib/readable-text-color';
+import { badgeColorStyle, badgeVariants, ColorDot } from '@/features/admin/components/Badge';
+import { cn } from '@/lib/utils';
 import { formatPhone } from '@/features/admin/lib/format-phone';
 import { formatCurrency, formatDateTime } from '@/lib/format';
 import type { Category, ConversationWithMessages, Paginated } from '@/features/admin/types/admin';
@@ -306,10 +307,8 @@ export default function ConversaDetailPage() {
                 disabled={isPending}
                 aria-busy={isPending}
                 title="Remover marcador"
-                className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
-                  isPending ? 'cursor-wait opacity-50' : ''
-                }`}
-                style={{ backgroundColor: cat.color, color: readableTextColor(cat.color) }}
+                className={cn(badgeVariants(), isPending && 'cursor-wait opacity-50')}
+                style={badgeColorStyle(cat.color)}
               >
                 {cat.name}
                 <span aria-hidden="true">×</span>
@@ -353,11 +352,7 @@ export default function ConversaDetailPage() {
                           isPending ? 'cursor-wait opacity-50' : ''
                         }`}
                       >
-                        <span
-                          aria-hidden="true"
-                          className="h-2.5 w-2.5 flex-none rounded-full"
-                          style={{ backgroundColor: cat.color }}
-                        />
+                        <ColorDot color={cat.color} />
                         {cat.name}
                       </button>
                     );

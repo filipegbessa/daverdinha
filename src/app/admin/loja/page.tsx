@@ -12,6 +12,7 @@ import { centsFromInput } from '@/features/admin/lib/currency-input';
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { FormField, SwitchField } from '@/features/admin/components/FormField';
 import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
+import { SectionLabel } from '@/features/admin/components/SectionLabel';
 import type { StoreSettings } from '@/features/admin/types/admin';
 
 const INSTALLMENT_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -83,9 +84,9 @@ export default function LojaPage() {
       <PageHeader title="Loja" />
       <form onSubmit={handleSubmit} className="mt-6 max-w-2xl space-y-8">
         <section aria-labelledby="pickup-title" className="space-y-4">
-          <h2 id="pickup-title" className="text-lg font-semibold">
+          <SectionLabel variant="title" id="pickup-title">
             Retirada no ateliê
-          </h2>
+          </SectionLabel>
           <SwitchField
             label="Oferecer retirada no ateliê"
             checked={form.pickupEnabled}
@@ -131,9 +132,9 @@ export default function LojaPage() {
         </section>
 
         <section aria-labelledby="installments-title" className="space-y-4">
-          <h2 id="installments-title" className="text-lg font-semibold">
+          <SectionLabel variant="title" id="installments-title">
             Parcelamento no cartão
-          </h2>
+          </SectionLabel>
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField id="maxInstallments" label="Máximo de parcelas">
               <NativeSelect

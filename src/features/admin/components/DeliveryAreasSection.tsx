@@ -46,9 +46,9 @@ export function DeliveryAreasSection({
 
   return (
     <section aria-labelledby="delivery-areas-title" className="mt-6">
-      <h2 id="delivery-areas-title" className="text-lg font-semibold">
+      <SectionLabel variant="title" id="delivery-areas-title">
         Áreas de entrega do site
-      </h2>
+      </SectionLabel>
       <p className="text-sm text-muted-foreground">
         O valor da entrega no site é o da área do bairro. O bot usa só a lista de bairros atendidos, mais abaixo.
       </p>

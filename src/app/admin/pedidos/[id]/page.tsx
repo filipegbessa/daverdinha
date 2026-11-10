@@ -19,6 +19,7 @@ import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { FormField } from '@/features/admin/components/FormField';
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { BusyRegion } from '@/features/admin/components/AdminList';
+import { Badge } from '@/features/admin/components/Badge';
 import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { FulfillmentStatus, SiteOrderAdmin } from '@/features/admin/types/admin';
 import { SectionLabel } from '@/features/admin/components/SectionLabel';
@@ -77,9 +78,7 @@ export default function PedidoPage() {
         ← Voltar para pedidos
       </Link>
       <PageHeader title={`Pedido ${order.code}`}>
-        <span className="rounded-full bg-muted px-3 py-1 text-sm font-semibold">
-          {ORDER_STATUS_SINGULAR[order.status]}
-        </span>
+        <Badge>{ORDER_STATUS_SINGULAR[order.status]}</Badge>
       </PageHeader>
       <p className="mt-1 text-sm text-muted-foreground">
         Feito em {formatOrderDate(order.createdAt)}

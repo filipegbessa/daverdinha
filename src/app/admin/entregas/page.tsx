@@ -8,6 +8,7 @@ import { PageHeader } from '@/features/admin/components/PageHeader';
 import { DeliveryAreasSection } from '@/features/admin/components/DeliveryAreasSection';
 import type { DeliveryAreaAdmin, DeliveryLocation, DeliveryZoneAreas } from '@/features/admin/types/admin';
 import { SectionLabel } from '@/features/admin/components/SectionLabel';
+import { ToggleButton } from '@/features/admin/components/ToggleButton';
 
 type CoverageFilter = 'all' | 'covered' | 'not-covered';
 
@@ -116,17 +117,9 @@ export default function EntregasPage() {
       <PageHeader title="Locais de entrega">
         <div className="flex gap-2" role="group" aria-label="Filtrar por status">
           {FILTERS.map(({ value, label }) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={filter === value}
-              onClick={() => setFilter(value)}
-              className={`rounded border px-3 py-1 text-sm ${
-                filter === value ? 'border-primary bg-primary/10' : 'border-border'
-              }`}
-            >
+            <ToggleButton key={value} pressed={filter === value} onPressedChange={() => setFilter(value)}>
               {label}
-            </button>
+            </ToggleButton>
           ))}
         </div>
       </PageHeader>
@@ -144,9 +137,9 @@ export default function EntregasPage() {
         />
       )}
       <section aria-labelledby="covered-bairros-title" className="mt-8">
-        <h2 id="covered-bairros-title" className="text-lg font-semibold">
+        <SectionLabel variant="title" id="covered-bairros-title">
           Bairros atendidos
-        </h2>
+        </SectionLabel>
         <div className="mt-3 space-y-4">
           {Object.entries(byZone).map(([zone, zoneLocations]) => {
             const visible = zoneLocations.filter(matchesFilter);

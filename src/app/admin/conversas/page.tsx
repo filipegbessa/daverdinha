@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
@@ -10,11 +9,18 @@ import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resourc
 import { TablePagination } from '@/features/admin/components/TablePagination';
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { BusyRegion } from '@/features/admin/components/AdminList';
+import { ColorDot } from '@/features/admin/components/Badge';
+import { ToggleButton } from '@/features/admin/components/ToggleButton';
 import { DataTable, type DataTableColumn } from '@/features/admin/components/DataTable';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { formatPhone } from '@/features/admin/lib/format-phone';
 import type { Category, Conversation, ConversationList, Paginated } from '@/features/admin/types/admin';
 import { formatDateTime } from '@/lib/format';
+
+/** A bolinha de "não lida", na tabela e no card do celular. */
+function UnreadDot() {
+  return <span title="Não lida" className="size-2 flex-none rounded-full bg-destructive" />;
+}
 
 const STATUS_LABEL: Record<Conversation['status'], string> = {
   bot_active: 'Bot ativo',
@@ -70,7 +76,7 @@ export default function ConversasPage() {
           href={`/admin/conversas/${conversation.id}`}
           className="flex items-center gap-2 underline underline-offset-4"
         >
-          {conversation.unread && <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-destructive" />}
+          {conversation.unread && <UnreadDot />}
           {conversation.name || formatPhone(conversation.phone)}
         </Link>
       ),
@@ -96,12 +102,7 @@ export default function ConversasPage() {
       cell: (conversation) => (
         <div className="flex flex-wrap gap-1">
           {(conversation.categories ?? []).map((cat) => (
-            <span
-              key={cat.id}
-              title={cat.name}
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: cat.color }}
-            />
+            <ColorDot key={cat.id} color={cat.color} title={cat.name} />
           ))}
         </div>
       ),
@@ -126,15 +127,9 @@ export default function ConversasPage() {
           aria-label="Buscar conversas"
           className="w-64"
         />
-        <Button
-          type="button"
-          variant="outline"
-          aria-pressed={onlyUnread}
-          onClick={() => setOnlyUnread((value) => !value)}
-          className={onlyUnread ? 'border-primary bg-primary/10' : ''}
-        >
+        <ToggleButton pressed={onlyUnread} onPressedChange={setOnlyUnread}>
           Não lidas
-        </Button>
+        </ToggleButton>
         <NativeSelect
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
@@ -164,9 +159,7 @@ export default function ConversasPage() {
                     href={`/admin/conversas/${conversation.id}`}
                     className="flex items-center gap-2 font-medium underline underline-offset-4"
                   >
-                    {conversation.unread && (
-                      <span title="Não lida" className="h-2 w-2 flex-none rounded-full bg-destructive" />
-                    )}
+                    {conversation.unread && <UnreadDot />}
                     {conversation.name || formatPhone(conversation.phone)}
                   </Link>
                   <p className="mt-1 text-sm text-muted-foreground">{formatPhone(conversation.phone)}</p>
@@ -178,12 +171,7 @@ export default function ConversasPage() {
                   {(conversation.categories ?? []).length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {(conversation.categories ?? []).map((cat) => (
-                        <span
-                          key={cat.id}
-                          title={cat.name}
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: cat.color }}
-                        />
+                        <ColorDot key={cat.id} color={cat.color} title={cat.name} />
                       ))}
                     </div>
                   )}

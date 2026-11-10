@@ -5,7 +5,7 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { FormDialog } from '@/features/admin/components/FormDialog';
 import { FormField } from '@/features/admin/components/FormField';
-import { readableTextColor } from '@/features/admin/lib/readable-text-color';
+import { Badge } from '@/features/admin/components/Badge';
 import type { Category } from '@/features/admin/types/admin';
 
 // What a brand-new category starts on before the operator picks anything.
@@ -57,13 +57,9 @@ export function CategoryDialog({
           />
           {/* A live preview of the chip, because the same colour reads very
               differently as a 40px swatch and as a label behind text. */}
-          <span
-            data-testid="category-color-preview"
-            className="rounded-full px-3 py-1 text-sm font-medium"
-            style={{ backgroundColor: color, color: readableTextColor(color) }}
-          >
+          <Badge data-testid="category-color-preview" color={color}>
             {name || 'Prévia'}
-          </span>
+          </Badge>
         </div>
       </FormField>
     </FormDialog>

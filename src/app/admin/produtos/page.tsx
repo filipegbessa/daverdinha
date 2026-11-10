@@ -12,6 +12,7 @@ import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resourc
 import { TablePagination } from '@/features/admin/components/TablePagination';
 import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
+import { Badge } from '@/features/admin/components/Badge';
 import { ProductDialog } from '@/features/admin/components/ProductDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
@@ -154,9 +155,9 @@ export default function ProdutosPage() {
                 <p className="font-medium">
                   {product.name}
                   {product.featured && (
-                    <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                    <Badge size="sm" className="ml-2">
                       Destaque
-                    </span>
+                    </Badge>
                   )}
                 </p>
                 <p className="text-sm text-muted-foreground">

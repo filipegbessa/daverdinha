@@ -10,7 +10,7 @@ import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
-import { readableTextColor } from '@/features/admin/lib/readable-text-color';
+import { Badge } from '@/features/admin/components/Badge';
 import type { Category } from '@/features/admin/types/admin';
 
 export default function MarcadoresPage() {
@@ -53,12 +53,7 @@ export default function MarcadoresPage() {
         >
           {categories.map((category) => (
             <AdminListItem key={category.id}>
-              <span
-                className="rounded-full px-2.5 py-0.5 text-sm font-medium"
-                style={{ backgroundColor: category.color, color: readableTextColor(category.color) }}
-              >
-                {category.name}
-              </span>
+              <Badge color={category.color}>{category.name}</Badge>
               <span className="flex-1" />
               <span className="text-sm text-muted-foreground">{category.conversationCount ?? 0} conversa(s)</span>
               <Button variant="outline" disabled={busy} onClick={() => setEditing(category)}>
