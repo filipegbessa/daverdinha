@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
+import { errorMessage } from '@/features/admin/lib/error-message';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { DeliveryAreasSection } from '@/features/admin/components/DeliveryAreasSection';
@@ -37,28 +38,36 @@ export default function EntregasPage() {
   // like the whole page failed to load.
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<CoverageFilter>('all');
-  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+  // Bairro → valor marcado, enquanto o PATCH corre e até o recarregamento
+  // trazer a lista nova. Sem isso o checkbox voltava ao valor antigo entre a
+  // resposta do PATCH e a chegada do refetch.
+  const [pending, setPending] = useState<Map<string, boolean>>(new Map());
   const [pendingZones, setPendingZones] = useState<Set<string>>(new Set());
+
+  /** Tira os que falharam já; os salvos ficam pendentes até a lista nova chegar. */
+  async function settle(saved: string[], failed: string[]) {
+    setPending((prev) => withoutKeys(prev, failed));
+    if (saved.length === 0) return;
+    loadAreas();
+    await load();
+    setPending((prev) => withoutKeys(prev, saved));
+  }
 
   async function toggleCovered(location: DeliveryLocation) {
     setError(null);
-    setPendingIds((prev) => new Set(prev).add(location.id));
+    const nextCovered = !location.covered;
+    setPending((prev) => new Map(prev).set(location.id, nextCovered));
     try {
       await apiFetch(`/delivery-locations/${location.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ covered: !location.covered }),
+        body: JSON.stringify({ covered: nextCovered }),
       });
-      load();
-      loadAreas();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao atualizar local de entrega.');
-    } finally {
-      setPendingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(location.id);
-        return next;
-      });
+      setError(errorMessage(err, 'Erro ao atualizar local de entrega.'));
+      await settle([], [location.id]);
+      return;
     }
+    await settle([location.id], []);
   }
 
   async function toggleZone(zone: string, zoneLocations: DeliveryLocation[]) {
@@ -66,37 +75,24 @@ export default function EntregasPage() {
     setPendingZones((prev) => new Set(prev).add(zone));
     const nextCovered = !zoneLocations.every((loc) => loc.covered);
     const toUpdate = zoneLocations.filter((loc) => loc.covered !== nextCovered);
-    setPendingIds((prev) => {
-      const next = new Set(prev);
-      toUpdate.forEach((loc) => next.add(loc.id));
+    setPending((prev) => {
+      const next = new Map(prev);
+      toUpdate.forEach((loc) => next.set(loc.id, nextCovered));
       return next;
     });
-    try {
-      const results = await Promise.allSettled(
-        toUpdate.map((loc) =>
-          apiFetch(`/delivery-locations/${loc.id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ covered: nextCovered }),
-          }),
-        ),
-      );
-      load();
-      loadAreas();
-      if (results.some((result) => result.status === 'rejected')) {
-        setError('Erro ao atualizar a região.');
-      }
-    } finally {
-      setPendingZones((prev) => {
-        const next = new Set(prev);
-        next.delete(zone);
-        return next;
-      });
-      setPendingIds((prev) => {
-        const next = new Set(prev);
-        toUpdate.forEach((loc) => next.delete(loc.id));
-        return next;
-      });
-    }
+    const results = await Promise.allSettled(
+      toUpdate.map((loc) =>
+        apiFetch(`/delivery-locations/${loc.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ covered: nextCovered }),
+        }),
+      ),
+    );
+    const failed = toUpdate.filter((_, i) => results[i].status === 'rejected').map((loc) => loc.id);
+    const saved = toUpdate.filter((_, i) => results[i].status === 'fulfilled').map((loc) => loc.id);
+    if (failed.length > 0) setError('Erro ao atualizar a região.');
+    await settle(saved, failed);
+    setPendingZones((prev) => withoutKeys(prev, [zone]));
   }
 
   if (isLoading) return <LoadingState />;
@@ -109,6 +105,8 @@ export default function EntregasPage() {
     return acc;
   }, {});
 
+  // O valor que aparece: o marcado, se ainda está salvando, senão o da API.
+  const isCovered = (loc: DeliveryLocation) => pending.get(loc.id) ?? loc.covered;
   const matchesFilter = (loc: DeliveryLocation) =>
     filter === 'all' || (filter === 'covered' ? loc.covered : !loc.covered);
 
@@ -151,8 +149,8 @@ export default function EntregasPage() {
         <div className="mt-3 space-y-4">
           {Object.entries(byZone).map(([zone, zoneLocations]) => {
             const visible = zoneLocations.filter(matchesFilter);
-            const allCovered = zoneLocations.every((loc) => loc.covered);
-            const noneCovered = zoneLocations.every((loc) => !loc.covered);
+            const allCovered = zoneLocations.every(isCovered);
+            const noneCovered = !zoneLocations.some(isCovered);
             const zonePending = pendingZones.has(zone);
 
             return (
@@ -171,12 +169,12 @@ export default function EntregasPage() {
                 </div>
                 <ul className="grid grid-cols-1 gap-x-4 p-3 sm:grid-cols-2 lg:grid-cols-3">
                   {visible.map((location) => {
-                    const itemPending = pendingIds.has(location.id);
+                    const itemPending = pending.has(location.id);
                     return (
                       <li key={location.id} className="flex items-center gap-2 py-1">
                         <input
                           type="checkbox"
-                          checked={location.covered}
+                          checked={isCovered(location)}
                           onChange={() => toggleCovered(location)}
                           disabled={itemPending}
                           aria-label={`Atendida ${location.regionName}`}
@@ -214,4 +212,10 @@ function IndeterminateCheckbox({
   });
 
   return <input ref={ref} type="checkbox" checked={checked} onChange={onChange} {...rest} />;
+}
+
+function withoutKeys<T extends Set<string> | Map<string, boolean>>(source: T, keys: Iterable<string>): T {
+  const next = (source instanceof Map ? new Map(source) : new Set(source)) as T;
+  for (const key of keys) next.delete(key);
+  return next;
 }

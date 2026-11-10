@@ -48,7 +48,7 @@ describe('useApiResource', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.error).toBe('Erro ao carregar dados');
+    expect(result.current.error).toBe('Erro ao carregar dados.');
   });
 
   it('does not fetch when path is null', () => {
@@ -172,6 +172,35 @@ describe('useApiResource', () => {
 
     await waitFor(() => expect(result.current.data).toEqual({ id: 'c1-updated' }));
     expect(apiFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('refetch() resolves only once the new data is in', async () => {
+    let resolveSecond!: (value: { n: number }) => void;
+    const apiFetch = jest
+      .fn()
+      .mockResolvedValueOnce({ n: 1 })
+      .mockReturnValueOnce(new Promise((resolve) => (resolveSecond = resolve)));
+    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+
+    const { result } = renderHook(() => useApiResource<{ n: number }>('/conversations'));
+    await waitFor(() => expect(result.current.data).toEqual({ n: 1 }));
+
+    let settled = false;
+    let reload!: Promise<void>;
+    act(() => {
+      reload = result.current.refetch().then(() => {
+        settled = true;
+      });
+    });
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
+    expect(settled).toBe(false);
+
+    await act(async () => {
+      resolveSecond({ n: 2 });
+      await reload;
+    });
+    expect(settled).toBe(true);
+    expect(result.current.data).toEqual({ n: 2 });
   });
 
   it('does not flip isLoading back to true on a background poll refetch once data has already loaded', async () => {

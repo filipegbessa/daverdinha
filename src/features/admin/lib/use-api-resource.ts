@@ -17,7 +17,11 @@ interface UseApiResourceResult<T> {
    */
   isRefreshing: boolean;
   error: string | null;
-  refetch: () => void;
+  /**
+   * Busca de novo. A promessa resolve quando essa busca termina (com sucesso
+   * ou erro), pra quem precisa esperar a lista nova antes de soltar a tela.
+   */
+  refetch: () => Promise<void>;
 }
 
 /**
@@ -41,11 +45,20 @@ export function useApiResource<T>(
   // Set by the poll right before it bumps the index, so that one fetch stays
   // invisible; anything else that re-runs the effect is shown.
   const silentRef = useRef(false);
+  // Quem chamou `refetch()` e espera a busca terminar. Cada busca leva só os
+  // que já estavam na fila quando começou; se for cancelada, devolve-os pra
+  // próxima, então ninguém resolve com a lista antiga.
+  const waitersRef = useRef<Array<() => void>>([]);
   const pollIntervalMs = options?.pollIntervalMs;
 
-  const refetch = useCallback(() => {
-    setRefetchIndex((index) => index + 1);
-  }, []);
+  const refetch = useCallback(
+    () =>
+      new Promise<void>((resolve) => {
+        waitersRef.current.push(resolve);
+        setRefetchIndex((index) => index + 1);
+      }),
+    [],
+  );
 
   const pollRefetch = useCallback(() => {
     silentRef.current = true;
@@ -55,10 +68,12 @@ export function useApiResource<T>(
   useEffect(() => {
     if (path === null) {
       setIsLoading(false);
+      waitersRef.current.splice(0).forEach((resolve) => resolve());
       return;
     }
 
     let cancelled = false;
+    const waiters = waitersRef.current.splice(0);
     const silent = silentRef.current;
     silentRef.current = false;
 
@@ -78,16 +93,18 @@ export function useApiResource<T>(
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
+        setError(err instanceof Error ? err.message : 'Erro ao carregar dados.');
       })
       .finally(() => {
         if (cancelled) return;
         setIsLoading(false);
         setIsRefreshing(false);
+        waiters.forEach((resolve) => resolve());
       });
 
     return () => {
       cancelled = true;
+      waitersRef.current.unshift(...waiters);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `data` is read
     // intentionally without being a dependency: it's checked to decide

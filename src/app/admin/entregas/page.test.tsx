@@ -243,6 +243,33 @@ describe('EntregasPage', () => {
     await waitFor(() => expect(checkbox).not.toBeDisabled());
   });
 
+  it('keeps the new value on a bairro checkbox until the reload brings the list back', async () => {
+    let resolveReload!: () => void;
+    let loads = 0;
+    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
+      if (options?.method === 'PATCH') return Promise.resolve(undefined);
+      loads += 1;
+      if (loads === 1) return Promise.resolve(locations);
+      return new Promise((resolve) => {
+        resolveReload = () => resolve(locations.map((loc) => (loc.id === 'l1' ? { ...loc, covered: false } : loc)));
+      });
+    });
+    mockClient(apiFetch);
+
+    render(<EntregasPage />);
+    await screen.findByText('Ipanema');
+
+    const checkbox = screen.getByRole('checkbox', { name: 'Atendida Ipanema' });
+    await userEvent.click(checkbox);
+
+    await waitFor(() => expect(loads).toBe(2));
+    expect(checkbox).not.toBeChecked();
+    expect(checkbox).toBeDisabled();
+    resolveReload();
+    await waitFor(() => expect(checkbox).not.toBeDisabled());
+    expect(checkbox).not.toBeChecked();
+  });
+
   it('disables every bairro checkbox in a region while its batch PATCH is in flight', async () => {
     const resolvers: Array<() => void> = [];
     const apiFetch = jest.fn((path: string, options?: RequestInit) => {
