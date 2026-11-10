@@ -70,6 +70,8 @@ describe('ProductImagesInput', () => {
     await userEvent.upload(screen.getByLabelText('Fotos'), [photo('grande.jpg', 'image/jpeg', 6 * 1024 * 1024)]);
 
     expect(screen.getByRole('alert')).toHaveTextContent('"grande.jpg" passa de 5 MB.');
+    expect(screen.getByLabelText('Fotos')).toHaveAccessibleDescription(expect.stringContaining('passa de 5 MB'));
+    expect(screen.getByLabelText('Fotos')).toHaveAttribute('aria-invalid', 'true');
     expect(onChange).toHaveBeenLastCalledWith([]);
   });
 });

@@ -16,6 +16,7 @@ import {
   ORDER_STATUS_SINGULAR,
 } from '@/features/admin/lib/site-order-labels';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
+import { FormField } from '@/features/admin/components/FormField';
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { BusyRegion } from '@/features/admin/components/AdminList';
 import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
@@ -150,10 +151,7 @@ export default function PedidoPage() {
 
         <Section title="Preparo e pagamento">
           {order.status === 'paid' ? (
-            <div>
-              <label htmlFor="fulfillment" className="mb-1 block font-medium">
-                Preparo
-              </label>
+            <FormField id="fulfillment" label="Preparo" error={fulfillment.error}>
               <NativeSelect
                 id="fulfillment"
                 value={order.fulfillmentStatus}
@@ -167,8 +165,7 @@ export default function PedidoPage() {
                   </option>
                 ))}
               </NativeSelect>
-              {fulfillment.error && <ErrorText>{fulfillment.error}</ErrorText>}
-            </div>
+            </FormField>
           ) : (
             <p className="text-sm text-ink-soft">O preparo só começa depois do pagamento.</p>
           )}

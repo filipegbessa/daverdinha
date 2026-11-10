@@ -21,7 +21,7 @@ export default function DashboardPage() {
     isLoading: isLoadingMenuItems,
     error: menuItemsError,
   } = useApiResource<MenuItem[]>('/menu-items');
-  const toggle = useApiMutation('Erro ao atualizar');
+  const toggle = useApiMutation('Erro ao atualizar o bot.');
 
   // `null` é "ainda não sei", que não é a mesma coisa que "nenhum ativo".
   // Colapsar os dois em `?? 0` era o que fazia o painel acusar a loja de não
@@ -50,6 +50,9 @@ export default function DashboardPage() {
       <StorageUsageNotice mediaBytesUsed={settings.mediaBytesUsed} />
       <div className="mt-6 flex items-center gap-3">
         <Switch
+          // O texto ao lado muda com o estado; o nome do controle fica fixo,
+          // pra leitura de tela não virar "Bot desativado, desligado".
+          aria-label="Atendimento automático do bot"
           checked={settings.botEnabled}
           // Com a lista carregada e vazia, travar faz sentido. Sem a lista, não:
           // desligar o bot numa emergência não pode depender de um endpoint que
@@ -61,7 +64,7 @@ export default function DashboardPage() {
               .then((ok) => ok && refetch())
           }
         />
-        <span>{settings.botEnabled ? 'Bot ativo' : 'Bot desativado'}</span>
+        <span aria-hidden="true">{settings.botEnabled ? 'Bot ativo' : 'Bot desativado'}</span>
       </div>
       {toggle.error && <ErrorText>{toggle.error}</ErrorText>}
     </div>

@@ -71,7 +71,7 @@ describe('DashboardPage', () => {
       releaseMenuItems([{ id: '1', active: true }]);
     });
 
-    await waitFor(() => expect(screen.getByRole('switch')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Atendimento automático do bot' })).toBeInTheDocument());
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 

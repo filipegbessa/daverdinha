@@ -46,10 +46,7 @@ export function CategoryDialog({
       <FormField id="categoryName" label="Nome">
         <Input id="categoryName" value={name} onChange={(e) => setName(e.target.value)} required />
       </FormField>
-      <div>
-        <label htmlFor="categoryColor" className="mb-1 block font-medium">
-          Cor
-        </label>
+      <FormField id="categoryColor" label="Cor">
         <div className="flex items-center gap-3">
           <input
             id="categoryColor"
@@ -68,7 +65,7 @@ export function CategoryDialog({
             {name || 'Prévia'}
           </span>
         </div>
-      </div>
+      </FormField>
     </FormDialog>
   );
 }

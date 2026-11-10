@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { ErrorText } from '@/features/admin/components/StatusMessage';
+import { FormField } from '@/features/admin/components/FormField';
 
 // Os mesmos limites que a API aplica (`products.controller.ts`): conferir
 // aqui só poupa a cliente de esperar o upload pra descobrir o erro.
@@ -53,23 +53,26 @@ export function ProductImagesInput({
 
   return (
     <div>
-      <label htmlFor="productImages" className="mb-1 block font-medium">
-        Fotos
-      </label>
-      <input
+      <FormField
         id="productImages"
-        type="file"
-        accept={ALLOWED_IMAGE_TYPES.join(',')}
-        multiple
-        onChange={handleChange}
-        aria-describedby="productImagesHelp"
-        className="block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-sand file:px-4 file:py-2 file:font-medium"
-      />
-      <p id="productImagesHelp" className="mt-1 text-sm text-ink-soft">
-        Até {MAX_IMAGES} fotos (JPEG, PNG ou WebP, até 5 MB cada). A primeira é a capa.
-        {currentImages.length > 0 && ' Escolher novas fotos substitui as atuais.'}
-      </p>
-      {error && <ErrorText className="mt-1 text-sm">{error}</ErrorText>}
+        label="Fotos"
+        hint={
+          <>
+            Até {MAX_IMAGES} fotos (JPEG, PNG ou WebP, até 5 MB cada). A primeira é a capa.
+            {currentImages.length > 0 && ' Escolher novas fotos substitui as atuais.'}
+          </>
+        }
+        error={error}
+      >
+        <input
+          id="productImages"
+          type="file"
+          accept={ALLOWED_IMAGE_TYPES.join(',')}
+          multiple
+          onChange={handleChange}
+          className="block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-sand file:px-4 file:py-2 file:font-medium"
+        />
+      </FormField>
       {shown.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-2" aria-label={files.length > 0 ? 'Fotos novas' : 'Fotos atuais'}>
           {shown.map((src, index) => (
