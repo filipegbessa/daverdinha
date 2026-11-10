@@ -56,7 +56,9 @@ export default function DashboardPage() {
           onCheckedChange={(checked) =>
             toggle
               .run(() => apiFetch('/bot-settings', { method: 'PATCH', body: JSON.stringify({ botEnabled: checked }) }))
-              .then((ok) => ok && refetch())
+              .then((ok) => {
+                if (ok) refetch();
+              })
           }
         />
         <span aria-hidden="true">{settings.botEnabled ? 'Bot ativo' : 'Bot desativado'}</span>
