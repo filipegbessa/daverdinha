@@ -14,6 +14,7 @@ import { DataTable, type DataTableColumn } from '@/features/admin/components/Dat
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { formatPhone } from '@/features/admin/lib/format-phone';
 import type { Category, Conversation, ConversationList, Paginated } from '@/features/admin/types/admin';
+import { formatDateTime } from '@/lib/format';
 
 const STATUS_LABEL: Record<Conversation['status'], string> = {
   bot_active: 'Bot ativo',
@@ -107,7 +108,7 @@ export default function ConversasPage() {
       sortable: true,
       sortValue: (conversation) => new Date(conversation.updatedAt).getTime(),
       defaultSortDirection: 'desc',
-      cell: (conversation) => new Date(conversation.updatedAt).toLocaleString('pt-BR'),
+      cell: (conversation) => formatDateTime(conversation.updatedAt),
     },
   ];
 
@@ -168,7 +169,7 @@ export default function ConversasPage() {
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-soft">
                     <span>{STATUS_LABEL[conversation.status]}</span>
                     <span>{conversation.entryPoint ? ENTRY_POINT_LABEL[conversation.entryPoint] : '—'}</span>
-                    <span>{new Date(conversation.updatedAt).toLocaleString('pt-BR')}</span>
+                    <span>{formatDateTime(conversation.updatedAt)}</span>
                   </div>
                   {(conversation.categories ?? []).length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">

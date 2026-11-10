@@ -1,4 +1,4 @@
-import { formatEventShort, formatPrice } from '@/features/site/lib/format';
+import { formatEventShort, formatPrice } from '@/lib/format';
 import { absoluteUrl, productHref } from '@/features/site/lib/paths';
 import type { Product } from '@/features/site/types/catalog';
 import type { SiteEvent } from '@/features/site/types/event';

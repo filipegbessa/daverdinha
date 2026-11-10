@@ -7,7 +7,7 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { formatCurrency } from '@/features/admin/lib/format-currency';
+import { formatCurrency } from '@/lib/format';
 import { centsFromInput } from '@/features/admin/lib/currency-input';
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { FormField, SwitchField } from '@/features/admin/components/FormField';

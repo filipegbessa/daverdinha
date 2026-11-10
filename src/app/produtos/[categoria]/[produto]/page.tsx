@@ -14,7 +14,7 @@ import { ProductCard } from '@/features/site/components/ProductCard';
 import { ProductGallery } from '@/features/site/components/ProductGallery';
 import { isSample } from '@/features/site/data/samples';
 import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
-import { formatPrice } from '@/features/site/lib/format';
+import { formatPrice } from '@/lib/format';
 import { categoryHref, homeHref, PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
 import { getActiveProductBySlug, getFeaturedProducts } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';

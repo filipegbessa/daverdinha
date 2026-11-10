@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { formatCurrency } from '@/features/admin/lib/format-currency';
+import { formatCurrency } from '@/lib/format';
 import { centsFromInput } from '@/features/admin/lib/currency-input';
 import { normalizeSearch } from '@/features/admin/lib/normalize-search';
 import { FormDialog } from '@/features/admin/components/FormDialog';

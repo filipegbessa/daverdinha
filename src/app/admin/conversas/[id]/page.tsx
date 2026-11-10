@@ -21,7 +21,7 @@ import { useConversationMessages } from '@/features/admin/lib/use-conversation-m
 import { ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import { readableTextColor } from '@/features/admin/lib/readable-text-color';
 import { formatPhone } from '@/features/admin/lib/format-phone';
-import { formatCurrency } from '@/features/admin/lib/format-currency';
+import { formatCurrency, formatDateTime } from '@/lib/format';
 import type { Category, ConversationWithMessages, Paginated } from '@/features/admin/types/admin';
 
 /** Truncates a quoted message preview to `max` characters, appending an ellipsis when it cuts. */
@@ -439,7 +439,7 @@ export default function ConversaDetailPage() {
                 <p className={kind === 'order' ? 'mt-1 whitespace-pre-line' : undefined}>{message.body}</p>
               )}
               <div className="mt-1 flex items-center justify-between gap-2">
-                <p className="text-xs text-ink-soft">{new Date(message.createdAt).toLocaleString('pt-BR')}</p>
+                <p className="text-xs text-ink-soft">{formatDateTime(message.createdAt)}</p>
                 {message.whatsappMessageId && (
                   <button
                     type="button"

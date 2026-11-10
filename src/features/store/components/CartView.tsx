@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
-import { formatPrice } from '@/features/site/lib/format';
+import { formatPrice } from '@/lib/format';
 import { PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useCart } from '@/features/store/components/CartProvider';

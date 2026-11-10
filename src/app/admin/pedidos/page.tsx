@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
-import { formatCurrency } from '@/features/admin/lib/format-currency';
+import { formatCurrency } from '@/lib/format';
 import {
   deliveryLabel,
   formatOrderDate,

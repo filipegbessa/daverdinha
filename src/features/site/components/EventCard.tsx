@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { eventCalendar, formatEventPrice, formatEventWhen } from '@/features/site/lib/format';
+import { eventCalendar, formatEventPrice, formatEventWhen } from '@/lib/format';
 import { eventHref } from '@/features/site/lib/paths';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import type { SiteEvent } from '@/features/site/types/event';

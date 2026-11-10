@@ -1,18 +1,39 @@
 /**
- * Formatação compartilhada entre card, página e dados estruturados — uma
- * fórmula só, pra o preço do card e o da página de produto nunca divergirem.
+ * Formatação de dinheiro e data do site, da loja e do admin — uma fórmula só,
+ * pra o preço do card, o da página de produto e o do pedido no admin nunca
+ * divergirem.
  */
 
 // A loja é no Rio; o servidor da Vercel roda em UTC. Sem o fuso explícito,
 // uma oficina às 10h apareceria às 13h.
 const TIME_ZONE = 'America/Sao_Paulo';
 
-const priceFormat = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const currencyFormats = new Map<string, Intl.NumberFormat>();
 
-export function formatPrice(value: number): string {
+function currencyFormat(currency: string): Intl.NumberFormat {
+  let format = currencyFormats.get(currency);
+  if (!format) {
+    format = new Intl.NumberFormat('pt-BR', { style: 'currency', currency });
+    currencyFormats.set(currency, format);
+  }
+  return format;
+}
+
+/**
+ * Valor numa moeda qualquer. A API manda valores como string decimal
+ * (`"35.00"`); um valor que não dá pra ler aparece cru, com a moeda na frente.
+ */
+export function formatCurrency(amount: string | number, currency: string): string {
+  const value = typeof amount === 'string' ? Number(amount) : amount;
+  if (Number.isNaN(value)) return `${currency} ${amount}`;
   // Intl separa "R$" do número com um espaço inquebrável; normaliza pra um
   // espaço comum, que é o que alguém digitaria ao procurar o texto.
-  return priceFormat.format(value).replace(/ /g, ' ');
+  return currencyFormat(currency).format(value).replace(/\u00a0/g, ' ');
+}
+
+/** Preço em reais, o do catálogo e do carrinho. */
+export function formatPrice(value: number): string {
+  return formatCurrency(value, 'BRL');
 }
 
 function parts(iso: string, options: Intl.DateTimeFormatOptions): Record<string, string> {
@@ -61,10 +82,21 @@ export function formatClock(iso: string): string {
   return `${p.hour}:${p.minute}`;
 }
 
-/** "09/11/2026" no horário do Rio. */
-export function formatDate(iso: string): string {
-  const p = parts(iso, { day: '2-digit', month: '2-digit', year: 'numeric' });
-  return `${p.day}/${p.month}/${p.year}`;
+/**
+ * "09/11/2026 14:32" no horário do Rio, qualquer que seja o fuso do navegador
+ * ou do servidor. `withYear: false` dá "09/11 14:32", pra listas recentes.
+ */
+export function formatDateTime(iso: string, { withYear = true }: { withYear?: boolean } = {}): string {
+  const p = parts(iso, {
+    day: '2-digit',
+    month: '2-digit',
+    ...(withYear ? { year: 'numeric' as const } : {}),
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+  const date = withYear ? `${p.day}/${p.month}/${p.year}` : `${p.day}/${p.month}`;
+  return `${date} ${p.hour}:${p.minute}`;
 }
 
 export function formatEventPrice(price: number | null): string {

@@ -8,7 +8,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { formatCurrency } from '@/features/admin/lib/format-currency';
+import { formatCurrency } from '@/lib/format';
 import { centsFromInput } from '@/features/admin/lib/currency-input';
 import { FormDialog } from '@/features/admin/components/FormDialog';
 import { FormField, SwitchField } from '@/features/admin/components/FormField';

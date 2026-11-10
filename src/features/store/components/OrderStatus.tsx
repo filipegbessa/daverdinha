@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { CheckCircle2, Clock, MessageCircle, XCircle } from 'lucide-react';
 import { ContactLink } from '@/features/site/components/ContactLink';
-import { formatClock, formatPrice } from '@/features/site/lib/format';
+import { formatClock, formatPrice } from '@/lib/format';
 import { PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import type { FulfillmentStatus, PublicSiteOrder } from '@/features/store/types/store';

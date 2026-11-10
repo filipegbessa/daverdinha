@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { onlyDigits, maskCep } from '@/features/site/lib/cep-check';
-import { formatPrice } from '@/features/site/lib/format';
+import { formatPrice } from '@/lib/format';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { useCart } from '@/features/store/components/CartProvider';

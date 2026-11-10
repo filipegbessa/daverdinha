@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { formatCurrency } from '@/features/admin/lib/format-currency';
+import { formatCurrency } from '@/lib/format';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { DeliveryAreaDialog } from '@/features/admin/components/DeliveryAreaDialog';

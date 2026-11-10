@@ -11,7 +11,7 @@ import { eventPlace } from '@/features/site/components/EventCard';
 import { EventsSection } from '@/features/site/components/EventsSection';
 import { Location } from '@/features/site/components/Location';
 import { isSample } from '@/features/site/data/samples';
-import { formatEventPrice, formatEventShort, formatEventWhen } from '@/features/site/lib/format';
+import { formatEventPrice, formatEventShort, formatEventWhen } from '@/lib/format';
 import { AGENDA_HREF, eventHref, homeHref } from '@/features/site/lib/paths';
 import { getEventBySlug, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';

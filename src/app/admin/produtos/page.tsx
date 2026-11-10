@@ -15,7 +15,7 @@ import { AdminList, AdminListItem } from '@/features/admin/components/AdminList'
 import { ProductDialog } from '@/features/admin/components/ProductDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
-import { formatCurrency } from '@/features/admin/lib/format-currency';
+import { formatCurrency } from '@/lib/format';
 import type { ProductAdmin, ProductCategoryAdmin } from '@/features/admin/types/admin';
 
 /** Como o produto está pro site, em poucas palavras, na linha da lista. */

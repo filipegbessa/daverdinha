@@ -1,3 +1,4 @@
+import { formatDateTime } from '@/lib/format';
 import type { FulfillmentStatus, SiteOrderAdmin, SiteOrderStatus } from '@/features/admin/types/admin';
 
 /** Na ordem do filtro da lista; "Pagos" primeiro, que é o padrão. */
@@ -36,13 +37,5 @@ export function deliveryLabel(order: Pick<SiteOrderAdmin, 'deliveryMethod' | 'ad
 
 /** "09/11 14:32" no horário do Rio. */
 export function formatOrderDate(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-    .format(new Date(iso))
-    .replace(',', '');
+  return formatDateTime(iso, { withYear: false });
 }

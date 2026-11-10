@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { formatPrice } from '@/features/site/lib/format';
+import { formatPrice } from '@/lib/format';
 import { productHref } from '@/features/site/lib/paths';
 import { AvailabilityBadge } from '@/features/site/components/AvailabilityBadge';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
