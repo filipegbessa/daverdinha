@@ -21,11 +21,14 @@ import { PageHeader } from '@/features/admin/components/PageHeader';
 import { BusyRegion } from '@/features/admin/components/AdminList';
 import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { FulfillmentStatus, SiteOrderAdmin } from '@/features/admin/types/admin';
+import { SectionLabel } from '@/features/admin/components/SectionLabel';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-lg border border-sand-line p-4">
-      <h2 className="mb-2 text-sm font-semibold tracking-wide text-berry uppercase">{title}</h2>
+      <SectionLabel as="h2" className="mb-2">
+        {title}
+      </SectionLabel>
       {children}
     </section>
   );

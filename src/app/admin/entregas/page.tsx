@@ -7,6 +7,7 @@ import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMess
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { DeliveryAreasSection } from '@/features/admin/components/DeliveryAreasSection';
 import type { DeliveryAreaAdmin, DeliveryLocation, DeliveryZoneAreas } from '@/features/admin/types/admin';
+import { SectionLabel } from '@/features/admin/components/SectionLabel';
 
 type CoverageFilter = 'all' | 'covered' | 'not-covered';
 
@@ -165,7 +166,7 @@ export default function EntregasPage() {
                     aria-busy={zonePending}
                     className="h-4 w-4 accent-berry disabled:cursor-wait disabled:opacity-50"
                   />
-                  <h3 className="text-sm font-semibold tracking-wide text-berry uppercase">{zone}</h3>
+                  <SectionLabel>{zone}</SectionLabel>
                 </div>
                 <ul className="grid grid-cols-1 gap-x-4 p-3 sm:grid-cols-2 lg:grid-cols-3">
                   {visible.map((location) => {

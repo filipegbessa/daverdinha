@@ -8,6 +8,7 @@ import { AdminList, AdminListItem } from '@/features/admin/components/AdminList'
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { DeliveryAreaDialog } from '@/features/admin/components/DeliveryAreaDialog';
 import type { DeliveryAreaAdmin, DeliveryLocation } from '@/features/admin/types/admin';
+import { SectionLabel } from '@/features/admin/components/SectionLabel';
 
 /**
  * As áreas de entrega do site, por zona: cada área tem um valor e uma lista
@@ -58,7 +59,7 @@ export function DeliveryAreasSection({
           return (
             <div key={zone} className="rounded-lg border border-sand-line p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold tracking-wide text-berry uppercase">{zone}</h3>
+                <SectionLabel>{zone}</SectionLabel>
                 <Button
                   variant="outline"
                   disabled={busy}

@@ -23,6 +23,7 @@ import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { orderMessage } from '@/features/site/lib/whatsapp-messages';
 import { AddToCartButton } from '@/features/store/components/AddToCartButton';
 import { isStoreEnabled } from '@/features/store/lib/store-enabled';
+import { Eyebrow } from '@/features/site/components/Eyebrow';
 
 type Props = { params: Promise<{ categoria: string; produto: string }> };
 
@@ -75,12 +76,11 @@ export default async function ProductPage({ params }: Props) {
           <div className="mt-6 grid gap-10 md:grid-cols-2 md:gap-14">
             <ProductGallery images={product.images} name={product.name} />
             <div>
-              <Link
-                href={categoryHref(product.category.slug)}
-                className="text-xs font-semibold tracking-[0.2em] text-berry uppercase hover:underline"
-              >
-                {product.category.name}
-              </Link>
+              <Eyebrow>
+                <Link href={categoryHref(product.category.slug)} className="hover:underline">
+                  {product.category.name}
+                </Link>
+              </Eyebrow>
               <h1 className="mt-2 font-serif text-3xl font-semibold text-balance text-ink md:text-4xl">
                 {product.name}
               </h1>

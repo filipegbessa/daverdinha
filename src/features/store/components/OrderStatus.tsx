@@ -6,6 +6,7 @@ import { PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import type { FulfillmentStatus, PublicSiteOrder } from '@/features/store/types/store';
 import { orderStatusMessage } from '@/features/site/lib/whatsapp-messages';
+import { Eyebrow } from '@/features/site/components/Eyebrow';
 
 const FULFILLMENT: Record<FulfillmentStatus, string> = {
   awaiting: 'Pedido recebido, logo começamos a preparar.',
@@ -35,7 +36,7 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
     <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-semibold tracking-[0.2em] text-ink-soft uppercase">Pedido {order.code}</p>
+          <Eyebrow className="text-sm text-ink-soft">Pedido {order.code}</Eyebrow>
           <h1 className={`mt-2 flex items-center gap-3 font-serif text-3xl font-semibold md:text-4xl ${tone}`}>
             <Icon className="size-8 shrink-0" aria-hidden="true" />
             {title}
