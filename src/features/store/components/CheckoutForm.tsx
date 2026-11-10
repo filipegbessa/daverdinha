@@ -102,7 +102,9 @@ export function CheckoutForm() {
   }, [quote, values.deliveryMethod]);
 
   if (!ready || items.length === 0) {
-    return <p className="text-ink-soft">Carregando seu carrinho...</p>;
+    return <p role="status" className="text-ink-soft">
+        Carregando seu carrinho...
+      </p>;
   }
 
   function set<K extends keyof CheckoutFormValues>(key: K, value: CheckoutFormValues[K]) {

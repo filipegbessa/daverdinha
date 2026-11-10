@@ -82,8 +82,8 @@ export function PushNotificationBanner() {
     <div className="flex flex-none flex-wrap items-center justify-between gap-3 border-b border-moss-line bg-sand px-4 py-2 text-sm">
       <p className="text-ink-soft">Ative as notificações pra saber na hora quando chegar uma mensagem nova.</p>
       <div className="flex items-center gap-2">
-        <Button type="button" onClick={handleClick} disabled={subscribing} size="sm">
-          {subscribing ? 'Ativando...' : 'Ativar notificações'}
+        <Button type="button" onClick={handleClick} loading={subscribing} loadingText="Ativando..." size="sm">
+          Ativar notificações
         </Button>
         <button
           type="button"

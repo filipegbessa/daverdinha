@@ -522,7 +522,7 @@ describe('ConversaDetailPage', () => {
 
     const bubble = await screen.findByTestId('message-bubble');
     const quote = within(bubble).getByTestId('reply-quote');
-    expect(quote).toHaveTextContent(`${'x'.repeat(80)}…`);
+    expect(quote).toHaveTextContent(`${'x'.repeat(80)}...`);
     expect(bubble).toHaveTextContent('Sim, confirmo!');
   });
 
@@ -608,7 +608,7 @@ describe('ConversaDetailPage', () => {
     await userEvent.click(within(bubble).getByTestId('reply-to-button'));
 
     const banner = await screen.findByTestId('replying-to-banner');
-    expect(banner).toHaveTextContent(`Respondendo a: ${'x'.repeat(60)}…`);
+    expect(banner).toHaveTextContent(`Respondendo a: ${'x'.repeat(60)}...`);
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar resposta citada' }));
 

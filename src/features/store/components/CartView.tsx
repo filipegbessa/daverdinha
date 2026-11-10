@@ -62,7 +62,9 @@ export function CartView() {
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   if (!ready) {
-    return <p className="text-ink-soft">Carregando seu carrinho...</p>;
+    return <p role="status" className="text-ink-soft">
+        Carregando seu carrinho...
+      </p>;
   }
 
   if (items.length === 0) {

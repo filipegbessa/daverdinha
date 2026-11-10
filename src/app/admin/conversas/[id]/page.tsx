@@ -26,7 +26,7 @@ import type { Category, ConversationWithMessages, Paginated } from '@/features/a
 
 /** Truncates a quoted message preview to `max` characters, appending an ellipsis when it cuts. */
 function truncate(text: string, max: number): string {
-  return text.length > max ? `${text.slice(0, max)}…` : text;
+  return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
 /**

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { checkCep, maskCep, onlyDigits, type CepCheckResult } from '@/features/site/lib/cep-check';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
@@ -38,16 +37,16 @@ export function CepChecker() {
           }}
           className="min-w-0 flex-1 rounded-full border border-moss-line bg-paper px-5 py-2.5 text-ink tabular-nums placeholder:text-ink-soft/60 focus:border-moss focus:outline-none"
         />
-        <button
+        <Button
           type="submit"
-          disabled={checking || onlyDigits(cep).length !== 8}
-          className={cn(
-            buttonVariants({ variant: 'default', size: 'lg' }),
-            'cursor-pointer rounded-full bg-moss hover:bg-moss/90 disabled:cursor-not-allowed',
-          )}
+          size="lg"
+          loading={checking}
+          loadingText="Verificando..."
+          disabled={onlyDigits(cep).length !== 8}
+          className="cursor-pointer rounded-full bg-moss hover:bg-moss/90 disabled:cursor-not-allowed"
         >
-          {checking ? 'Verificando…' : 'Verificar'}
-        </button>
+          Verificar
+        </Button>
       </form>
 
       <div aria-live="polite" className="mt-3 min-h-12 text-sm">
