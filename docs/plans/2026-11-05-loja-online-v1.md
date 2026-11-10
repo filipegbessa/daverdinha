@@ -45,7 +45,7 @@
 |---|---|
 | 1 | **Pagamento por redirect (checkout hospedado do Pagar.me).** "Finalizar compra" cria o pedido na API e manda o navegador pra `paymentUrl` (`window.location.assign`). O Pagar.me devolve pra `/pedido/<token>`. Pix e cartão (à vista ou parcelado sem juros pro comprador, até o número de parcelas configurado em `/admin/loja`), sem boleto. Nada de dado de cartão passa pelo site. |
 | 2 | **Rotas novas:** `/carrinho`, `/checkout`, `/pedido/[token]`. Todas `noindex`, fora do sitemap, e `/pedido` também com `robots: nofollow` e sem cache (`dynamic = 'force-dynamic'`) — é por pedido e muda de status. |
-| 3 | **WhatsApp continua.** Página do produto ganha "Adicionar ao carrinho" como botão principal e mantém "Pedir pelo WhatsApp" como secundário. Checkout e página do pedido têm "Falar no WhatsApp" com o código do pedido na mensagem. |
+| 3 | **WhatsApp continua.** Página do produto ganha "Adicionar ao carrinho" e, com a loja ligada, perde o "Pedir pelo WhatsApp" (revisto em 2026-11-10: a compra é só pelo carrinho; o WhatsApp segue no cabeçalho e no rodapé). Checkout e página do pedido têm "Falar no WhatsApp" com o código do pedido na mensagem. |
 | 4 | **Exemplos da prévia vão pro carrinho, sem chegar à API** (revisto em 2026-11-09, pedido do usuário pra validar a loja em `/site`). Carrinho só com `sample-…` usa uma cotação montada no navegador (`preview-quote.ts`) e finalizar mostra um aviso de prévia em vez de criar pedido. Antes era botão desabilitado com "Disponível no lançamento". |
 | 5 | **Carrinho tolera mudança.** Produto que saiu do ar, esgotou ou mudou de preço aparece na cotação (`problems`/preço novo); a tela de carrinho mostra o aviso na linha, atualiza o preço salvo e bloqueia "Finalizar" até o cliente ajustar. 409 no `POST /checkout` faz o mesmo. |
 | 6 | **Entrega:** o cliente escolhe "Entregar" ou "Retirar no ateliê" no checkout. "Entregar" exige CEP; se a cotação disser que não entrega (`delivery.available === false`), a opção fica desabilitada com o motivo e o link pro WhatsApp. "Retirar" mostra endereço, horário e instruções configurados no admin e some se a cliente desligar a retirada (`pickup.available === false`). |
@@ -57,7 +57,7 @@
 
 **Pendente da conta Stone/Pagar.me da cliente** (esclarecer durante o desenvolvimento, quando ela trouxer as informações): plano, taxas e parcelamento da conta — ver plano irmão, Tarefa 6, Step 0. Até lá valem 3x sem juros e parcela mínima de R$ 30, editáveis em `/admin/loja`.
 
-**Pra confirmar com a cliente:** textos de troca/devolução e de cancelamento de ingresso, a partir das respostas do questionário `docs/questionario-politicas.md` (Tarefa 12).
+**Pra confirmar com a cliente:** textos de entrega, retirada e troca/devolução, parcelamento e nota fiscal, a partir das respostas do questionário `docs/questionario-politicas.md` (Tarefa 12). O cancelamento de ingresso fica em `docs/questionario-ingressos.md`, pra quando a Fase 3 entrar.
 
 ## Global Constraints
 
@@ -220,7 +220,7 @@ Pré-requisito: Tarefas 1–9 do plano irmão no ar (pelo menos em homologação
 - [ ] **Step 0: Testes do selo** — "Pronta entrega"; "Sob encomenda" + "Confecção em até 10 dias"; sob encomenda sem prazo → "prazo combinado no WhatsApp"; "Esgotado". Aparece mesmo com a loja desligada (é informação do catálogo).
 - [ ] **Step 1: Testes do botão** — adiciona e mostra confirmação ("Adicionado · Ver carrinho") por alguns segundos; produto `sample-…` → desabilitado "Disponível no lançamento"; `availability: 'sold_out'` → desabilitado "Esgotado"; dispara `gtag('event', 'add_to_cart', { currency: 'BRL', value, items: [...] })`.
 - [ ] **Step 2: Testes do `CartLink`** — sem número antes de `ready`; com itens mostra a contagem e `aria-label="Carrinho, 3 itens"`.
-- [ ] **Step 3: Implementar** — na página do produto, `AddToCartButton` vira o botão principal (mesmo estilo do atual) e "Pedir pelo WhatsApp" passa pra botão secundário (contorno), **só com a loja ligada**; com ela desligada a página fica idêntica à de hoje. `CartLink` no header ao lado do menu, e no `MobileNav`.
+- [ ] **Step 3: Implementar** — na página do produto, `AddToCartButton` vira o botão principal (mesmo estilo do atual) e "Pedir pelo WhatsApp" sai da página (revisto em 2026-11-10), **só com a loja ligada**; com ela desligada a página fica idêntica à de hoje. `CartLink` no header ao lado do menu, e no `MobileNav`.
 - [ ] **Step 4: Rodar e confirmar que passa; conferir em 375 px que o header não estoura.**
 - [ ] **Step 5: Commit** — `feat(store): add to cart from the product page`
 
@@ -307,9 +307,9 @@ Tela por status (`PublicSiteOrder.status`):
 ## Task 12: Páginas de política, SEO e lançamento
 
 **Files:**
-- Create: `src/app/trocas-e-devolucoes/page.tsx` — texto escrito a partir das respostas da cliente ao questionário `docs/questionario-politicas.md` (Parte 1), incluindo o caso de peça sob encomenda
-- ~~Create: `src/app/cancelamento-de-ingressos/page.tsx`~~ — fora do MVP, vem com a Fase 3 (Parte 2 do questionário)
-- Modify: `src/app/politica-de-privacidade/page.tsx` — dados coletados na compra (nome, e-mail, telefone, endereço, nomes dos participantes), pra quê e com quem são compartilhados (Pagar.me/Stone)
+- Create: `src/app/trocas-e-devolucoes/page.tsx` — texto escrito a partir das respostas da cliente ao questionário `docs/questionario-politicas.md` (Parte 3), incluindo o caso de peça sob encomenda, e com uma seção de entrega e retirada (Partes 1 e 2: prazo, dias e horários, ausência, quanto tempo o pedido fica guardado). O prazo de entrega também aparece em uma linha no checkout
+- ~~Create: `src/app/cancelamento-de-ingressos/page.tsx`~~ — fora do MVP, vem com a Fase 3 (`docs/questionario-ingressos.md`)
+- Modify: `src/app/politica-de-privacidade/page.tsx` — dados coletados na compra (nome, e-mail, telefone, endereço), pra quê e com quem são compartilhados (Pagar.me/Stone)
 - Modify: `src/features/site/components/Footer.tsx` — links das políticas
 - Modify: `src/app/sitemap.ts` (+ teste) — `/trocas-e-devolucoes` entra; `/carrinho`, `/checkout`, `/pedido` nunca
 - Modify: `src/features/site/lib/structured-data.ts` (+ teste) — `offers.availability` conforme `availability`: `InStock`, `MadeToOrder` ou `OutOfStock` (todos valores de `schema.org/ItemAvailability`)
