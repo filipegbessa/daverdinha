@@ -238,7 +238,13 @@ function IndeterminateCheckbox({
 }
 
 function withoutKeys<T extends Set<string> | Map<string, boolean>>(source: T, keys: Iterable<string>): T {
-  const next = (source instanceof Map ? new Map(source) : new Set(source)) as T;
+  // Tipos explícitos nas cópias: dependendo da ordem em que o TypeScript
+  // resolve os overloads, `new Set(source)` sem tipo quebrava o build na Vercel.
+  const next = (
+    source instanceof Map
+      ? new Map<string, boolean>(source as Map<string, boolean>)
+      : new Set<string>(source as Set<string>)
+  ) as T;
   for (const key of keys) next.delete(key);
   return next;
 }
