@@ -18,17 +18,33 @@ export interface DataTableProps<T> {
   rowKey: (row: T) => string;
   /** Overrides the mobile card for a row; defaults to stacking every column's label and cell. */
   renderMobileCard?: (row: T) => React.ReactNode;
+  /**
+   * Controlled sort, for when something outside the table also sorts (the
+   * "Ordenar por" in the mobile filters). Without it the table keeps its own.
+   * `null` is the order the rows came in.
+   */
+  sort?: DataTableSort;
+  onSortChange?: (sort: DataTableSort) => void;
 }
 
-type SortState = { key: string; direction: 'asc' | 'desc' } | null;
+export type DataTableSort = { key: string; direction: 'asc' | 'desc' } | null;
 
 function compareValues(a: string | number | null | undefined, b: string | number | null | undefined): number {
   if (typeof a === 'number' && typeof b === 'number') return a - b;
   return String(a).localeCompare(String(b), 'pt-BR');
 }
 
-export function DataTable<T>({ columns, rows, rowKey, renderMobileCard }: DataTableProps<T>) {
-  const [sort, setSort] = useState<SortState>(null);
+export function DataTable<T>({
+  columns,
+  rows,
+  rowKey,
+  renderMobileCard,
+  sort: controlledSort,
+  onSortChange,
+}: DataTableProps<T>) {
+  const [internalSort, setInternalSort] = useState<DataTableSort>(null);
+  const isControlled = controlledSort !== undefined;
+  const sort = isControlled ? controlledSort : internalSort;
 
   const sortedRows = useMemo(() => {
     if (!sort) return rows;
@@ -49,12 +65,12 @@ export function DataTable<T>({ columns, rows, rowKey, renderMobileCard }: DataTa
   }, [rows, sort, columns]);
 
   function handleSortClick(column: DataTableColumn<T>) {
-    setSort((current) => {
-      if (current?.key === column.key) {
-        return { key: column.key, direction: current.direction === 'asc' ? 'desc' : 'asc' };
-      }
-      return { key: column.key, direction: column.defaultSortDirection ?? 'asc' };
-    });
+    const next: DataTableSort =
+      sort?.key === column.key
+        ? { key: column.key, direction: sort.direction === 'asc' ? 'desc' : 'asc' }
+        : { key: column.key, direction: column.defaultSortDirection ?? 'asc' };
+    if (!isControlled) setInternalSort(next);
+    onSortChange?.(next);
   }
 
   return (

@@ -44,7 +44,10 @@ describe('DataTable', () => {
   });
 
   function rowOrder() {
-    return screen.getAllByRole('row').slice(1).map((row) => within(row).getAllByRole('cell')[0].textContent);
+    return screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => within(row).getAllByRole('cell')[0].textContent);
   }
 
   it('sorts ascending on the first click, and flips to descending on a second click of the same header', async () => {
@@ -113,7 +116,14 @@ describe('DataTable', () => {
   it('starts a column at its configured defaultSortDirection on first click, instead of always ascending', async () => {
     const user = userEvent.setup();
     const columnsWithDefault: DataTableColumn<Row>[] = [
-      { key: 'name', header: 'Nome', cell: (row) => row.name, sortable: true, sortValue: (row) => row.name, defaultSortDirection: 'desc' },
+      {
+        key: 'name',
+        header: 'Nome',
+        cell: (row) => row.name,
+        sortable: true,
+        sortValue: (row) => row.name,
+        defaultSortDirection: 'desc',
+      },
     ];
     render(<DataTable columns={columnsWithDefault} rows={rows} rowKey={(row) => row.id} />);
 
@@ -121,6 +131,35 @@ describe('DataTable', () => {
 
     expect(screen.getByRole('columnheader', { name: 'Nome' })).toHaveAttribute('aria-sort', 'descending');
     expect(rowOrder()).toEqual(['Carla', 'Bruno', 'Ana']);
+  });
+
+  describe('controlled sort', () => {
+    it('sorts by the sort prop and reports header clicks through onSortChange instead of sorting on its own', async () => {
+      const user = userEvent.setup();
+      const onSortChange = jest.fn();
+      const { rerender } = render(
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          sort={{ key: 'age', direction: 'desc' }}
+          onSortChange={onSortChange}
+        />,
+      );
+
+      expect(rowOrder()).toEqual(['Bruno', 'Carla', 'Ana']);
+      expect(screen.getByRole('columnheader', { name: 'Idade' })).toHaveAttribute('aria-sort', 'descending');
+
+      await user.click(screen.getByRole('button', { name: 'Idade' }));
+      expect(onSortChange).toHaveBeenCalledWith({ key: 'age', direction: 'asc' });
+      // Still the parent's order until it passes the new sort down.
+      expect(rowOrder()).toEqual(['Bruno', 'Carla', 'Ana']);
+
+      rerender(
+        <DataTable columns={columns} rows={rows} rowKey={(row) => row.id} sort={null} onSortChange={onSortChange} />,
+      );
+      expect(rowOrder()).toEqual(['Bruno', 'Ana', 'Carla']);
+    });
   });
 
   describe('mobile card layout', () => {
@@ -145,7 +184,11 @@ describe('DataTable', () => {
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
-          renderMobileCard={(row) => <p data-testid="custom-card">{row.name} ({row.age})</p>}
+          renderMobileCard={(row) => (
+            <p data-testid="custom-card">
+              {row.name} ({row.age})
+            </p>
+          )}
         />,
       );
 
