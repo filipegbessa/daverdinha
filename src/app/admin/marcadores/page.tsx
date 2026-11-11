@@ -9,17 +9,20 @@ import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resourc
 import { TablePagination } from '@/features/admin/components/TablePagination';
 import { CategoryDialog } from '@/features/admin/components/CategoryDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
-import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
+import { PageHeader } from '@/features/admin/components/PageHeader';
+import { FilterBar } from '@/features/admin/components/FilterBar';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { Badge } from '@/features/admin/components/Badge';
 import type { Category } from '@/features/admin/types/admin';
 
+const DEFAULT_FILTERS = { q: '' };
+
 export default function MarcadoresPage() {
   const { apiFetch } = useApiClient();
-  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
   // A busca roda no banco (`?q=`), então espera uma pausa na digitação.
-  const debouncedSearch = useDebouncedValue(search.trim());
+  const debouncedSearch = useDebouncedValue(filters.q.trim());
   const {
     data,
     items: categories,
@@ -50,14 +53,16 @@ export default function MarcadoresPage() {
           Novo marcador
         </Button>
       </PageHeader>
-      <FilterBar>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nome"
-          aria-label="Buscar marcadores"
-          className="w-56"
-        />
+      <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
+        {(values, set) => (
+          <Input
+            value={values.q}
+            onChange={(e) => set({ q: e.target.value })}
+            placeholder="Buscar por nome"
+            aria-label="Buscar marcadores"
+            className="w-56"
+          />
+        )}
       </FilterBar>
       {error && <ErrorAlert>{error}</ErrorAlert>}
       {isLoading && <LoadingState />}

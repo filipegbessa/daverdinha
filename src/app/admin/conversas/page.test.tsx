@@ -288,6 +288,26 @@ describe('ConversasPage', () => {
       expect(nameOrder()[0]).toContain('Maria');
     });
 
+    it('shares the sort between the table headers and "Ordenar por" in the mobile filters', async () => {
+      mockApi();
+      render(<ConversasPage />);
+      await screen.findAllByText('Maria');
+
+      // Only the drawer has "Ordenar por"; the desktop row sorts from the headers.
+      expect(screen.queryByLabelText('Ordenar por')).not.toBeInTheDocument();
+
+      await userEvent.click(within(table()).getByRole('button', { name: 'Nome' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Filtros (1 ativo)' }));
+      const sheet = screen.getByRole('dialog', { name: 'Filtros' });
+      expect(within(sheet).getByLabelText('Ordenar por')).toHaveValue('name:asc');
+
+      await userEvent.selectOptions(within(sheet).getByLabelText('Ordenar por'), 'status:desc');
+      await userEvent.click(within(sheet).getByRole('button', { name: 'Aplicar' }));
+
+      expect(within(table()).getByRole('columnheader', { name: 'Status' })).toHaveAttribute('aria-sort', 'descending');
+      expect(within(table()).getByRole('columnheader', { name: 'Nome' })).toHaveAttribute('aria-sort', 'none');
+    });
+
     it('defaults "Atualizado em" to descending (most recent first) on first click', async () => {
       mockApi();
       render(<ConversasPage />);

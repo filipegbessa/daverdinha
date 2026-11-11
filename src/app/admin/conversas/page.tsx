@@ -7,11 +7,12 @@ import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { TablePagination } from '@/features/admin/components/TablePagination';
-import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
+import { PageHeader } from '@/features/admin/components/PageHeader';
+import { FilterBar } from '@/features/admin/components/FilterBar';
 import { EmptyState } from '@/features/admin/components/AdminList';
 import { ColorDot } from '@/features/admin/components/Badge';
 import { ToggleButton } from '@/features/admin/components/ToggleButton';
-import { DataTable, type DataTableColumn } from '@/features/admin/components/DataTable';
+import { DataTable, type DataTableColumn, type DataTableSort } from '@/features/admin/components/DataTable';
 import { BusyRegion, ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { formatPhone } from '@/features/admin/lib/format-phone';
 import type { Category, Conversation, ConversationList, Paginated } from '@/features/admin/types/admin';
@@ -32,14 +33,40 @@ const ENTRY_POINT_LABEL: Record<string, string> = {
   catalog: 'Catálogo',
 };
 
+/**
+ * A ordenação da tabela, como texto (`coluna:direção`) pra caber no select
+ * "Ordenar por" da gaveta de filtros. Vazio é a ordem da API (atualizadas
+ * mais recentemente primeiro), igual à tabela sem nenhum cabeçalho clicado.
+ */
+const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'Padrão (mais recentes primeiro)' },
+  { value: 'updatedAt:desc', label: 'Atualizado em (mais recentes)' },
+  { value: 'updatedAt:asc', label: 'Atualizado em (mais antigas)' },
+  { value: 'name:asc', label: 'Nome (A–Z)' },
+  { value: 'name:desc', label: 'Nome (Z–A)' },
+  { value: 'status:asc', label: 'Status (A–Z)' },
+  { value: 'status:desc', label: 'Status (Z–A)' },
+  { value: 'entryPoint:asc', label: 'Origem (A–Z)' },
+  { value: 'entryPoint:desc', label: 'Origem (Z–A)' },
+];
+
+function parseSort(value: string): DataTableSort {
+  const [key, direction] = value.split(':');
+  return key && (direction === 'asc' || direction === 'desc') ? { key, direction } : null;
+}
+
+const serializeSort = (sort: DataTableSort) => (sort ? `${sort.key}:${sort.direction}` : '');
+
+const DEFAULT_FILTERS = { q: '', unread: false, categoryId: 'all', sort: '' };
+
 export default function ConversasPage() {
-  const [search, setSearch] = useState('');
-  const [onlyUnread, setOnlyUnread] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
   // The search now runs against the database, so it waits for a pause in
   // typing rather than firing a query per character.
-  const debouncedSearch = useDebouncedValue(search.trim());
+  const debouncedSearch = useDebouncedValue(filters.q.trim());
+  const onlyUnread = filters.unread;
+  const categoryFilter = filters.categoryId;
   const hasFilters = Boolean(debouncedSearch || onlyUnread || categoryFilter !== 'all');
 
   // Filtering moved to the server: applying it in the browser would only ever
@@ -121,30 +148,48 @@ export default function ConversasPage() {
   return (
     <div>
       <PageHeader title="Conversas" />
-      <FilterBar>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nome ou telefone"
-          aria-label="Buscar conversas"
-          className="w-64"
-        />
-        <ToggleButton pressed={onlyUnread} onPressedChange={setOnlyUnread}>
-          Não lidas
-        </ToggleButton>
-        <NativeSelect
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          aria-label="Filtrar por marcador"
-          className="w-auto"
-        >
-          <option value="all">Todos os marcadores</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </NativeSelect>
+      <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
+        {(values, set, layout) => (
+          <>
+            <Input
+              value={values.q}
+              onChange={(e) => set({ q: e.target.value })}
+              placeholder="Buscar por nome ou telefone"
+              aria-label="Buscar conversas"
+              className="w-64"
+            />
+            <ToggleButton pressed={values.unread} onPressedChange={(unread) => set({ unread })}>
+              Não lidas
+            </ToggleButton>
+            <NativeSelect
+              value={values.categoryId}
+              onChange={(e) => set({ categoryId: e.target.value })}
+              aria-label="Filtrar por marcador"
+              className="w-auto"
+            >
+              <option value="all">Todos os marcadores</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </NativeSelect>
+            {/* No desktop a ordem sai dos cabeçalhos da tabela; o celular, que só tem cards, ordena por aqui. */}
+            {layout === 'sheet' && (
+              <NativeSelect
+                value={values.sort}
+                onChange={(e) => set({ sort: e.target.value })}
+                aria-label="Ordenar por"
+              >
+                {SORT_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </NativeSelect>
+            )}
+          </>
+        )}
       </FilterBar>
       {isLoading && <LoadingState />}
       {!isLoading && error && <ErrorAlert>{error}</ErrorAlert>}
@@ -159,6 +204,8 @@ export default function ConversasPage() {
               <DataTable
                 columns={columns}
                 rows={conversations}
+                sort={parseSort(filters.sort)}
+                onSortChange={(sort) => setFilters((current) => ({ ...current, sort: serializeSort(sort) }))}
                 rowKey={(conversation) => conversation.id}
                 renderMobileCard={(conversation) => (
                   <div className="rounded-md border border-border p-3">

@@ -8,13 +8,16 @@ import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { ProductCategoryDialog } from '@/features/admin/components/ProductCategoryDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
-import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
+import { PageHeader } from '@/features/admin/components/PageHeader';
+import { FilterBar } from '@/features/admin/components/FilterBar';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { normalizeSearch } from '@/features/admin/lib/normalize-search';
 import type { ProductCategoryAdmin } from '@/features/admin/types/admin';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
+
+const DEFAULT_FILTERS: { q: string; status: StatusFilter } = { q: '', status: 'all' };
 
 export default function CategoriasPage() {
   const { apiFetch } = useApiClient();
@@ -29,11 +32,11 @@ export default function CategoriasPage() {
   const busy = remove.isPending || isRefreshing;
   const [editing, setEditing] = useState<ProductCategoryAdmin | 'new' | null>(null);
   const [deleting, setDeleting] = useState<ProductCategoryAdmin | null>(null);
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<StatusFilter>('all');
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const { status } = filters;
 
   // São poucas e a API devolve todas de uma vez, então o filtro é aqui mesmo.
-  const query = normalizeSearch(search);
+  const query = normalizeSearch(filters.q);
   const visible = (categories ?? []).filter(
     (category) =>
       normalizeSearch(category.name).includes(query) && (status === 'all' || category.active === (status === 'active')),
@@ -55,24 +58,28 @@ export default function CategoriasPage() {
           Nova categoria
         </Button>
       </PageHeader>
-      <FilterBar>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nome"
-          aria-label="Buscar categorias"
-          className="w-56"
-        />
-        <NativeSelect
-          value={status}
-          onChange={(e) => setStatus(e.target.value as StatusFilter)}
-          aria-label="Filtrar por situação"
-          className="w-auto"
-        >
-          <option value="all">No site e ocultas</option>
-          <option value="active">Aparecem no site</option>
-          <option value="inactive">Ocultas</option>
-        </NativeSelect>
+      <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
+        {(values, set) => (
+          <>
+            <Input
+              value={values.q}
+              onChange={(e) => set({ q: e.target.value })}
+              placeholder="Buscar por nome"
+              aria-label="Buscar categorias"
+              className="w-56"
+            />
+            <NativeSelect
+              value={values.status}
+              onChange={(e) => set({ status: e.target.value as StatusFilter })}
+              aria-label="Filtrar por situação"
+              className="w-auto"
+            >
+              <option value="all">No site e ocultas</option>
+              <option value="active">Aparecem no site</option>
+              <option value="inactive">Ocultas</option>
+            </NativeSelect>
+          </>
+        )}
       </FilterBar>
       {error && <ErrorAlert>{error}</ErrorAlert>}
       {isLoading && <LoadingState />}

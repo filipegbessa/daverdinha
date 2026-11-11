@@ -23,15 +23,3 @@ export function PageHeader({
     </div>
   );
 }
-
-/**
- * A linha de busca e filtros embaixo do cabeçalho. Toda lista do admin põe a
- * busca e os filtros aqui, nunca dentro do `PageHeader`.
- */
-export function FilterBar({ children }: { children: React.ReactNode }) {
-  return (
-    <div role="search" className="mt-4 flex flex-wrap items-center gap-2">
-      {children}
-    </div>
-  );
-}

@@ -10,7 +10,8 @@ import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { TablePagination } from '@/features/admin/components/TablePagination';
-import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
+import { PageHeader } from '@/features/admin/components/PageHeader';
+import { FilterBar } from '@/features/admin/components/FilterBar';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { Badge } from '@/features/admin/components/Badge';
 import { ProductDialog } from '@/features/admin/components/ProductDialog';
@@ -27,13 +28,13 @@ function stockLabel(product: ProductAdmin): string {
   return product.stock === 0 ? 'Esgotado' : `Estoque: ${product.stock}`;
 }
 
+const DEFAULT_FILTERS = { q: '', categoryId: '', active: '', featured: '' };
+
 export default function ProdutosPage() {
   const { apiFetch } = useApiClient();
-  const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [active, setActive] = useState('');
-  const [featured, setFeatured] = useState('');
-  const debouncedSearch = useDebouncedValue(search.trim());
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const { categoryId, active, featured } = filters;
+  const debouncedSearch = useDebouncedValue(filters.q.trim());
   const hasFilters = Boolean(debouncedSearch || categoryId || active || featured);
   const {
     data,
@@ -81,47 +82,51 @@ export default function ProdutosPage() {
           Novo produto
         </Button>
       </PageHeader>
-      <FilterBar>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nome"
-          aria-label="Buscar produtos"
-          className="w-56"
-        />
-        <NativeSelect
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          aria-label="Filtrar por categoria"
-          className="w-auto"
-        >
-          <option value="">Todas as categorias</option>
-          {(categories ?? []).map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect
-          value={active}
-          onChange={(e) => setActive(e.target.value)}
-          aria-label="Filtrar por situação"
-          className="w-auto"
-        >
-          <option value="">No site e ocultos</option>
-          <option value="true">Aparecem no site</option>
-          <option value="false">Ocultos</option>
-        </NativeSelect>
-        <NativeSelect
-          value={featured}
-          onChange={(e) => setFeatured(e.target.value)}
-          aria-label="Filtrar por destaque"
-          className="w-auto"
-        >
-          <option value="">Com e sem destaque</option>
-          <option value="true">Em destaque</option>
-          <option value="false">Sem destaque</option>
-        </NativeSelect>
+      <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
+        {(values, set) => (
+          <>
+            <Input
+              value={values.q}
+              onChange={(e) => set({ q: e.target.value })}
+              placeholder="Buscar por nome"
+              aria-label="Buscar produtos"
+              className="w-56"
+            />
+            <NativeSelect
+              value={values.categoryId}
+              onChange={(e) => set({ categoryId: e.target.value })}
+              aria-label="Filtrar por categoria"
+              className="w-auto"
+            >
+              <option value="">Todas as categorias</option>
+              {(categories ?? []).map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </NativeSelect>
+            <NativeSelect
+              value={values.active}
+              onChange={(e) => set({ active: e.target.value })}
+              aria-label="Filtrar por situação"
+              className="w-auto"
+            >
+              <option value="">No site e ocultos</option>
+              <option value="true">Aparecem no site</option>
+              <option value="false">Ocultos</option>
+            </NativeSelect>
+            <NativeSelect
+              value={values.featured}
+              onChange={(e) => set({ featured: e.target.value })}
+              aria-label="Filtrar por destaque"
+              className="w-auto"
+            >
+              <option value="">Com e sem destaque</option>
+              <option value="true">Em destaque</option>
+              <option value="false">Sem destaque</option>
+            </NativeSelect>
+          </>
+        )}
       </FilterBar>
       {error && <ErrorAlert>{error}</ErrorAlert>}
       {mutation.error && !deleting && <ErrorAlert>{mutation.error}</ErrorAlert>}

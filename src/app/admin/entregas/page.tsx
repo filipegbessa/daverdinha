@@ -5,7 +5,8 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { errorMessage } from '@/features/admin/lib/error-message';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
-import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
+import { PageHeader } from '@/features/admin/components/PageHeader';
+import { FilterBar } from '@/features/admin/components/FilterBar';
 import { EmptyState } from '@/features/admin/components/AdminList';
 import { DeliveryAreasSection } from '@/features/admin/components/DeliveryAreasSection';
 import type { DeliveryAreaAdmin, DeliveryLocation, DeliveryZoneAreas } from '@/features/admin/types/admin';
@@ -19,6 +20,8 @@ const FILTERS: { value: CoverageFilter; label: string }[] = [
   { value: 'covered', label: 'Atende' },
   { value: 'not-covered', label: 'Não atende' },
 ];
+
+const DEFAULT_FILTERS: { filter: CoverageFilter } = { filter: 'all' };
 
 export default function EntregasPage() {
   const { apiFetch } = useApiClient();
@@ -41,7 +44,8 @@ export default function EntregasPage() {
   // the resource hook. They're kept apart so a failed toggle doesn't read
   // like the whole page failed to load.
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<CoverageFilter>('all');
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const { filter } = filters;
   // Bairro → valor marcado, enquanto o PATCH corre e até o recarregamento
   // trazer a lista nova. Sem isso o checkbox voltava ao valor antigo entre a
   // resposta do PATCH e a chegada do refetch.
@@ -135,14 +139,20 @@ export default function EntregasPage() {
             Bairros atendidos
           </SectionLabel>
           {/* O filtro é só desta lista, então fica junto dela, não no topo da página. */}
-          <FilterBar>
-            <div className="flex gap-2" role="group" aria-label="Filtrar por status">
-              {FILTERS.map(({ value, label }) => (
-                <ToggleButton key={value} pressed={filter === value} onPressedChange={() => setFilter(value)}>
-                  {label}
-                </ToggleButton>
-              ))}
-            </div>
+          <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
+            {(values, set) => (
+              <div className="flex gap-2" role="group" aria-label="Filtrar por status">
+                {FILTERS.map(({ value, label }) => (
+                  <ToggleButton
+                    key={value}
+                    pressed={values.filter === value}
+                    onPressedChange={() => set({ filter: value })}
+                  >
+                    {label}
+                  </ToggleButton>
+                ))}
+              </div>
+            )}
           </FilterBar>
           {locations.length > 0 && !locations.some(matchesFilter) && (
             <div className="mt-3">

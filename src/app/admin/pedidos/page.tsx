@@ -13,19 +13,22 @@ import {
   ORDER_STATUS_LABELS,
 } from '@/features/admin/lib/site-order-labels';
 import { TablePagination } from '@/features/admin/components/TablePagination';
-import { FilterBar, PageHeader } from '@/features/admin/components/PageHeader';
+import { PageHeader } from '@/features/admin/components/PageHeader';
+import { FilterBar } from '@/features/admin/components/FilterBar';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { SiteOrderAdmin, SiteOrderStatus } from '@/features/admin/types/admin';
+
+const DEFAULT_FILTERS: { q: string; status: SiteOrderStatus } = { q: '', status: 'paid' };
 
 /**
  * Pedidos feitos no site. Abre nos pagos, que é o que a cliente acompanha;
  * pendentes, vencidos e cancelados ficam no filtro.
  */
 export default function PedidosPage() {
-  const [status, setStatus] = useState<SiteOrderStatus>('paid');
-  const [search, setSearch] = useState('');
-  const q = useDebouncedValue(search.trim());
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const { status } = filters;
+  const q = useDebouncedValue(filters.q.trim());
   const {
     data,
     items: orders,
@@ -38,26 +41,30 @@ export default function PedidosPage() {
   return (
     <div>
       <PageHeader title="Pedidos" />
-      <FilterBar>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Código ou nome"
-          aria-label="Buscar pedidos"
-          className="w-56"
-        />
-        <NativeSelect
-          value={status}
-          onChange={(e) => setStatus(e.target.value as SiteOrderStatus)}
-          aria-label="Filtrar por status"
-          className="w-auto"
-        >
-          {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </NativeSelect>
+      <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
+        {(values, set) => (
+          <>
+            <Input
+              value={values.q}
+              onChange={(e) => set({ q: e.target.value })}
+              placeholder="Código ou nome"
+              aria-label="Buscar pedidos"
+              className="w-56"
+            />
+            <NativeSelect
+              value={values.status}
+              onChange={(e) => set({ status: e.target.value as SiteOrderStatus })}
+              aria-label="Filtrar por status"
+              className="w-auto"
+            >
+              {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </NativeSelect>
+          </>
+        )}
       </FilterBar>
       {error && <ErrorAlert>{error}</ErrorAlert>}
       {isLoading && <LoadingState />}
