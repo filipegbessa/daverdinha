@@ -22,7 +22,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22, igual ao ambiente local: o Node 20 não lê o `jest.config.ts`
+          # sem o ts-node, e os testes nem começavam.
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm test
@@ -35,7 +37,7 @@ jobs:
           # elas; em produção quem manda são as variáveis do painel da Vercel.
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
           CLERK_SECRET_KEY: sk_test_ci-build-only
-          # Sem SITE_MODE a home renderiza a landing "em breve", que é o
-          # caminho que está no ar hoje. Trocar pra 'full' faria o build tentar
-          # falar com a API.
+          # Sem NEXT_PUBLIC_API_URL o build não fala com a API: os
+          # interruptores do Dashboard leem como desligados e a home renderiza
+          # a página "em breve" (`src/lib/site-settings.ts`).
           SITE_URL: https://example.com
