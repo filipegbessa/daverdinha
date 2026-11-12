@@ -1,3 +1,4 @@
+import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import { render, screen } from '@testing-library/react';
 import CheckoutPage, { metadata } from './page';
 
@@ -9,21 +10,16 @@ jest.mock('next/navigation', () => ({
 }));
 
 describe('/checkout', () => {
-  const original = process.env.NEXT_PUBLIC_STORE_ENABLED;
-  afterEach(() => {
-    process.env.NEXT_PUBLIC_STORE_ENABLED = original;
+  it('is a 404 while the store is off', async () => {
+    mockSiteSettings({ storeEnabled: false });
+
+    await expect(CheckoutPage()).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
-  it('is a 404 while the store is off', () => {
-    delete process.env.NEXT_PUBLIC_STORE_ENABLED;
+  it('shows the checkout with the store on, and is never indexed', async () => {
+    mockSiteSettings({ storeEnabled: true });
 
-    expect(() => CheckoutPage()).toThrow('NEXT_NOT_FOUND');
-  });
-
-  it('shows the checkout with the store on, and is never indexed', () => {
-    process.env.NEXT_PUBLIC_STORE_ENABLED = 'true';
-
-    render(CheckoutPage());
+    render(await CheckoutPage());
 
     expect(screen.getByRole('heading', { level: 1, name: 'Finalizar compra' })).toBeInTheDocument();
     expect(metadata.robots).toEqual({ index: false, follow: false });

@@ -6,7 +6,7 @@ import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { StorageUsageNotice } from '@/features/admin/components/StorageUsageNotice';
-import type { BotSettings, MenuItem } from '@/features/admin/types/admin';
+import type { BotSettings, MenuItem, StoreSettings } from '@/features/admin/types/admin';
 
 export default function DashboardPage() {
   const { apiFetch } = useApiClient();
@@ -17,6 +17,22 @@ export default function DashboardPage() {
     error: menuItemsError,
   } = useApiResource<MenuItem[]>('/menu-items');
   const toggle = useApiMutation('Erro ao atualizar o bot.');
+  // Site e loja vêm de outra rota: se ela falhar, o interruptor do bot continua
+  // funcionando (desligar o bot numa emergência não pode depender dela).
+  const {
+    data: storeSettings,
+    error: storeSettingsError,
+    refetch: refetchStoreSettings,
+  } = useApiResource<StoreSettings>('/store-settings');
+  const storeToggle = useApiMutation('Erro ao atualizar o site.');
+
+  function patchStoreSettings(changes: Partial<Pick<StoreSettings, 'siteEnabled' | 'storeEnabled'>>) {
+    storeToggle
+      .run(() => apiFetch('/store-settings', { method: 'PATCH', body: JSON.stringify(changes) }))
+      .then((ok) => {
+        if (ok) refetchStoreSettings();
+      });
+  }
 
   // `null` é "ainda não sei", que não é a mesma coisa que "nenhum ativo".
   // Colapsar os dois em `?? 0` era o que fazia o painel acusar a loja de não
@@ -75,6 +91,74 @@ export default function DashboardPage() {
         <span aria-hidden="true">{settings.botEnabled ? 'Bot ativo' : 'Bot desativado'}</span>
       </div>
       {toggle.error && <ErrorText>{toggle.error}</ErrorText>}
+
+      <section aria-labelledby="site-switches-title" className="mt-8 space-y-4">
+        <h2 id="site-switches-title" className="text-sm font-semibold">
+          Site e loja
+        </h2>
+        {storeSettings ? (
+          <>
+            <SwitchRow
+              label="Site completo"
+              checked={storeSettings.siteEnabled}
+              disabled={storeToggle.isPending}
+              onCheckedChange={(checked) => patchStoreSettings({ siteEnabled: checked })}
+              state={storeSettings.siteEnabled ? 'Site ativo' : 'Site desativado'}
+              hint={
+                storeSettings.siteEnabled
+                  ? 'O endereço principal mostra o site completo.'
+                  : 'O endereço principal mostra a página "em breve". O site completo fica só na prévia (/site).'
+              }
+            />
+            <SwitchRow
+              label="Loja do site"
+              checked={storeSettings.storeEnabled}
+              disabled={storeToggle.isPending}
+              onCheckedChange={(checked) => patchStoreSettings({ storeEnabled: checked })}
+              state={storeSettings.storeEnabled ? 'Loja ativa' : 'Loja desativada'}
+              hint={
+                storeSettings.storeEnabled
+                  ? 'Venda pelo site, com carrinho e pagamento pelo Pagar.me.'
+                  : 'Sem carrinho: os produtos levam pra comprar pelo WhatsApp.'
+              }
+            />
+            <p className="text-xs text-muted-foreground">A mudança aparece no site em até 1 minuto.</p>
+            {storeToggle.error && <ErrorText>{storeToggle.error}</ErrorText>}
+          </>
+        ) : storeSettingsError ? (
+          <ErrorText>{storeSettingsError}</ErrorText>
+        ) : (
+          <LoadingState />
+        )}
+      </section>
+    </div>
+  );
+}
+
+/** Um interruptor com o estado ao lado e uma linha explicando o efeito. */
+function SwitchRow({
+  label,
+  state,
+  hint,
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  label: string;
+  state: string;
+  hint: string;
+  checked: boolean;
+  disabled: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-3">
+        {/* Nome fixo no controle; o estado muda só no texto ao lado. */}
+        <Switch aria-label={label} checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} />
+        <span aria-hidden="true">{state}</span>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
     </div>
   );
 }

@@ -13,8 +13,8 @@ const OG_IMAGE = {
   alt: 'Daverdinha — Ateliê de Plantas',
 };
 
-export function generateMetadata(): Metadata {
-  const soon = getSiteMode() === 'soon';
+export async function generateMetadata(): Promise<Metadata> {
+  const soon = (await getSiteMode()) === 'soon';
 
   const title = soon ? 'Daverdinha · Em breve' : 'Daverdinha · Ateliê de plantas no Rio de Janeiro';
   const description = soon
@@ -38,7 +38,7 @@ export function generateMetadata(): Metadata {
 }
 
 export default async function Page() {
-  const mode = getSiteMode();
+  const mode = await getSiteMode();
 
   // A API só é consultada no modo 'full'. Uma página que só diz "em breve" não
   // tem por que cair junto com o backend do bot.

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SiteShell } from '@/features/site/components/SiteShell';
+import { SiteShell, shellProps } from '@/features/site/components/SiteShell';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { CategoryChips } from '@/features/site/components/CategoryChips';
 import { EventsSection } from '@/features/site/components/EventsSection';
@@ -8,15 +8,16 @@ import { Location } from '@/features/site/components/Location';
 import { Pagination } from '@/features/site/components/Pagination';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { isSample } from '@/features/site/data/samples';
-import { homeHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
+import { PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { paginate } from '@/features/site/lib/pagination';
 import { pageMetadata } from '@/features/site/lib/seo';
 
-export function generateMetadata(): Metadata {
+export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
     title: 'Produtos · Daverdinha, ateliê de plantas no Rio de Janeiro',
-    description: 'Vasos, mudas, arranjos e kits do ateliê da Daverdinha no Santo Cristo, com entrega em bairros do Rio.',
+    description:
+      'Vasos, mudas, arranjos e kits do ateliê da Daverdinha no Santo Cristo, com entrega em bairros do Rio.',
     path: PRODUCTS_HREF,
   });
 }
@@ -31,10 +32,10 @@ export default async function ProductsPage({ searchParams }: Props) {
     getUpcomingEvents(),
   ]);
   const { items: products, page, totalPages } = paginate(allProducts, pageParam);
-  const home = homeHref();
+  const { home, storeEnabled } = await shellProps();
 
   return (
-    <SiteShell home={home} preview={allProducts.some(isSample) || events.some(isSample)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} preview={allProducts.some(isSample) || events.some(isSample)}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

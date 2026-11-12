@@ -1,3 +1,4 @@
+import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import { render, screen } from '@testing-library/react';
 import { notFound, permanentRedirect } from 'next/navigation';
 import Page from './page';
@@ -18,10 +19,10 @@ jest.mock('@/features/site/lib/delivery-zones', () => ({
 const renderPage = async (categoria: string, produto: string) =>
   render(await Page({ params: Promise.resolve({ categoria, produto }) }));
 
-// Sem NEXT_PUBLIC_API_URL e sem SITE_MODE, a página usa os produtos de exemplo.
+// Sem NEXT_PUBLIC_API_URL e com o site desligado, a página usa os produtos de exemplo.
 describe('/produtos/[categoria]/[produto]', () => {
   beforeEach(() => {
-    delete process.env.SITE_MODE;
+    mockSiteSettings({ siteEnabled: false });
     delete process.env.NEXT_PUBLIC_API_URL;
   });
 
@@ -78,10 +79,10 @@ describe('/produtos/[categoria]/[produto]', () => {
 
   describe('with the store on', () => {
     beforeEach(() => {
-      process.env.NEXT_PUBLIC_STORE_ENABLED = 'true';
+      mockSiteSettings({ storeEnabled: true });
     });
     afterEach(() => {
-      delete process.env.NEXT_PUBLIC_STORE_ENABLED;
+      mockSiteSettings({ storeEnabled: false });
     });
 
     it('sells through the cart only, without the WhatsApp order button', async () => {

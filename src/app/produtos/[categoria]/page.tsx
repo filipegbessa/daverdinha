@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { SiteShell } from '@/features/site/components/SiteShell';
+import { SiteShell, shellProps } from '@/features/site/components/SiteShell';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { CategoryChips } from '@/features/site/components/CategoryChips';
 import { EventsSection } from '@/features/site/components/EventsSection';
@@ -8,7 +8,7 @@ import { Location } from '@/features/site/components/Location';
 import { Pagination } from '@/features/site/components/Pagination';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { isSample } from '@/features/site/data/samples';
-import { categoryHref, homeHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
+import { categoryHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { paginate } from '@/features/site/lib/pagination';
 import { pageMetadata } from '@/features/site/lib/seo';
@@ -49,10 +49,10 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   if (!category || allProducts.length === 0) notFound();
 
   const { items: products, page, totalPages } = paginate(allProducts, pageParam);
-  const home = homeHref();
+  const { home, storeEnabled } = await shellProps();
 
   return (
-    <SiteShell home={home} preview={allProducts.some(isSample) || events.some(isSample)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} preview={allProducts.some(isSample) || events.some(isSample)}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

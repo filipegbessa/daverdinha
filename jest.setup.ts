@@ -1,4 +1,11 @@
 import '@testing-library/jest-dom';
+import { resetSiteSettings } from '@/lib/__mocks__/site-settings';
+
+// Os interruptores do site e da loja vêm da API (Dashboard). Nos testes, o
+// mock de `lib/__mocks__/site-settings.ts`: os dois desligados, e cada teste
+// liga o que precisa com `mockSiteSettings`.
+jest.mock('@/lib/site-settings');
+afterEach(() => resetSiteSettings());
 
 // jsdom doesn't implement matchMedia — default to "motion allowed" everywhere,
 // individual tests override this to simulate prefers-reduced-motion.

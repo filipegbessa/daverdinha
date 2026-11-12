@@ -6,7 +6,7 @@ import { DEFAULT_HERO_SLIDE } from '@/features/site/data/hero';
 /**
  * Conteúdo de exemplo pra cliente validar o layout em `/site` antes de a API
  * de catálogo e agenda existir. Só aparece antes do lançamento
- * (`SITE_MODE` ≠ 'full') e só quando a API não devolve nada — ver
+ * (site desligado no Dashboard) e só quando a API não devolve nada — ver
  * `withPreviewFallback` em `lib/public-api.ts`. Toda página que mostra isto
  * exibe o aviso de prévia (`PreviewNotice`).
  *

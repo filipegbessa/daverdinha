@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { MessageCircle } from 'lucide-react';
-import { SiteShell } from '@/features/site/components/SiteShell';
+import { SiteShell, shellProps } from '@/features/site/components/SiteShell';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { siteButtonClass } from '@/features/site/components/SiteButton';
@@ -10,14 +10,14 @@ import { Location } from '@/features/site/components/Location';
 import { Pagination } from '@/features/site/components/Pagination';
 import { ProductsSection } from '@/features/site/components/ProductsSection';
 import { isSample } from '@/features/site/data/samples';
-import { AGENDA_HREF, homeHref } from '@/features/site/lib/paths';
+import { AGENDA_HREF } from '@/features/site/lib/paths';
 import { getFeaturedProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { paginate } from '@/features/site/lib/pagination';
 import { pageMetadata } from '@/features/site/lib/seo';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { UPCOMING_EVENTS_MESSAGE } from '@/features/site/lib/whatsapp-messages';
 
-export function generateMetadata(): Metadata {
+export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
     title: 'Agenda · Oficinas e eventos da Daverdinha no Rio de Janeiro',
     description: 'Oficinas de terrário, kokedama e outros encontros no ateliê da Daverdinha, no Santo Cristo.',
@@ -34,10 +34,10 @@ export default async function AgendaPage({ searchParams }: Props) {
     getFeaturedProducts(),
   ]);
   const { items: events, page, totalPages } = paginate(allEvents, pageParam);
-  const home = homeHref();
+  const { home, storeEnabled } = await shellProps();
 
   return (
-    <SiteShell home={home} preview={allEvents.some(isSample) || featured.some(isSample)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} preview={allEvents.some(isSample) || featured.some(isSample)}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

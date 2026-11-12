@@ -3,13 +3,13 @@ import type { Product } from '@/features/site/types/catalog';
 import type { SiteEvent } from '@/features/site/types/event';
 
 /**
- * Onde fica a home do site completo. Antes do lançamento `/` é a landing
- * "em breve", e a home completa que a cliente valida vive em `/site` — o logo
- * e o "Início" da trilha precisam levar pra lá, não pra uma página que não
- * tem nada do que ela está revisando. Server-only (lê `SITE_MODE`).
+ * Onde fica a home do site completo. Com o site desligado no Dashboard, `/` é
+ * a landing "em breve", e a home completa que a cliente valida vive em
+ * `/site` — o logo e o "Início" da trilha precisam levar pra lá, não pra uma
+ * página que não tem nada do que ela está revisando. Server-only.
  */
-export function homeHref(): string {
-  return getSiteMode() === 'full' ? '/' : '/site';
+export async function homeHref(): Promise<string> {
+  return (await getSiteMode()) === 'full' ? '/' : '/site';
 }
 
 export const PRODUCTS_HREF = '/produtos';

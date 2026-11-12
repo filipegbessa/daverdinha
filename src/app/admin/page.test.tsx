@@ -13,8 +13,20 @@ const emptySettings = { botEnabled: false, welcomeMessage: '' };
  * re-reads one after a toggle, so an ordered `mockResolvedValueOnce` chain
  * would break on any change to how often the page refetches.
  */
-function mockApi(handlers: { settings?: () => unknown; menuItems?: () => unknown; patch?: () => unknown }) {
+const storeSettingsOff = { siteEnabled: false, storeEnabled: false };
+
+function mockApi(handlers: {
+  settings?: () => unknown;
+  menuItems?: () => unknown;
+  patch?: () => unknown;
+  storeSettings?: () => unknown;
+  patchStore?: () => unknown;
+}) {
   return mockAdminApi((path, options) => {
+    if (path === '/store-settings') {
+      if (options?.method === 'PATCH') return handlers.patchStore?.();
+      return handlers.storeSettings?.() ?? storeSettingsOff;
+    }
     if (options?.method === 'PATCH') return handlers.patch?.();
     if (path === '/menu-items') return handlers.menuItems?.() ?? [];
     return handlers.settings?.() ?? emptySettings;
@@ -28,7 +40,10 @@ describe('DashboardPage', () => {
     render(<DashboardPage />);
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
-    expect(screen.getByRole('switch')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('switch', { name: 'Atendimento automático do bot' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
   });
 
   // Regressão do PWA: no primeiro acesso, /bot-settings respondia antes de
@@ -94,9 +109,14 @@ describe('DashboardPage', () => {
     });
 
     render(<DashboardPage />);
-    await waitFor(() => expect(screen.getByRole('switch')).not.toHaveAttribute('aria-disabled', 'true'));
+    await waitFor(() =>
+      expect(screen.getByRole('switch', { name: 'Atendimento automático do bot' })).not.toHaveAttribute(
+        'aria-disabled',
+        'true',
+      ),
+    );
 
-    await userEvent.click(screen.getByRole('switch'));
+    await userEvent.click(screen.getByRole('switch', { name: 'Atendimento automático do bot' }));
 
     await waitFor(() =>
       expect(apiFetch).toHaveBeenCalledWith('/bot-settings', {
@@ -115,8 +135,13 @@ describe('DashboardPage', () => {
     });
 
     render(<DashboardPage />);
-    await waitFor(() => expect(screen.getByRole('switch')).not.toHaveAttribute('aria-disabled', 'true'));
-    await userEvent.click(screen.getByRole('switch'));
+    await waitFor(() =>
+      expect(screen.getByRole('switch', { name: 'Atendimento automático do bot' })).not.toHaveAttribute(
+        'aria-disabled',
+        'true',
+      ),
+    );
+    await userEvent.click(screen.getByRole('switch', { name: 'Atendimento automático do bot' }));
 
     await waitFor(() =>
       expect(screen.getByText('Não é possível ligar o bot sem nenhum item de menu ativo.')).toBeInTheDocument(),
@@ -140,7 +165,9 @@ describe('DashboardPage', () => {
 
     render(<DashboardPage />);
 
-    await waitFor(() => expect(screen.getByRole('switch')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('switch', { name: 'Atendimento automático do bot' })).toBeInTheDocument(),
+    );
     expect(screen.queryByText(/Armazenamento de imagens/)).not.toBeInTheDocument();
   });
 
@@ -152,5 +179,61 @@ describe('DashboardPage', () => {
 
     await waitFor(() => expect(screen.getByText('Não foi possível carregar os dados do painel.')).toBeInTheDocument());
     expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+  });
+
+  describe('site and store switches', () => {
+    it('shows both off, as the site starts, and turns the full site on', async () => {
+      const apiFetch = mockApi({
+        menuItems: () => [{ id: '1', active: true }],
+        patchStore: () => ({ ...storeSettingsOff, siteEnabled: true }),
+      });
+
+      render(<DashboardPage />);
+
+      const site = await screen.findByRole('switch', { name: 'Site completo' });
+      expect(site).not.toBeChecked();
+      expect(screen.getByRole('switch', { name: 'Loja do site' })).not.toBeChecked();
+      expect(screen.getByText(/mostra a página "em breve"/)).toBeInTheDocument();
+
+      await userEvent.click(site);
+
+      await waitFor(() =>
+        expect(apiFetch).toHaveBeenCalledWith('/store-settings', {
+          method: 'PATCH',
+          body: JSON.stringify({ siteEnabled: true }),
+        }),
+      );
+    });
+
+    it('shows why the store did not open, e.g. no Pagar.me key yet', async () => {
+      mockApi({
+        menuItems: () => [{ id: '1', active: true }],
+        patchStore: () => {
+          throw new Error('O pagamento ainda não está configurado (chave do Pagar.me). A loja continua desligada.');
+        },
+      });
+
+      render(<DashboardPage />);
+      await userEvent.click(await screen.findByRole('switch', { name: 'Loja do site' }));
+
+      expect(await screen.findByText(/A loja continua desligada/)).toBeInTheDocument();
+    });
+
+    it('keeps the bot switch usable when the store settings fail to load', async () => {
+      mockApi({
+        menuItems: () => [{ id: '1', active: true }],
+        storeSettings: () => {
+          throw new Error('Configurações da loja indisponíveis.');
+        },
+      });
+
+      render(<DashboardPage />);
+
+      expect(await screen.findByText('Configurações da loja indisponíveis.')).toBeInTheDocument();
+      expect(screen.getByRole('switch', { name: 'Atendimento automático do bot' })).not.toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    });
   });
 });

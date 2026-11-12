@@ -10,6 +10,12 @@ import { Analytics } from '@/components/analytics';
 const lora = Lora({ subsets: ['latin'], variable: '--font-lora', display: 'swap' });
 const raleway = Raleway({ subsets: ['latin'], variable: '--font-raleway', display: 'swap' });
 
+// Os interruptores do site e da loja (Dashboard) vêm da API: nenhuma página
+// estática pode ficar congelada no valor do build. Mesmo intervalo do cache
+// da leitura (`SITE_SETTINGS_REVALIDATE_SECONDS` em `lib/site-settings.ts`).
+// Literal porque o Next lê este valor na compilação.
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   // Base das URLs relativas de canonical e Open Graph das páginas internas
   // (`/produtos/...`, `/agenda/...`). Sem ela o Next resolve contra localhost.

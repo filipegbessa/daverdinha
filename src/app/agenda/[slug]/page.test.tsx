@@ -1,3 +1,4 @@
+import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import { render, screen, within } from '@testing-library/react';
 import Page from './page';
 
@@ -28,7 +29,7 @@ describe('/agenda/[slug]', () => {
   const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   beforeEach(() => {
-    delete process.env.SITE_MODE;
+    mockSiteSettings({ siteEnabled: false });
     delete process.env.NEXT_PUBLIC_API_URL;
   });
 

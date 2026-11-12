@@ -1,7 +1,7 @@
+import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import sitemap from './sitemap';
 
 describe('sitemap', () => {
-  const originalMode = process.env.SITE_MODE;
   const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   beforeEach(() => {
@@ -11,14 +11,12 @@ describe('sitemap', () => {
   });
 
   afterEach(() => {
-    if (originalMode === undefined) delete process.env.SITE_MODE;
-    else process.env.SITE_MODE = originalMode;
     process.env.NEXT_PUBLIC_API_URL = originalApiUrl;
     jest.restoreAllMocks();
   });
 
   it('lists only the homepage and privacy policy before launch', async () => {
-    delete process.env.SITE_MODE;
+    mockSiteSettings({ siteEnabled: false });
 
     const result = await sitemap();
     expect(result).toEqual([
@@ -39,7 +37,7 @@ describe('sitemap', () => {
   });
 
   it('adds the catalog, categories with products, products and events after launch', async () => {
-    process.env.SITE_MODE = 'full';
+    mockSiteSettings({ siteEnabled: true });
     const responses: Record<string, unknown> = {
       'https://api.test/product-categories/active': [
         { id: 'c1', name: 'Vasos', slug: 'vasos', description: '' },

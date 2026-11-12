@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CartProvider } from './CartProvider';
 import { CartLink } from './CartLink';
+import { StoreEnabledProvider } from './StoreEnabled';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { readCart } from '@/features/store/lib/cart-storage';
 import { SAMPLE_PRODUCTS } from '@/features/site/data/samples';
@@ -9,26 +10,21 @@ import type { Product } from '@/features/site/types/catalog';
 
 const real: Product = { ...SAMPLE_PRODUCTS[0], id: 'p1', availability: 'in_stock' };
 
-function renderCard(product: Product) {
+function renderCard(product: Product, storeEnabled = true) {
   return render(
-    <CartProvider>
-      <CartLink />
-      <ProductCard product={product} />
-    </CartProvider>,
+    <StoreEnabledProvider value={storeEnabled}>
+      <CartProvider>
+        <CartLink />
+        <ProductCard product={product} />
+      </CartProvider>
+    </StoreEnabledProvider>,
   );
 }
 
 describe('ProductCard add button', () => {
-  const original = process.env.NEXT_PUBLIC_STORE_ENABLED;
-
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_STORE_ENABLED = 'true';
     localStorage.clear();
     window.gtag = jest.fn();
-  });
-
-  afterEach(() => {
-    process.env.NEXT_PUBLIC_STORE_ENABLED = original;
   });
 
   it('adds from the card without leaving the page and confirms for a few seconds', async () => {
@@ -63,8 +59,11 @@ describe('ProductCard add button', () => {
   });
 
   it('has no button with the store off', () => {
-    process.env.NEXT_PUBLIC_STORE_ENABLED = undefined;
-    render(<ProductCard product={real} />);
+    render(
+      <StoreEnabledProvider value={false}>
+        <ProductCard product={real} />
+      </StoreEnabledProvider>,
+    );
 
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CepChecker } from './CepChecker';
+import { StoreEnabledProvider } from '@/features/store/components/StoreEnabled';
 import { checkCep } from '@/features/site/lib/cep-check';
 
 jest.mock('@/features/site/lib/cep-check', () => ({
@@ -21,9 +22,13 @@ describe('CepChecker', () => {
     expect(button).toBeDisabled();
   });
 
-  async function check(result: unknown) {
+  async function check(result: unknown, storeEnabled = false) {
     (checkCep as jest.Mock).mockResolvedValue(result);
-    render(<CepChecker />);
+    render(
+      <StoreEnabledProvider value={storeEnabled}>
+        <CepChecker />
+      </StoreEnabledProvider>,
+    );
     await userEvent.type(screen.getByLabelText('CEP'), '22220000');
     await userEvent.click(screen.getByRole('button', { name: 'Verificar' }));
   }
@@ -38,15 +43,8 @@ describe('CepChecker', () => {
   });
 
   describe('with the store on', () => {
-    beforeEach(() => {
-      process.env.NEXT_PUBLIC_STORE_ENABLED = 'true';
-    });
-    afterEach(() => {
-      delete process.env.NEXT_PUBLIC_STORE_ENABLED;
-    });
-
     it('shows the delivery fee instead of the WhatsApp link', async () => {
-      await check({ status: 'covered', bairro: 'Catete', fee: 15 });
+      await check({ status: 'covered', bairro: 'Catete', fee: 15 }, true);
 
       expect(await screen.findByText(/Entregamos em Catete!/)).toBeInTheDocument();
       expect(screen.getByText(/Frete:/).textContent).toMatch(/Frete: R\$\s15,00\./);
@@ -54,7 +52,7 @@ describe('CepChecker', () => {
     });
 
     it('says it does not deliver yet when the bairro is in no delivery area', async () => {
-      await check({ status: 'covered', bairro: 'Catete', fee: null });
+      await check({ status: 'covered', bairro: 'Catete', fee: null }, true);
 
       expect(await screen.findByText(/Ainda não entregamos em/)).toHaveTextContent('Ainda não entregamos em Catete.');
       expect(screen.queryByText(/Entregamos em Catete!/)).not.toBeInTheDocument();

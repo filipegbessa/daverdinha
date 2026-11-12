@@ -9,7 +9,7 @@ import { ContactLink } from '@/features/site/components/ContactLink';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 
 /**
- * A landing que `/` mostra enquanto `SITE_MODE` não for 'full'.
+ * A landing que `/` mostra enquanto o site está desligado no Dashboard.
  *
  * Só entra aqui informação que já é verdade confirmada sobre o negócio —
  * logo, frase, endereço, WhatsApp, Instagram. Nada de placeholder: o motivo

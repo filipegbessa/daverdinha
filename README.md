@@ -10,25 +10,22 @@ Frontend do projeto Daverdinha (Next.js + Tailwind + shadcn/ui + Clerk).
 
 Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/business.ts`, não em `.env` — edite ali pra atualizar. As áreas de entrega **não** ficam ali: vêm da API (ver abaixo).
 
-### Site em construção (`SITE_MODE`)
+### Site e loja: interruptores no Dashboard
 
-Hoje `/` serve uma landing **em construção** (`ComingSoon.tsx`). O site institucional completo — home, catálogo (`/produtos`), agenda (`/agenda`), entregas, FAQ — continua inteiro no repositório, só que escondido atrás da flag `SITE_MODE`.
+Dois interruptores no Dashboard do admin, ao lado do bot, ligam o site e a loja sem deploy. Ficam nas configurações da loja na API (`store_settings.site_enabled` e `store_enabled`), e o site lê por `GET /store-settings/public` (`src/lib/site-settings.ts`) com cache de 1 minuto: a mudança aparece em até 1 minuto.
 
-**Validação com a cliente:** a home completa fica em **`/site`**, e dali se navega pro catálogo e pra agenda. Enquanto a API de catálogo e agenda não existir, essas telas mostram produtos e eventos **de exemplo**, com uma faixa "Prévia do site" no topo. Antes do lançamento, todas essas páginas são `noindex` e ficam fora do sitemap. Com `SITE_MODE=full`, exemplo nunca aparece: lista vazia esconde a seção.
+- **Site completo** desligado: `/` serve a landing **em breve** (`ComingSoon.tsx`), e o site completo — home, catálogo (`/produtos`), agenda (`/agenda`), entregas, FAQ — fica na prévia **`/site`**, pra cliente validar. Na prévia, lista vazia da API vira produtos e eventos **de exemplo**, com a faixa "Prévia do site", e as páginas são `noindex` e ficam fora do sitemap. Ligado: `/` é o site completo e exemplo nunca aparece (lista vazia esconde a seção).
+- **Loja do site**: ver "Loja online" abaixo.
 
-Semântica exata: só `SITE_MODE=full` abre o site completo. Ausente, vazia ou com typo cai em `soon` (a falha segura é esconder, não publicar). A flag é server-only (sem prefixo `NEXT_PUBLIC_`) — ver `src/lib/site-mode.ts`.
+**Falha segura:** com a API fora do ar (ou sem `NEXT_PUBLIC_API_URL`), os dois contam como desligados: `/` volta pra "em breve" e a loja some até a API responder.
 
-**Por que uma flag e não deletar/mover o código:** o catálogo e a agenda ainda não têm API nem conteúdo real. A flag mantém ele compilando e com testes passando, então dá pra evoluí-lo local com `SITE_MODE=full` sem nada disso vazar pra produção.
-
-⚠️ Trocar a chave em produção **exige um redeploy**: `/` é estática, então mexer na variável no painel da Vercel só vale a partir do próximo build ("Redeploy", sem push de código).
-
-A landing é **indexável de propósito**: `robots.ts` segue liberando `/`, `sitemap.ts` também não foi alterado — ele já lista a home — e o JSON-LD de `LocalBusiness` continua sendo emitido (com `areaServed: []`, já que nada foi confirmado pela API), pra quem buscar "Daverdinha" achar o negócio e os contatos. Ela também **não chama a API** — não depende da `daverdinha-api` estar de pé.
+A landing é **indexável de propósito**: `robots.ts` segue liberando `/`, o sitemap lista a home e o JSON-LD de `LocalBusiness` continua sendo emitido (com `areaServed: []`), pra quem buscar "Daverdinha" achar o negócio e os contatos.
 
 Os canais de contato são WhatsApp, Instagram e o e-mail `contato@daverdinha.com.br` (mostrado em Localização e no JSON-LD). Hoje esse endereço só redireciona pra caixa pessoal do desenvolvedor; no lançamento o redirecionamento passa pra caixa da cliente.
 
-### Loja online (`NEXT_PUBLIC_STORE_ENABLED`)
+### Loja online (interruptor "Loja do site")
 
-A loja só aparece com `NEXT_PUBLIC_STORE_ENABLED=true` (`src/features/store/lib/store-enabled.ts`). Sem ela o site fica como antes, só com WhatsApp, e `/carrinho` responde 404. Por ser `NEXT_PUBLIC_`, mudar na Vercel vale a partir do próximo deploy.
+A loja só aparece com o interruptor ligado no Dashboard (`isStoreEnabled()` no servidor; `useStoreEnabled()` nos componentes de cliente, pelo `StoreEnabledProvider` que o `SiteShell` monta). Desligada, o site fica só com WhatsApp, e `/carrinho`, `/checkout` e `/pedido` respondem 404. A API não deixa ligar sem a chave do Pagar.me e recusa pedido com a loja desligada.
 
 - **Carrinho** (`src/features/store`): fica no `localStorage` (`daverdinha:cart:v1`), num `CartProvider` que o `SiteShell` monta com a loja ligada. Guarda só o necessário pra desenhar a tela; leitura tolerante (JSON inválido, item sem id ou armazenamento bloqueado viram carrinho vazio), quantidade de 1 a 20, até 30 produtos, e acompanha outra aba pelo evento `storage`.
 - **Página do produto**: "Adicionar ao carrinho" vira o botão principal e "Pedir pelo WhatsApp" o secundário. Esgotado fica "Esgotado", desabilitado. Produto de exemplo da prévia entra no carrinho com o aviso "Prévia: produto de exemplo": com o carrinho só de exemplos, a cotação é montada no navegador (`preview-quote.ts`: preços dos exemplos, retirada no endereço do ateliê, entrega de R$ 15 pra qualquer CEP, até 3x) e finalizar mostra um aviso em vez de chamar a API. É assim que a cliente valida a loja em `/site` antes de ela existir. Dispara `add_to_cart` no GA.

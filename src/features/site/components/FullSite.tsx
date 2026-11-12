@@ -19,11 +19,13 @@ export interface FullSiteData {
   /** Só os produtos em destaque: a home é vitrine, o catálogo inteiro fica em `/produtos`. */
   featured: Product[];
   events: SiteEvent[];
+  /** Interruptor "Loja" do Dashboard. */
+  storeEnabled: boolean;
 }
 
 /**
  * A home do site completo, sem a flag de `/` em volta — usada tanto por `/`
- * (quando SITE_MODE=full) quanto por `/site` (que mostra a versão completa
+ * (com o site ligado no Dashboard) quanto por `/site` (que mostra a versão completa
  * pra cliente validar mesmo com `/` em "em breve"). Recebe os dados prontos:
  * quem busca é a página.
  *
@@ -31,11 +33,11 @@ export interface FullSiteData {
  * seguidas dividiam o mesmo fundo e a página parecia ter menos partes do que
  * tinha.
  */
-export function FullSite({ home, slides, zones, featured, events }: FullSiteData) {
+export function FullSite({ home, storeEnabled, slides, zones, featured, events }: FullSiteData) {
   const preview = featured.some(isSample) || events.some(isSample) || slides.some(isSample);
 
   return (
-    <SiteShell home={home} preview={preview}>
+    <SiteShell home={home} storeEnabled={storeEnabled} preview={preview}>
       <Hero slides={slides} />
       <ProductsSection products={featured} />
       <EventsSection events={events} cardVariant="compact" />

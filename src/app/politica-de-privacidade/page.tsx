@@ -1,20 +1,21 @@
 import type { Metadata } from 'next';
 import { businessInfo } from '@/data/business';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
-import { SiteShell } from '@/features/site/components/SiteShell';
-import { homeHref } from '@/features/site/lib/paths';
+import { SiteShell, shellProps } from '@/features/site/components/SiteShell';
 import { pageMetadata } from '@/features/site/lib/seo';
 
 const PATH = '/politica-de-privacidade';
 
-export const metadata: Metadata = pageMetadata({
-  title: 'Política de Privacidade · Daverdinha',
-  description:
-    'Quais dados a Daverdinha coleta no site e no WhatsApp, como usa essas informações e como pedir acesso, correção ou exclusão (LGPD).',
-  path: PATH,
-  // Já é pública antes do lançamento: a página "em breve" linka pra ela.
-  indexBeforeLaunch: true,
-});
+export function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: 'Política de Privacidade · Daverdinha',
+    description:
+      'Quais dados a Daverdinha coleta no site e no WhatsApp, como usa essas informações e como pedir acesso, correção ou exclusão (LGPD).',
+    path: PATH,
+    // Já é pública antes do lançamento: a página "em breve" linka pra ela.
+    indexBeforeLaunch: true,
+  });
+}
 
 function PolicySection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -25,11 +26,11 @@ function PolicySection({ title, children }: { title: string; children: React.Rea
   );
 }
 
-export default function PoliticaDePrivacidadePage() {
-  const home = homeHref();
+export default async function PoliticaDePrivacidadePage() {
+  const { home, storeEnabled } = await shellProps();
 
   return (
-    <SiteShell home={home}>
+    <SiteShell home={home} storeEnabled={storeEnabled}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-3xl">
           <Breadcrumbs

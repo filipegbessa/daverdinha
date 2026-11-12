@@ -1,3 +1,4 @@
+import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import { render, screen } from '@testing-library/react';
 import OrderPage, { dynamic, metadata } from './page';
 import { getOrderByToken } from '@/features/store/lib/store-api';
@@ -15,13 +16,13 @@ const renderPage = async (token: string, query: Record<string, string> = {}) =>
 
 describe('/pedido/[token]', () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_STORE_ENABLED = 'true';
-    delete process.env.SITE_MODE;
+    mockSiteSettings({ storeEnabled: true });
+    mockSiteSettings({ siteEnabled: false });
     jest.clearAllMocks();
   });
 
   afterAll(() => {
-    delete process.env.NEXT_PUBLIC_STORE_ENABLED;
+    mockSiteSettings({ storeEnabled: false });
   });
 
   it('is never cached nor indexed', () => {
@@ -33,7 +34,7 @@ describe('/pedido/[token]', () => {
     (getOrderByToken as jest.Mock).mockResolvedValue(null);
     await expect(renderPage('nope')).rejects.toThrow('NEXT_NOT_FOUND');
 
-    delete process.env.NEXT_PUBLIC_STORE_ENABLED;
+    mockSiteSettings({ storeEnabled: false });
     await expect(renderPage('abc')).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
@@ -55,7 +56,7 @@ describe('/pedido/[token]', () => {
   });
 
   it('has no sample order after the launch', async () => {
-    process.env.SITE_MODE = 'full';
+    mockSiteSettings({ siteEnabled: true });
     (getOrderByToken as jest.Mock).mockResolvedValue(null);
 
     await expect(renderPage('exemplo')).rejects.toThrow('NEXT_NOT_FOUND');

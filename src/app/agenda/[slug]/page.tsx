@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { CalendarDays, ExternalLink, MapPin, MessageCircle, Ticket } from 'lucide-react';
 import { businessInfo } from '@/data/business';
-import { SiteShell } from '@/features/site/components/SiteShell';
+import { SiteShell, shellProps } from '@/features/site/components/SiteShell';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButton';
@@ -13,7 +13,7 @@ import { EventsSection } from '@/features/site/components/EventsSection';
 import { Location } from '@/features/site/components/Location';
 import { isSample } from '@/features/site/data/samples';
 import { formatEventPrice, formatEventShort, formatEventWhen } from '@/lib/format';
-import { AGENDA_HREF, eventHref, homeHref } from '@/features/site/lib/paths';
+import { AGENDA_HREF, eventHref } from '@/features/site/lib/paths';
 import { getEventBySlug, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
 import { eventJsonLd } from '@/features/site/lib/structured-data';
@@ -48,7 +48,7 @@ export default async function EventPage({ params }: Props) {
   if (!event) notFound();
 
   const past = new Date(event.endsAt).getTime() < Date.now();
-  const home = homeHref();
+  const { home, storeEnabled } = await shellProps();
   const atAtelier = event.locationName === null;
   const address = atAtelier ? businessInfo.address.formatted : event.locationAddress;
   const others = upcoming.filter((e) => e.id !== event.id);
@@ -57,7 +57,7 @@ export default async function EventPage({ params }: Props) {
     .join(' · ');
 
   return (
-    <SiteShell home={home} preview={isSample(event)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} preview={isSample(event)}>
       <JsonLd data={eventJsonLd(event)} />
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">

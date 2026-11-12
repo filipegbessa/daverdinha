@@ -7,7 +7,6 @@ import { ContactLink } from '@/features/site/components/ContactLink';
 import { MobileNav } from '@/features/site/components/MobileNav';
 import { siteNav } from '@/features/site/components/site-nav';
 import { CartLink } from '@/features/store/components/CartLink';
-import { isStoreEnabled } from '@/features/store/lib/store-enabled';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 
 /**
@@ -15,7 +14,7 @@ import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
  * WhatsApp. No celular o menu vira gaveta e o WhatsApp fica no botão
  * flutuante, então o cabeçalho fixo ocupa pouco da tela.
  */
-export function Header({ home }: { home: string }) {
+export function Header({ home, storeEnabled = false }: { home: string; storeEnabled?: boolean }) {
   const links = siteNav(home);
 
   return (
@@ -25,7 +24,7 @@ export function Header({ home }: { home: string }) {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <Link href={home} className="shrink-0">
           {/* A logo horizontal já traz o nome escrito; o `alt` é o que o Google e o leitor de tela leem. */}
-          <Image src="/logo-horizontal.png" alt="Daverdinha" width={132} height={44} priority className="h-11 w-auto" />
+          <Image src="/logo-horizontal.png" alt="Daverdinha" width={158} height={44} priority className="h-11 w-auto" />
         </Link>
 
         {/* Só a partir de `lg`: entre 768 e ~800 px os 5 links, a logo e o botão não cabem numa linha. */}
@@ -51,7 +50,7 @@ export function Header({ home }: { home: string }) {
             <MessageCircle className="size-4" aria-hidden="true" />
             Falar no WhatsApp
           </ContactLink>
-          {isStoreEnabled() && <CartLink />}
+          {storeEnabled && <CartLink />}
           <MobileNav links={links} />
         </div>
       </div>

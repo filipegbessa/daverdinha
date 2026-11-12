@@ -4,7 +4,7 @@ import { productHref } from '@/features/site/lib/paths';
 import { AvailabilityBadge } from '@/features/site/components/AvailabilityBadge';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import { QuickAddButton } from '@/features/store/components/QuickAddButton';
-import { isStoreEnabled } from '@/features/store/lib/store-enabled';
+import { StoreOnly } from '@/features/store/components/StoreEnabled';
 import type { Product } from '@/features/site/types/catalog';
 
 /**
@@ -56,11 +56,11 @@ export function ProductCard({ product, variant = 'full' }: { product: Product; v
           </div>
         </div>
       </Link>
-      {isStoreEnabled() && (
+      <StoreOnly>
         <div className="px-4 pb-4">
           <QuickAddButton product={product} />
         </div>
-      )}
+      </StoreOnly>
     </div>
   );
 }

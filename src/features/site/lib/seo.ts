@@ -8,8 +8,8 @@ import { getSiteMode } from '@/lib/site-mode';
  * bloqueada ainda pode ser indexada por um link sem o Google nunca ver o
  * noindex — o mesmo motivo de `/admin` usar header em `next.config.ts`.
  */
-export function prelaunchRobots(): Pick<Metadata, 'robots'> {
-  return getSiteMode() === 'full' ? {} : { robots: { index: false, follow: false } };
+export async function prelaunchRobots(): Promise<Pick<Metadata, 'robots'>> {
+  return (await getSiteMode()) === 'full' ? {} : { robots: { index: false, follow: false } };
 }
 
 /**
@@ -18,7 +18,7 @@ export function prelaunchRobots(): Pick<Metadata, 'robots'> {
  * lançamento (a política de privacidade, linkada pela página "em breve" e
  * listada no sitemap desde sempre).
  */
-export function pageMetadata({
+export async function pageMetadata({
   title,
   description,
   path,
@@ -30,12 +30,12 @@ export function pageMetadata({
   path: string;
   image?: string;
   indexBeforeLaunch?: boolean;
-}): Metadata {
+}): Promise<Metadata> {
   return {
     title,
     description,
     alternates: { canonical: path },
-    ...(indexBeforeLaunch ? {} : prelaunchRobots()),
+    ...(indexBeforeLaunch ? {} : await prelaunchRobots()),
     openGraph: {
       title,
       description,

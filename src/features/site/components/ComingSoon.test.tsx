@@ -58,9 +58,7 @@ describe('ComingSoon', () => {
 
   it('shows the real address and the business description', () => {
     render(<ComingSoon />);
-    expect(
-      screen.getByText('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030')).toBeInTheDocument();
     expect(screen.getByText(/cantinho verde pra chamar de seu/)).toBeInTheDocument();
   });
 
@@ -75,7 +73,7 @@ describe('ComingSoon', () => {
 
   // A Meta exige que a razão social apareça no site pra verificar a
   // empresa — sem isso, a verificação de negócio falha. Essa é a página
-  // que fica no ar em produção (SITE_MODE=soon), então o texto precisa
+  // que fica no ar em produção (site desligado no Dashboard), então o texto precisa
   // estar aqui, não só no Footer do site completo.
   it('shows the razão social, for Meta business verification', () => {
     render(<ComingSoon />);

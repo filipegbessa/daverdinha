@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
-import { SiteShell } from '@/features/site/components/SiteShell';
+import { SiteShell, shellProps } from '@/features/site/components/SiteShell';
 import { AvailabilityBadge } from '@/features/site/components/AvailabilityBadge';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { Carousel } from '@/features/site/components/Carousel';
@@ -16,14 +16,13 @@ import { ProductGallery } from '@/features/site/components/ProductGallery';
 import { isSample } from '@/features/site/data/samples';
 import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
 import { formatPrice } from '@/lib/format';
-import { categoryHref, homeHref, PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
+import { categoryHref, PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
 import { getActiveProductBySlug, getFeaturedProducts } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
 import { productJsonLd } from '@/features/site/lib/structured-data';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { orderMessage } from '@/features/site/lib/whatsapp-messages';
 import { AddToCartButton } from '@/features/store/components/AddToCartButton';
-import { isStoreEnabled } from '@/features/store/lib/store-enabled';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
 
 type Props = { params: Promise<{ categoria: string; produto: string }> };
@@ -58,11 +57,10 @@ export default async function ProductPage({ params }: Props) {
     getCoveredDeliveryZones(),
   ]);
   const related = bestSellers.filter((p) => p.id !== product.id).slice(0, RELATED_LIMIT);
-  const home = homeHref();
-  const storeEnabled = isStoreEnabled();
+  const { home, storeEnabled } = await shellProps();
 
   return (
-    <SiteShell home={home} preview={isSample(product)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} preview={isSample(product)}>
       <JsonLd data={productJsonLd(product)} />
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">

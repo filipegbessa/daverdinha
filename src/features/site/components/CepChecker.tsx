@@ -6,7 +6,7 @@ import { checkCep, maskCep, onlyDigits, type CepCheckResult } from '@/features/s
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { deliveryScheduleMessage } from '@/features/site/lib/whatsapp-messages';
-import { isStoreEnabled } from '@/features/store/lib/store-enabled';
+import { useStoreEnabled } from '@/features/store/components/StoreEnabled';
 import { formatPrice } from '@/lib/format';
 
 /**
@@ -20,7 +20,7 @@ export function CepChecker() {
   const [cep, setCep] = useState('');
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<CepCheckResult | null>(null);
-  const storeEnabled = isStoreEnabled();
+  const storeEnabled = useStoreEnabled();
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();

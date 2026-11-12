@@ -54,6 +54,10 @@ export interface DeliveryZoneAreas {
 
 /** Configurações da loja (`/admin/loja`): retirada e parcelamento. */
 export interface StoreSettings {
+  /** Site completo em `/`; desligado, `/` é a página "em breve". */
+  siteEnabled: boolean;
+  /** Venda pelo site (carrinho + Pagar.me); desligada, a compra é pelo WhatsApp. */
+  storeEnabled: boolean;
   pickupEnabled: boolean;
   pickupAddress: string;
   pickupHours: string;

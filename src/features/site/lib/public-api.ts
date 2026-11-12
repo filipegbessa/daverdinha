@@ -34,9 +34,9 @@ async function fetchPublic<T>(path: string): Promise<T | null> {
  * avaliar o layout. Depois do lançamento, vazio é vazio: a seção some, como
  * as outras do site.
  */
-function withPreviewFallback<T>(items: T[] | null, samples: () => T[]): T[] {
+async function withPreviewFallback<T>(items: T[] | null, samples: () => T[]): Promise<T[]> {
   if (items && items.length > 0) return items;
-  return getSiteMode() === 'full' ? [] : samples();
+  return (await getSiteMode()) === 'full' ? [] : samples();
 }
 
 export async function getActiveCategories(): Promise<ProductCategory[]> {
@@ -72,13 +72,13 @@ export async function getFeaturedProducts(categorySlug?: string): Promise<Produc
 export async function getHeroSlides(): Promise<HeroSlide[]> {
   const slides = await fetchPublic<HeroSlide[]>('/hero-slides/active');
   if (slides && slides.length > 0) return slides;
-  return getSiteMode() === 'full' ? [DEFAULT_HERO_SLIDE] : SAMPLE_HERO_SLIDES;
+  return (await getSiteMode()) === 'full' ? [DEFAULT_HERO_SLIDE] : SAMPLE_HERO_SLIDES;
 }
 
 export async function getActiveProductBySlug(slug: string): Promise<Product | null> {
   const product = await fetchPublic<Product>(`/products/active/${encodeURIComponent(slug)}`);
   if (product) return product;
-  if (getSiteMode() === 'full') return null;
+  if ((await getSiteMode()) === 'full') return null;
   return SAMPLE_PRODUCTS.find((p) => p.slug === slug) ?? null;
 }
 
@@ -90,6 +90,6 @@ export async function getUpcomingEvents(): Promise<SiteEvent[]> {
 export async function getEventBySlug(slug: string): Promise<SiteEvent | null> {
   const event = await fetchPublic<SiteEvent>(`/events/${encodeURIComponent(slug)}`);
   if (event) return event;
-  if (getSiteMode() === 'full') return null;
+  if ((await getSiteMode()) === 'full') return null;
   return sampleEvents().find((e) => e.slug === slug) ?? null;
 }

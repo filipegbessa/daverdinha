@@ -1,3 +1,4 @@
+import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import { render, screen } from '@testing-library/react';
 import { notFound } from 'next/navigation';
 import CartPage, { metadata } from './page';
@@ -9,22 +10,17 @@ jest.mock('next/navigation', () => ({
 }));
 
 describe('/carrinho', () => {
-  const original = process.env.NEXT_PUBLIC_STORE_ENABLED;
-  afterEach(() => {
-    process.env.NEXT_PUBLIC_STORE_ENABLED = original;
-  });
+  it('is a 404 while the store is off', async () => {
+    mockSiteSettings({ storeEnabled: false });
 
-  it('is a 404 while the store is off', () => {
-    delete process.env.NEXT_PUBLIC_STORE_ENABLED;
-
-    expect(() => CartPage()).toThrow('NEXT_NOT_FOUND');
+    await expect(CartPage()).rejects.toThrow('NEXT_NOT_FOUND');
     expect(notFound).toHaveBeenCalled();
   });
 
-  it('shows the cart with the store on, and is never indexed', () => {
-    process.env.NEXT_PUBLIC_STORE_ENABLED = 'true';
+  it('shows the cart with the store on, and is never indexed', async () => {
+    mockSiteSettings({ storeEnabled: true });
 
-    render(CartPage());
+    render(await CartPage());
 
     expect(screen.getByRole('heading', { level: 1, name: 'Carrinho' })).toBeInTheDocument();
     expect(metadata.robots).toEqual({ index: false, follow: false });

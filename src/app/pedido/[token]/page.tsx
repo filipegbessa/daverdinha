@@ -1,11 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getSiteMode } from '@/lib/site-mode';
-import { SiteShell } from '@/features/site/components/SiteShell';
-import { homeHref } from '@/features/site/lib/paths';
+import { SiteShell, shellProps } from '@/features/site/components/SiteShell';
 import { OrderStatus } from '@/features/store/components/OrderStatus';
 import { PurchaseTracker } from '@/features/store/components/PurchaseTracker';
-import { isStoreEnabled } from '@/features/store/lib/store-enabled';
 import { getOrderByToken } from '@/features/store/lib/store-api';
 import { PREVIEW_ORDER_TOKEN, previewOrder } from '@/features/store/lib/preview-order';
 
@@ -24,18 +22,19 @@ type Props = {
 };
 
 export default async function OrderPage({ params, searchParams }: Props) {
-  if (!isStoreEnabled()) notFound();
+  const shell = await shellProps();
+  if (!shell.storeEnabled) notFound();
   const { token } = await params;
 
   // Antes do lançamento, `/pedido/exemplo?status=paid` mostra um pedido de
   // exemplo em cada estado, pra cliente validar a página.
-  const preview = token === PREVIEW_ORDER_TOKEN && getSiteMode() !== 'full';
+  const preview = token === PREVIEW_ORDER_TOKEN && (await getSiteMode()) !== 'full';
   const query = await searchParams;
   const order = preview ? previewOrder(query.status, query.entrega !== 'retirada') : await getOrderByToken(token);
   if (!order) notFound();
 
   return (
-    <SiteShell home={homeHref()} preview={preview}>
+    <SiteShell {...shell} preview={preview}>
       {!preview && <PurchaseTracker order={order} />}
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">

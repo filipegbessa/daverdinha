@@ -34,7 +34,7 @@
 - **Admin** (Fase 1 e Tarefa 11): páginas client-side em `src/app/admin/*` no molde de `admin/categorias` e `admin/menu` — `useApiResource` pra ler, `useApiClient().apiFetch` pra escrever (já pula o `Content-Type` com `FormData`), `useApiMutation` pra erro de exclusão, `ConfirmDialog`, `TablePagination`, `Switch`.
 - **Carrinho** (Fase 2): estado só no navegador (`localStorage`, chave `daverdinha:cart:v1`), num `CartProvider` client-side montado no `SiteShell`. O carrinho guarda `{ productId, slug, categorySlug, name, price, imageUrl, quantity }` só pra desenhar a tela; **preço e frete que valem são os do `POST /checkout/quote`**, sempre chamado antes de mostrar total e de enviar o pedido.
 - **Chamadas da loja** ficam num arquivo só, `src/features/store/lib/store-api.ts` (como `public-api.ts` é pro catálogo): `quoteCart`, `createCheckout`, `getOrderByToken`. As duas primeiras rodam no navegador (precisam do carrinho); `getOrderByToken` roda no servidor (página do pedido).
-- **Liga/desliga da loja:** `NEXT_PUBLIC_STORE_ENABLED=true`. Desligada, nada muda no site de hoje (página do produto só com "Pedir pelo WhatsApp", sem ícone de carrinho, `/carrinho`/`/checkout` respondem 404). Assim a loja pode ser lançada depois do site, ou desligada num problema, sem deploy de código.
+- **Liga/desliga da loja:** interruptor "Loja do site" no Dashboard (desde 2026-11-12; antes era `NEXT_PUBLIC_STORE_ENABLED`). Desligada, nada muda no site de hoje (página do produto só com "Pedir pelo WhatsApp", sem ícone de carrinho, `/carrinho`/`/checkout` respondem 404). Assim a loja pode ser lançada depois do site, ou desligada num problema, sem deploy.
 - Código novo de loja em `src/features/store/` (componentes, lib, types), separado de `src/features/site/` — o site continua funcionando sem ele.
 
 **Tech Stack:** Next.js 16 App Router, React 19, Server Components onde há fetch no servidor, `next/navigation` (`notFound`), Clerk no admin, GA4 (`window.gtag`, já carregado por `src/components/analytics.tsx`).
@@ -73,7 +73,7 @@
 ## Review Focus
 
 - **Prévia não vende:** em `/site`, produto de exemplo nunca entra no carrinho.
-- **Loja desligada = site de hoje:** com `NEXT_PUBLIC_STORE_ENABLED` ausente, nenhum botão, ícone ou rota nova aparece.
+- **Loja desligada = site de hoje:** com a loja desligada no Dashboard, nenhum botão, ícone ou rota nova aparece.
 - **Preço desatualizado:** carrinho salvo ontem com preço antigo mostra o preço novo da cotação e bloqueia "Finalizar" até a nova cotação carregar.
 - **Pagamento sem limpar carrinho errado:** falha no `POST /checkout` (409/422/503) mantém o carrinho; sucesso limpa.
 - **Página do pedido:** token inválido → 404; pendente → "Pagar agora" + aviso de prazo; pago → confirmação; vencido → mensagem + "Montar o carrinho de novo"; nada de endereço completo na tela.
@@ -164,7 +164,7 @@ Sem código novo esperado — `public-api.ts` já chama os endpoints definitivos
 - [ ] **Step 1:** Com a API de produção, conferir que `GET /product-categories/active`, `GET /products/active`, `?category=<slug>`, `?featured=true` e `GET /products/active/<slug>` respondem no formato de `src/features/site/types/catalog.ts` (`price` número, `category.slug`).
 - [ ] **Step 2:** Cadastrar pela Tarefa 2/3 uma categoria e dois produtos reais, um em destaque; em `/site`, os exemplos e o aviso de prévia somem e o destaque aparece na home.
 - [ ] **Step 3:** Trocar a categoria de um produto e conferir o 308 da URL antiga pra nova.
-- [ ] **Step 4:** Só no lançamento (`SITE_MODE=full` + redeploy): `/produtos/...` sem `noindex` e no sitemap.
+- [ ] **Step 4:** Só no lançamento (interruptor "Site completo" ligado no Dashboard): `/produtos/...` sem `noindex` e no sitemap.
 - [ ] **Step 5:** Marcar as Tarefas 8–11 do plano do catálogo como feitas/substituídas por este plano.
 
 ---
@@ -316,8 +316,8 @@ Tela por status (`PublicSiteOrder.status`):
 
 - [ ] **Step 1: Testes** — sitemap e JSON-LD como acima.
 - [ ] **Step 2: Implementar e rodar.**
-- [ ] **Step 3: Homologação ponta a ponta** (sandbox do Pagar.me, preview da Vercel com `NEXT_PUBLIC_STORE_ENABLED=true`): comprar com entrega e com retirada; cartão à vista e parcelado; pedido abaixo da parcela mínima (só à vista); cartão recusado e depois aprovado; Pix que vence; voltar do Pagar.me sem pagar e pagar pela página do pedido; produto esgotado no meio da compra; carrinho com item sob encomenda (selo e prazo do começo ao fim); CEP de bairro sem área; retirada desligada; celular (375 px) e desktop; push de pedido novo chegando no admin.
-- [ ] **Step 4: Lançamento** — a cliente cadastra as áreas de entrega e confere a retirada no admin; `NEXT_PUBLIC_STORE_ENABLED=true` em produção (depois das variáveis do Pagar.me de produção na API); marcar `purchase` como evento-chave no GA4; primeira compra real de valor baixo, estornada pelo painel.
+- [ ] **Step 3: Homologação ponta a ponta** (sandbox do Pagar.me, preview da Vercel apontando pra uma API de homologação com a loja ligada): comprar com entrega e com retirada; cartão à vista e parcelado; pedido abaixo da parcela mínima (só à vista); cartão recusado e depois aprovado; Pix que vence; voltar do Pagar.me sem pagar e pagar pela página do pedido; produto esgotado no meio da compra; carrinho com item sob encomenda (selo e prazo do começo ao fim); CEP de bairro sem área; retirada desligada; celular (375 px) e desktop; push de pedido novo chegando no admin.
+- [ ] **Step 4: Lançamento** — a cliente cadastra as áreas de entrega e confere a retirada no admin; ligar "Loja do site" no Dashboard de produção (depois das variáveis do Pagar.me de produção na API); marcar `purchase` como evento-chave no GA4; primeira compra real de valor baixo, estornada pelo painel.
   - [ ] trocar o redirecionamento de contato@daverdinha.com.br para o e-mail da cliente
 - [ ] **Step 5: Commit** — `feat(site): add store policies and launch checks`
 

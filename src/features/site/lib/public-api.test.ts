@@ -1,3 +1,4 @@
+import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import {
   getActiveCategories,
   getActiveProductBySlug,
@@ -22,7 +23,6 @@ const product = {
 
 describe('public API reads', () => {
   const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const originalMode = process.env.SITE_MODE;
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_API_URL = 'https://api.test';
@@ -31,14 +31,12 @@ describe('public API reads', () => {
 
   afterEach(() => {
     process.env.NEXT_PUBLIC_API_URL = originalApiUrl;
-    if (originalMode === undefined) delete process.env.SITE_MODE;
-    else process.env.SITE_MODE = originalMode;
     jest.restoreAllMocks();
   });
 
-  describe('after launch (SITE_MODE=full)', () => {
+  describe('after launch (site ligado no Dashboard)', () => {
     beforeEach(() => {
-      process.env.SITE_MODE = 'full';
+      mockSiteSettings({ siteEnabled: true });
     });
 
     it('reads products from the API, cached for a minute', async () => {
@@ -84,7 +82,7 @@ describe('public API reads', () => {
 
   describe('before launch (preview)', () => {
     beforeEach(() => {
-      delete process.env.SITE_MODE;
+      mockSiteSettings({ siteEnabled: false });
     });
 
     it('prefers real data when the API has it', async () => {

@@ -1,11 +1,12 @@
-import { render, screen } from "@testing-library/react";
-import Page, { generateMetadata } from "./page";
-import { getCoveredDeliveryZones } from "@/features/site/lib/delivery-zones";
+import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
+import { render, screen } from '@testing-library/react';
+import Page, { generateMetadata } from './page';
+import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
 
 // Catalog and agenda reads hit `NEXT_PUBLIC_API_URL`, which is unset in tests:
 // in 'full' mode that means empty sections (never sample data), so only the
 // delivery zones need a mock here.
-jest.mock("@/features/site/lib/delivery-zones", () => ({
+jest.mock('@/features/site/lib/delivery-zones', () => ({
   getCoveredDeliveryZones: jest.fn(),
 }));
 
@@ -15,160 +16,136 @@ const mockZones = getCoveredDeliveryZones as jest.Mock;
 // element tree before handing it to RTL.
 const renderPage = async () => render(await Page());
 
-const originalMode = process.env.SITE_MODE;
+afterEach(() => {});
 
-afterEach(() => {
-  if (originalMode === undefined) delete process.env.SITE_MODE;
-  else process.env.SITE_MODE = originalMode;
-});
-
-describe("Home page — full site (SITE_MODE=full)", () => {
+describe('Home page — full site (site ligado no Dashboard)', () => {
   beforeEach(() => {
-    process.env.SITE_MODE = "full";
-    mockZones.mockResolvedValue([{ zone: "Centro", bairros: ["Gamboa"] }]);
+    mockSiteSettings({ siteEnabled: true });
+    mockZones.mockResolvedValue([{ zone: 'Centro', bairros: ['Gamboa'] }]);
   });
 
-  it("renders the core static sections", async () => {
+  it('renders the core static sections', async () => {
     await renderPage();
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Ateliê de plantas, vasos e oficinas no Rio de Janeiro",
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Ateliê de plantas, vasos e oficinas no Rio de Janeiro',
     );
-    expect(screen.getByText("Onde entregamos")).toBeInTheDocument();
-    expect(screen.getByText("Onde estamos")).toBeInTheDocument();
-    expect(screen.getByText("Perguntas frequentes")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Daverdinha" })).toBeInTheDocument();
+    expect(screen.getByText('Onde entregamos')).toBeInTheDocument();
+    expect(screen.getByText('Onde estamos')).toBeInTheDocument();
+    expect(screen.getByText('Perguntas frequentes')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Daverdinha' })).toBeInTheDocument();
   });
 
-  it("never shows sample products or events after launch", async () => {
+  it('never shows sample products or events after launch', async () => {
     await renderPage();
 
     expect(screen.queryByText(/Prévia do site/)).not.toBeInTheDocument();
-    expect(screen.queryByText("Vaso Terracota M")).not.toBeInTheDocument();
-    expect(screen.queryByText("Próximos eventos")).not.toBeInTheDocument();
+    expect(screen.queryByText('Vaso Terracota M')).not.toBeInTheDocument();
+    expect(screen.queryByText('Próximos eventos')).not.toBeInTheDocument();
   });
 
-  it("renders the LocalBusiness JSON-LD script tag", async () => {
+  it('renders the LocalBusiness JSON-LD script tag', async () => {
     const { container } = await renderPage();
 
-    const script = container.querySelector(
-      'script[type="application/ld+json"]',
-    );
+    const script = container.querySelector('script[type="application/ld+json"]');
     expect(script).not.toBeNull();
   });
 
-  it("feeds the covered zones into the structured data Google reads", async () => {
+  it('feeds the covered zones into the structured data Google reads', async () => {
     mockZones.mockResolvedValue([
-      { zone: "Centro", bairros: ["Gamboa"] },
-      { zone: "Zona Sul", bairros: ["Botafogo"] },
+      { zone: 'Centro', bairros: ['Gamboa'] },
+      { zone: 'Zona Sul', bairros: ['Botafogo'] },
     ]);
 
     const { container } = await renderPage();
 
-    const script = container.querySelector(
-      'script[type="application/ld+json"]',
-    );
-    expect(JSON.parse(script!.innerHTML).areaServed).toEqual([
-      "Centro",
-      "Zona Sul",
-    ]);
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(JSON.parse(script!.innerHTML).areaServed).toEqual(['Centro', 'Zona Sul']);
   });
 
-  it("drops the delivery section when nothing is covered, and advertises no area", async () => {
+  it('drops the delivery section when nothing is covered, and advertises no area', async () => {
     mockZones.mockResolvedValue([]);
 
     const { container } = await renderPage();
 
-    expect(screen.queryByText("Onde entregamos")).not.toBeInTheDocument();
-    const script = container.querySelector(
-      'script[type="application/ld+json"]',
-    );
+    expect(screen.queryByText('Onde entregamos')).not.toBeInTheDocument();
+    const script = container.querySelector('script[type="application/ld+json"]');
     expect(JSON.parse(script!.innerHTML).areaServed).toEqual([]);
   });
 
-  it("keeps the institutional title and advertises the logo as the OpenGraph image", () => {
-    const metadata = generateMetadata();
+  it('keeps the institutional title and advertises the logo as the OpenGraph image', async () => {
+    const metadata = await generateMetadata();
 
-    expect(metadata.title).toBe(
-      "Daverdinha · Ateliê de plantas no Rio de Janeiro",
-    );
+    expect(metadata.title).toBe('Daverdinha · Ateliê de plantas no Rio de Janeiro');
     expect(metadata.openGraph?.images).toEqual([
       {
-        url: "/logo-circle.png",
+        url: '/logo-circle.png',
         width: 1200,
         height: 1200,
-        alt: "Daverdinha — Ateliê de Plantas",
+        alt: 'Daverdinha — Ateliê de Plantas',
       },
     ]);
   });
 });
 
-describe("Home page — coming soon (SITE_MODE unset)", () => {
+describe('Home page — coming soon (site desligado no Dashboard)', () => {
   beforeEach(() => {
-    delete process.env.SITE_MODE;
+    mockSiteSettings({ siteEnabled: false });
     // Clears call history left by the 'full' describe above — jest isn't
     // configured with clearMocks/resetMocks, so without this the "never
     // calls the delivery API" assertion below would see stale calls from
     // earlier tests instead of verifying this mode's own behavior.
     mockZones.mockClear();
-    mockZones.mockResolvedValue([{ zone: "Centro", bairros: ["Gamboa"] }]);
+    mockZones.mockResolvedValue([{ zone: 'Centro', bairros: ['Gamboa'] }]);
   });
 
-  it("renders the coming-soon landing instead of the institutional sections", async () => {
+  it('renders the coming-soon landing instead of the institutional sections', async () => {
     await renderPage();
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Nosso site está chegando",
-    );
-    expect(screen.queryByText("Onde entregamos")).not.toBeInTheDocument();
-    expect(screen.queryByText("Perguntas frequentes")).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Nosso site está chegando');
+    expect(screen.queryByText('Onde entregamos')).not.toBeInTheDocument();
+    expect(screen.queryByText('Perguntas frequentes')).not.toBeInTheDocument();
   });
 
-  it("never calls the delivery API — the landing must not depend on the backend being up", async () => {
+  it('never calls the delivery API — the landing must not depend on the backend being up', async () => {
     await renderPage();
 
     expect(mockZones).not.toHaveBeenCalled();
   });
 
-  it("still emits the LocalBusiness JSON-LD, advertising no served area", async () => {
+  it('still emits the LocalBusiness JSON-LD, advertising no served area', async () => {
     const { container } = await renderPage();
 
-    const script = container.querySelector(
-      'script[type="application/ld+json"]',
-    );
+    const script = container.querySelector('script[type="application/ld+json"]');
     const json = JSON.parse(script!.innerHTML);
-    expect(json.name).toBe("Daverdinha");
-    expect(json.telephone).toBe("+5521986509259");
+    expect(json.name).toBe('Daverdinha');
+    expect(json.telephone).toBe('+5521986509259');
     expect(json.areaServed).toEqual([]);
   });
 
-  it("keeps the WhatsApp and Instagram links reachable", async () => {
+  it('keeps the WhatsApp and Instagram links reachable', async () => {
     await renderPage();
 
-    expect(
-      screen.getByRole("link", { name: "Falar no WhatsApp" }),
-    ).toHaveAttribute(
-      "href",
-      expect.stringContaining("https://wa.me/5521986509259"),
+    expect(screen.getByRole('link', { name: 'Falar no WhatsApp' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('https://wa.me/5521986509259'),
     );
-    expect(
-      screen.getByRole("link", { name: "@daverdinha_" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '@daverdinha_' })).toBeInTheDocument();
   });
 
-  it('titles the page "Em breve" and repeats every OpenGraph field, since metadata merges shallowly', () => {
-    const metadata = generateMetadata();
+  it('titles the page "Em breve" and repeats every OpenGraph field, since metadata merges shallowly', async () => {
+    const metadata = await generateMetadata();
 
-    expect(metadata.title).toBe("Daverdinha · Em breve");
-    expect(metadata.openGraph?.title).toBe("Daverdinha · Em breve");
+    expect(metadata.title).toBe('Daverdinha · Em breve');
+    expect(metadata.openGraph?.title).toBe('Daverdinha · Em breve');
     expect(metadata.openGraph?.description).toBe(metadata.description);
-    expect(metadata.openGraph).toHaveProperty("type", "website");
+    expect(metadata.openGraph).toHaveProperty('type', 'website');
     expect(metadata.openGraph?.images).toEqual([
       {
-        url: "/logo-circle.png",
+        url: '/logo-circle.png',
         width: 1200,
         height: 1200,
-        alt: "Daverdinha — Ateliê de Plantas",
+        alt: 'Daverdinha — Ateliê de Plantas',
       },
     ]);
   });

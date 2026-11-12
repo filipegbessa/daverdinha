@@ -1,3 +1,4 @@
+import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import { render, screen } from '@testing-library/react';
 import Page from './page';
 
@@ -12,7 +13,7 @@ const renderPage = async (categoria: string, page?: string) =>
 
 describe('/produtos/[categoria]', () => {
   beforeEach(() => {
-    delete process.env.SITE_MODE;
+    mockSiteSettings({ siteEnabled: false });
     delete process.env.NEXT_PUBLIC_API_URL;
   });
 

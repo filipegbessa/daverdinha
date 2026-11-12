@@ -4,20 +4,33 @@ import { ContactLink } from '@/features/site/components/ContactLink';
 import { Footer } from '@/features/site/components/Footer';
 import { Header } from '@/features/site/components/Header';
 import { CartProvider } from '@/features/store/components/CartProvider';
+import { StoreEnabledProvider } from '@/features/store/components/StoreEnabled';
 import { isStoreEnabled } from '@/features/store/lib/store-enabled';
+import { homeHref } from '@/features/site/lib/paths';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
+
+/** O que toda página passa pro `SiteShell`, lido dos interruptores do Dashboard. */
+export async function shellProps(): Promise<{ home: string; storeEnabled: boolean }> {
+  const [home, storeEnabled] = await Promise.all([homeHref(), isStoreEnabled()]);
+  return { home, storeEnabled };
+}
 
 /**
  * A moldura de toda página do site completo: cabeçalho, rodapé e o botão
  * flutuante de WhatsApp. Síncrono de propósito — quem busca os dados é a
- * página. Com a loja ligada, envolve tudo no carrinho.
+ * página, inclusive o interruptor da loja (`shellProps()`), que vai pros
+ * componentes de cliente pelo `StoreEnabledProvider`. Com a loja ligada,
+ * envolve tudo no carrinho.
  */
 export function SiteShell({
   home,
+  storeEnabled,
   preview = false,
   children,
 }: {
   home: string;
+  /** Interruptor "Loja" do Dashboard (`shellProps()` ou `isStoreEnabled()`). */
+  storeEnabled: boolean;
   /** Algum dado da página é exemplo (ver `data/samples.ts`): mostra o aviso de prévia. */
   preview?: boolean;
   children: React.ReactNode;
@@ -29,7 +42,7 @@ export function SiteShell({
           Prévia do site: os produtos, preços e eventos são exemplos para validar o layout.
         </p>
       )}
-      <Header home={home} />
+      <Header home={home} storeEnabled={storeEnabled} />
       {/* Fundo das seções da página: claro e areia alternados, contados pelas
           seções que de fato aparecem (seção vazia que retorna null não
           quebra a sequência). Nenhuma seção de página define o próprio fundo. */}
@@ -46,5 +59,9 @@ export function SiteShell({
       </ContactLink>
     </>
   );
-  return isStoreEnabled() ? <CartProvider>{page}</CartProvider> : page;
+  return (
+    <StoreEnabledProvider value={storeEnabled}>
+      {storeEnabled ? <CartProvider>{page}</CartProvider> : page}
+    </StoreEnabledProvider>
+  );
 }
