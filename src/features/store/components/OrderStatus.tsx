@@ -1,14 +1,17 @@
 import Link from 'next/link';
-import { CheckCircle2, Clock, MessageCircle, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Mail, MessageCircle, XCircle } from 'lucide-react';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButton';
 import { formatClock, formatEventWhen, formatPrice } from '@/lib/format';
-import { eventHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
+import { eventHref, MY_ORDERS_HREF, PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { eventPlace } from '@/features/site/components/EventCard';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import type { FulfillmentStatus, PublicSiteOrder } from '@/features/store/types/store';
 import { orderStatusMessage } from '@/features/site/lib/whatsapp-messages';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
+import { PaymentConfirmer } from '@/features/store/components/PaymentConfirmer';
+import { TicketCards } from '@/features/store/components/TicketCards';
+import { AddToCalendar } from '@/features/store/components/AddToCalendar';
 
 const FULFILLMENT: Record<FulfillmentStatus, string> = {
   awaiting: 'Pedido recebido, logo começamos a preparar.',
@@ -67,6 +70,7 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
                 Já paguei
               </a>
             </div>
+            <PaymentConfirmer />
           </div>
         )}
 
@@ -84,10 +88,21 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
               {order.event.locationAddress && ` · ${order.event.locationAddress}`}
             </p>
             {order.status === 'paid' && (
-              <p className="pt-2 font-semibold text-moss">Apresente esta página ou diga o nome na entrada.</p>
+              <div className="pt-3">
+                <AddToCalendar event={order.event} orderCode={order.code} />
+              </div>
             )}
           </div>
         )}
+
+        {tickets && order.status === 'paid' && (
+          <>
+            <EmailNotice>Mandamos tudo pro seu e-mail. Mostre o QR na entrada.</EmailNotice>
+            <TicketCards tickets={order.tickets} />
+          </>
+        )}
+
+        {order.status === 'paid' && !tickets && <EmailNotice>Mandamos a confirmação pro seu e-mail.</EmailNotice>}
 
         {order.status === 'paid' && !tickets && (
           <div className="space-y-2 rounded-2xl border border-moss-line bg-moss/5 p-5">
@@ -141,6 +156,12 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
           <MessageCircle className="size-5" aria-hidden="true" />
           Falar no WhatsApp sobre o pedido {order.code}
         </ContactLink>
+        <p className="text-sm text-ink-soft">
+          Perdeu o link de outro pedido?{' '}
+          <Link href={MY_ORDERS_HREF} className="font-semibold text-moss underline underline-offset-4">
+            Receber meus pedidos por e-mail
+          </Link>
+        </p>
       </div>
 
       {tickets ? (
@@ -194,5 +215,15 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
         </aside>
       )}
     </div>
+  );
+}
+
+/** "Mandamos pro seu e-mail": o comprador sabe onde achar o pedido depois. */
+function EmailNotice({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="flex items-center gap-2 text-ink">
+      <Mail className="size-5 shrink-0 text-moss" aria-hidden="true" />
+      {children}
+    </p>
   );
 }

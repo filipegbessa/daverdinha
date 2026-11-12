@@ -14,6 +14,8 @@ export async function homeHref(): Promise<string> {
 
 export const PRODUCTS_HREF = '/produtos';
 export const AGENDA_HREF = '/agenda';
+/** Pede os links dos pedidos por e-mail (sem conta). */
+export const MY_ORDERS_HREF = '/meus-pedidos';
 
 export function categoryHref(categorySlug: string): string {
   return `${PRODUCTS_HREF}/${categorySlug}`;

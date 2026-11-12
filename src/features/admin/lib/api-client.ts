@@ -1,12 +1,13 @@
 'use client';
 import { useAuth } from '@clerk/nextjs';
 import { useCallback } from 'react';
+import { ApiError } from '@/features/admin/lib/api-error';
 
 export function useApiClient() {
   const { getToken } = useAuth();
 
   const apiFetch = useCallback(
-    async <T,>(path: string, options: RequestInit = {}): Promise<T> => {
+    async <T>(path: string, options: RequestInit = {}): Promise<T> => {
       const token = await getToken();
       const isFormData = options.body instanceof FormData;
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
@@ -20,7 +21,7 @@ export function useApiClient() {
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.message ?? `Erro ${response.status}`);
+        throw new ApiError(body.message ?? `Erro ${response.status}`, response.status, body);
       }
 
       if (response.status === 204) return undefined as T;

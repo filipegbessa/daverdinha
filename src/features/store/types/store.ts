@@ -99,8 +99,11 @@ export interface PublicSiteOrder {
     locationName: string | null;
     locationAddress: string | null;
   } | null;
-  /** Um por participante; `[]` em pedido de produto. */
-  tickets: { attendeeName: string; unitPrice: number }[];
+  /**
+   * Um por participante; `[]` em pedido de produto. `code` é o conteúdo do QR
+   * lido na entrada; `checkedIn` diz se a pessoa já entrou.
+   */
+  tickets: { attendeeName: string; unitPrice: number; code: string; checkedIn: boolean }[];
   subtotal: number;
   deliveryFee: number;
   total: number;

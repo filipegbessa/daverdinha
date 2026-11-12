@@ -20,6 +20,11 @@ describe('Footer', () => {
     expect(screen.getByText(/R\. Capiberibe, 32, Santo Cristo/)).toBeInTheDocument();
   });
 
+  it('links to "Meus pedidos", where buyers get their order links by email', () => {
+    render(<Footer home="/" />);
+    expect(screen.getByRole('link', { name: 'Meus pedidos' })).toHaveAttribute('href', '/meus-pedidos');
+  });
+
   it('links to the privacy policy page', () => {
     render(<Footer home="/" />);
     expect(screen.getByRole('link', { name: 'Política de Privacidade' })).toHaveAttribute(

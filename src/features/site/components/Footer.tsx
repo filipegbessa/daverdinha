@@ -4,6 +4,7 @@ import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { siteNav } from '@/features/site/components/site-nav';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
+import { MY_ORDERS_HREF } from '@/features/site/lib/paths';
 
 /**
  * Nome, endereço e telefone em todas as páginas, escritos igual ao perfil da
@@ -62,6 +63,12 @@ export function Footer({ home }: { home: string }) {
                 </Link>
               </li>
             ))}
+            {/* Fora do menu do topo: só quem comprou procura. */}
+            <li>
+              <Link href={MY_ORDERS_HREF} className="hover:text-paper">
+                Meus pedidos
+              </Link>
+            </li>
           </ul>
         </nav>
 

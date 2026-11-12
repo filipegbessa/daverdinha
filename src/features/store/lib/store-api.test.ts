@@ -1,4 +1,11 @@
-import { createCheckout, createTicketCheckout, getOrderByToken, PREVIEW_CHECKOUT, quoteCart } from './store-api';
+import {
+  createCheckout,
+  createTicketCheckout,
+  getOrderByToken,
+  PREVIEW_CHECKOUT,
+  quoteCart,
+  requestOrderLinks,
+} from './store-api';
 
 /** Resposta mínima de `fetch`: o jsdom dos testes não tem `Response`. */
 function reply(status: number, body: unknown) {
@@ -200,5 +207,42 @@ describe('getOrderByToken', () => {
     await expect(getOrderByToken('x')).resolves.toBeNull();
     fetchMock.mockRejectedValueOnce(new Error('offline'));
     await expect(getOrderByToken('x')).resolves.toBeNull();
+  });
+});
+
+describe('requestOrderLinks', () => {
+  const originalUrl = process.env.NEXT_PUBLIC_API_URL;
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_API_URL = 'https://api.test';
+    fetchMock = jest.fn();
+    global.fetch = fetchMock;
+  });
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_API_URL = originalUrl;
+  });
+
+  it('posts the trimmed email and treats 202 as done', async () => {
+    fetchMock.mockResolvedValue(reply(202, {}));
+
+    await expect(requestOrderLinks(' maria@exemplo.com ')).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledWith('https://api.test/checkout/orders/lookup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'maria@exemplo.com' }),
+    });
+  });
+
+  it('tells the rate limit apart from other failures', async () => {
+    fetchMock.mockResolvedValueOnce(reply(429, {}));
+    await expect(requestOrderLinks('a@b.co')).resolves.toEqual({ ok: false, reason: 'too_many' });
+
+    fetchMock.mockResolvedValueOnce(reply(500, {}));
+    await expect(requestOrderLinks('a@b.co')).resolves.toEqual({ ok: false, reason: 'error' });
+
+    fetchMock.mockRejectedValueOnce(new Error('offline'));
+    await expect(requestOrderLinks('a@b.co')).resolves.toEqual({ ok: false, reason: 'error' });
   });
 });

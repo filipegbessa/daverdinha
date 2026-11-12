@@ -28,6 +28,11 @@ export function maskPhone(value: string): string {
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** O mesmo teste de e-mail do checkout, pra outros formulários do site. */
+export function isValidEmail(value: string): boolean {
+  return EMAIL.test(value.trim());
+}
+
 /**
  * Quem compra: as regras do `CustomerDto` da API, as mesmas no checkout de
  * produtos e na compra de ingresso.

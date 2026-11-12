@@ -8,6 +8,7 @@ jest.mock('next/navigation', () => ({
   notFound: jest.fn(() => {
     throw new Error('NEXT_NOT_FOUND');
   }),
+  useRouter: () => ({ refresh: jest.fn() }),
 }));
 jest.mock('@/features/store/lib/store-api', () => ({ getOrderByToken: jest.fn() }));
 
@@ -53,7 +54,7 @@ describe('/pedido/[token]', () => {
         locationName: null,
         locationAddress: null,
       },
-      tickets: [{ attendeeName: 'Ana Lima', unitPrice: 45 }],
+      tickets: [{ attendeeName: 'Ana Lima', unitPrice: 45, code: 'K7Q2M9XP', checkedIn: false }],
       deliveryMethod: null,
       pickup: null,
     });

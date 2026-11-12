@@ -5,6 +5,7 @@ import { mockApi as mockAdminApi, paginated } from '@/features/admin/test-fixtur
 import type { Attendee } from '@/features/admin/types/admin';
 
 jest.mock('@/features/admin/lib/api-client');
+jest.mock('@/features/admin/lib/use-qr-scanner', () => ({ useQrScanner: () => 'scanning' }));
 jest.mock('next/navigation', () => ({
   useParams: () => ({ id: 'e1' }),
   useSearchParams: () => new URLSearchParams('evento=Oficina de terrário'),
@@ -75,5 +76,28 @@ describe('ParticipantesPage', () => {
     await userEvent.type(screen.getByLabelText('Buscar participantes'), 'ana');
 
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/events/e1/attendees?q=ana'));
+  });
+
+  it('opens the QR reader and refreshes the list after a check-in', async () => {
+    const apiFetch = mockAdminApi((path) => {
+      if (path === '/site-order-tickets/check-in-by-code')
+        return { ...attendees[0], checkedInAt: '2026-11-21T13:10:00.000Z' };
+      return { ...paginated(attendees), sold: 12, spots: 20 };
+    });
+    render(<ParticipantesPage />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Ler QR' }));
+    const reader = screen.getByRole('region', { name: 'Leitor de ingressos' });
+    await userEvent.type(within(reader).getByLabelText('Código do ingresso'), 'K7Q2M9XP');
+    await userEvent.click(within(reader).getByRole('button', { name: 'Confirmar entrada' }));
+
+    expect(await within(reader).findByText('Ana Lima entrou')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        apiFetch.mock.calls.filter(([path]) => String(path).startsWith('/events/e1/attendees')).length,
+      ).toBeGreaterThan(1),
+    );
+    await userEvent.click(within(reader).getByRole('button', { name: 'Fechar' }));
+    expect(screen.queryByRole('region', { name: 'Leitor de ingressos' })).not.toBeInTheDocument();
   });
 });

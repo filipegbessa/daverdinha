@@ -2,6 +2,8 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
+import { QrCode } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useApiClient } from '@/features/admin/lib/api-client';
@@ -14,6 +16,7 @@ import { FilterBar } from '@/features/admin/components/FilterBar';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { TablePagination } from '@/features/admin/components/TablePagination';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
+import { TicketScanner } from '@/features/admin/components/TicketScanner';
 import type { Attendee, AttendeeList } from '@/features/admin/types/admin';
 
 const DEFAULT_FILTERS = { q: '' };
@@ -49,6 +52,7 @@ function Attendees() {
   } = usePaginatedResource<Attendee, AttendeeList>(`/events/${id}/attendees`, { q: q || undefined });
   const checkIn = useApiMutation('Erro ao marcar a presença.');
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
 
   async function toggle(attendee: Attendee, checked: boolean) {
     setSavingId(attendee.id);
@@ -71,10 +75,15 @@ function Attendees() {
   return (
     <div>
       <BackLink href="/admin/agenda">Voltar para a agenda</BackLink>
-      <PageHeader
-        title="Participantes"
-        description={occupancy && [eventTitle, occupancy].filter(Boolean).join(' · ')}
-      />
+      <PageHeader title="Participantes" description={occupancy && [eventTitle, occupancy].filter(Boolean).join(' · ')}>
+        {!scanning && (
+          <Button onClick={() => setScanning(true)}>
+            <QrCode aria-hidden="true" />
+            Ler QR
+          </Button>
+        )}
+      </PageHeader>
+      {scanning && <TicketScanner eventId={id} onCheckedIn={() => refetch()} onClose={() => setScanning(false)} />}
       <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
         {(values, set) => (
           <Input

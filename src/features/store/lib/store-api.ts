@@ -143,3 +143,26 @@ export async function getOrderByToken(token: string): Promise<PublicSiteOrder | 
     return null;
   }
 }
+
+/** Resultado de "Meus pedidos": a API nunca diz se o e-mail tem pedido. */
+export type OrderLinksResult = { ok: true } | { ok: false; reason: 'too_many' | 'error' };
+
+/**
+ * Pede os links dos pedidos por e-mail (`POST /checkout/orders/lookup`). A
+ * API responde 202 com ou sem pedido; 429 é limite de tentativas.
+ */
+export async function requestOrderLinks(email: string): Promise<OrderLinksResult> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return { ok: false, reason: 'error' };
+  try {
+    const response = await fetch(`${apiUrl}/checkout/orders/lookup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+    if (response.ok) return { ok: true };
+    return { ok: false, reason: response.status === 429 ? 'too_many' : 'error' };
+  } catch {
+    return { ok: false, reason: 'error' };
+  }
+}
