@@ -64,7 +64,7 @@ export function eventJsonLd(event: SiteEvent): Record<string, unknown> {
     name: event.title,
     description: event.description,
     startDate: event.startsAt,
-    endDate: event.endsAt,
+    ...(event.endsAt ? { endDate: event.endsAt } : {}),
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     ...(event.imageUrl ? { image: [event.imageUrl] } : {}),

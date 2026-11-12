@@ -14,7 +14,6 @@ const event: SiteEvent = {
   price: 120,
   spots: 8,
   imageUrl: 'https://example.com/terrario.jpg',
-  ctaUrl: null,
   ticketSales: false,
   maxTicketsPerOrder: 10,
   spotsLeft: null,

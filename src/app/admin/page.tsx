@@ -141,7 +141,7 @@ export default function DashboardPage() {
               disabled={storeToggle.isPending}
               onCheckedChange={(checked) => patchStoreSettings({ ticketsEnabled: checked })}
               state={storeSettings.ticketsEnabled ? 'Venda de ingressos ativa' : 'Venda de ingressos desativada'}
-              hint="Os eventos com 'Vender ingressos pelo site' marcado passam a vender e inscrever pelo site. Desligado, todos usam o link de inscrição ou o WhatsApp."
+              hint="Os eventos com 'Vender ingressos pelo site' marcado passam a vender e inscrever pelo site. Desligado, a inscrição de todos é pelo WhatsApp."
             />
             {storeSettings.ticketsEnabled && !storeSettings.paymentConfigured && (
               <p role="status" className="text-xs text-amber-700 dark:text-amber-400">

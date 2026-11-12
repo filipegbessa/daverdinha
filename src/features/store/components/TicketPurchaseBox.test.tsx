@@ -15,7 +15,6 @@ const event: SiteEvent = {
   price: 45,
   spots: 20,
   imageUrl: null,
-  ctaUrl: null,
   ticketSales: true,
   maxTicketsPerOrder: 4,
   spotsLeft: 3,
@@ -43,12 +42,30 @@ describe('TicketPurchaseBox', () => {
     );
   });
 
-  it('stops the quantity at the spots left', async () => {
+  it('stops the quantity at the spots left and says so only then', async () => {
     render(<TicketPurchaseBox event={{ ...event, spotsLeft: 2 }} />);
 
+    expect(screen.queryByText('Só restam 2 vagas.')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Aumentar' }));
 
     expect(screen.getByRole('button', { name: 'Aumentar' })).toBeDisabled();
+    expect(screen.getByText('Só restam 2 vagas.')).toBeInTheDocument();
+  });
+
+  it('explains the per-order limit once the buyer reaches it', async () => {
+    render(<TicketPurchaseBox event={{ ...event, spotsLeft: 10 }} />);
+
+    for (let i = 0; i < 2; i++) await userEvent.click(screen.getByRole('button', { name: 'Aumentar' }));
+    expect(screen.queryByText('O máximo por compra é 4 ingressos.')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Aumentar' }));
+
+    expect(screen.getByText('O máximo por compra é 4 ingressos.')).toBeInTheDocument();
+  });
+
+  it('shows the spots left of a free event too', () => {
+    render(<TicketPurchaseBox event={{ ...event, price: null, spotsLeft: 12 }} />);
+
+    expect(screen.getByText('Restam 12 vagas')).toBeInTheDocument();
   });
 
   it('says "Inscrever-se" for a free event', () => {

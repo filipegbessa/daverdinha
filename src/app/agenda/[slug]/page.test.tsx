@@ -21,7 +21,6 @@ const pastEvent = {
   price: 100,
   spots: null,
   imageUrl: null,
-  ctaUrl: null,
   ticketSales: false,
   maxTicketsPerOrder: 10,
   spotsLeft: null,
@@ -43,7 +42,7 @@ describe('/agenda/[slug]', () => {
     jest.restoreAllMocks();
   });
 
-  it('shows when, where and how much, with a WhatsApp signup naming the event', async () => {
+  it('shows when, where, how much and the spots left', async () => {
     await renderPage('plantar-e-brindar-kokedama');
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Plantar e brindar: kokedama');
@@ -52,9 +51,10 @@ describe('/agenda/[slug]', () => {
     expect(
       within(details).getByText('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030'),
     ).toBeInTheDocument();
-    expect(within(details).getByText('R$ 150,00 · 10 vagas')).toBeInTheDocument();
-    const signup = screen.getByRole('link', { name: 'Quero me inscrever' });
-    expect(decodeURIComponent(signup.getAttribute('href')!)).toContain('*Plantar e brindar: kokedama*');
+    expect(within(details).getByText('R$ 150,00 · Restam 2 vagas')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Comprar ingresso' })).getByText('Restam 2 vagas'),
+    ).toBeInTheDocument();
   });
 
   it('sells tickets on the page when the event sells through the site, even with the products store off', async () => {
@@ -97,7 +97,8 @@ describe('/agenda/[slug]', () => {
     await renderPage('comecou');
 
     expect(screen.queryByRole('region', { name: 'Comprar ingresso' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Quero me inscrever' })).toBeInTheDocument();
+    const signup = screen.getByRole('link', { name: 'Quero me inscrever' });
+    expect(decodeURIComponent(signup.getAttribute('href')!)).toContain('*Oficina antiga*');
   });
 
   // Link antigo compartilhado no Instagram cai numa página que explica.

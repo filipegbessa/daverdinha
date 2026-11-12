@@ -65,10 +65,22 @@ function hour(iso: string): string {
 }
 
 /** "sáb, 15/11 · 10h às 12h" */
-export function formatEventWhen(startsAt: string, endsAt: string): string {
+export function formatEventWhen(startsAt: string, endsAt: string | null): string {
   const { weekday } = eventCalendar(startsAt);
   const p = parts(startsAt, { day: '2-digit', month: '2-digit' });
-  return `${weekday}, ${p.day}/${p.month} · ${hour(startsAt)} às ${hour(endsAt)}`;
+  const start = `${weekday}, ${p.day}/${p.month} · ${hour(startsAt)}`;
+  // Sem horário de fim (festa, feirinha): só o começo.
+  return endsAt ? `${start} às ${hour(endsAt)}` : start;
+}
+
+/**
+ * Quando o evento acaba de fato: o fim cadastrado ou, sem ele, o fim do dia
+ * em que começa no Rio (mesma regra da API pra tirar o evento da lista).
+ */
+export function eventEndTime(event: { startsAt: string; endsAt: string | null }): number {
+  if (event.endsAt) return new Date(event.endsAt).getTime();
+  const day = parts(event.startsAt, { year: 'numeric', month: '2-digit', day: '2-digit' });
+  return new Date(`${day.year}-${day.month}-${day.day}T23:59:59.999-03:00`).getTime();
 }
 
 /** "sáb 15/11 · 10h" — a versão curta da faixa do topo. */

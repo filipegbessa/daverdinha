@@ -22,6 +22,30 @@ export function clampQuantity(value: unknown, limit: number): number {
   return Math.max(1, Math.min(n, limit));
 }
 
+/** "Restam 5 vagas" / "Resta 1 vaga"; `null` quando o evento não tem limite. */
+export function spotsLeftText(spotsLeft: number | null): string | null {
+  if (spotsLeft === null) return null;
+  return spotsLeft === 1 ? 'Resta 1 vaga' : `Restam ${spotsLeft} vagas`;
+}
+
+/**
+ * O aviso de quando a pessoa chega no limite pelo seletor: diz se o que
+ * travou foram as vagas ou o máximo por compra. Antes do limite, nada.
+ */
+export function quantityLimitText(
+  event: Pick<SiteEvent, 'maxTicketsPerOrder' | 'spotsLeft' | 'price'>,
+  quantity: number,
+): string | null {
+  const limit = ticketLimit(event);
+  if (limit <= 1 || quantity < limit) return null;
+  if (event.spotsLeft !== null && event.spotsLeft <= event.maxTicketsPerOrder) {
+    return limit === 1 ? 'Só resta 1 vaga.' : `Só restam ${limit} vagas.`;
+  }
+  return isFreeEvent(event)
+    ? `O máximo por inscrição é ${limit} pessoas.`
+    : `O máximo por compra é ${limit} ingressos.`;
+}
+
 /** O checkout de ingresso do evento, já com a quantidade escolhida. */
 export function ticketCheckoutHref(event: Pick<SiteEvent, 'slug'>, quantity: number): string {
   return `${eventHref(event)}/ingressos?quantidade=${quantity}`;

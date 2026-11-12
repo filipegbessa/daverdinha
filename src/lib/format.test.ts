@@ -1,5 +1,6 @@
 import {
   eventCalendar,
+  eventEndTime,
   formatCurrency,
   formatDateTime,
   formatEventPrice,
@@ -52,6 +53,15 @@ describe('event dates', () => {
 
   it('describes when it happens, in Rio time', () => {
     expect(formatEventWhen(startsAt, endsAt)).toBe('sáb, 14/11 · 10h às 12h30');
+  });
+
+  it('shows only the start when there is no end time', () => {
+    expect(formatEventWhen(startsAt, null)).toBe('sáb, 14/11 · 10h');
+  });
+
+  it('ends an event without an end time at the end of its day in Rio', () => {
+    expect(eventEndTime({ startsAt, endsAt })).toBe(new Date(endsAt).getTime());
+    expect(new Date(eventEndTime({ startsAt, endsAt: null })).toISOString()).toBe('2026-11-15T02:59:59.999Z');
   });
 
   it('has a short version for the top bar', () => {

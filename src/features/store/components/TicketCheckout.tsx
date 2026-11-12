@@ -17,7 +17,13 @@ import { QuantityStepper } from '@/features/store/components/QuantityStepper';
 import { createTicketCheckout } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
 import { maskPhone, validateCustomer } from '@/features/store/lib/checkout-form';
-import { clampQuantity, isFreeEvent, ticketLimit } from '@/features/store/lib/tickets';
+import {
+  clampQuantity,
+  isFreeEvent,
+  quantityLimitText,
+  spotsLeftText,
+  ticketLimit,
+} from '@/features/store/lib/tickets';
 import type { SiteEvent } from '@/features/site/types/event';
 
 type Buyer = { name: string; email: string; phone: string; notes: string };
@@ -65,6 +71,7 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
   const [closed, setClosed] = useState<Closed | null>(event.soldOut || limit === 0 ? 'sold_out' : null);
 
   const quantity = attendees.length;
+  const limitText = quantityLimitText({ maxTicketsPerOrder: maxPerOrder, spotsLeft, price: event.price }, quantity);
   const total = (event.price ?? 0) * quantity;
   const names = buyerAttends ? [buyer.name, ...attendees.slice(1)] : attendees;
   const totalText = free ? 'Gratuito' : formatPrice(total);
@@ -251,7 +258,7 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
         <fieldset className="space-y-4">
           <legend className="font-serif text-xl font-semibold text-ink">Participantes</legend>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-ink-soft">{limit > 1 ? `Até ${limit} por compra.` : 'Uma vaga por compra.'}</p>
+            <p className="text-sm text-ink-soft">{spotsLeftText(spotsLeft) ?? ''}</p>
             {limit > 1 && (
               <QuantityStepper
                 value={quantity}
@@ -261,6 +268,11 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
               />
             )}
           </div>
+          {limitText && (
+            <p role="status" className="text-sm text-ink-soft">
+              {limitText}
+            </p>
+          )}
           <label className="flex cursor-pointer items-center gap-2 text-ink">
             <input
               type="checkbox"

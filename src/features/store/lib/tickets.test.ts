@@ -1,4 +1,11 @@
-import { clampQuantity, isFreeEvent, ticketCheckoutHref, ticketLimit } from './tickets';
+import {
+  clampQuantity,
+  isFreeEvent,
+  quantityLimitText,
+  spotsLeftText,
+  ticketCheckoutHref,
+  ticketLimit,
+} from './tickets';
 
 describe('ticket helpers', () => {
   it('treats no price and zero as free', () => {
@@ -19,6 +26,23 @@ describe('ticket helpers', () => {
     expect(clampQuantity('0', 4)).toBe(1);
     expect(clampQuantity('abc', 4)).toBe(1);
     expect(clampQuantity(undefined, 4)).toBe(1);
+  });
+
+  it('says how many spots are left, or nothing when there is no limit', () => {
+    expect(spotsLeftText(5)).toBe('Restam 5 vagas');
+    expect(spotsLeftText(1)).toBe('Resta 1 vaga');
+    expect(spotsLeftText(null)).toBeNull();
+  });
+
+  it('explains the limit only once the quantity reaches it', () => {
+    const paid = { maxTicketsPerOrder: 4, spotsLeft: 10, price: 45 };
+    expect(quantityLimitText(paid, 3)).toBeNull();
+    expect(quantityLimitText(paid, 4)).toBe('O máximo por compra é 4 ingressos.');
+    expect(quantityLimitText({ ...paid, price: null }, 4)).toBe('O máximo por inscrição é 4 pessoas.');
+    expect(quantityLimitText({ ...paid, spotsLeft: 2 }, 2)).toBe('Só restam 2 vagas.');
+    expect(quantityLimitText({ ...paid, spotsLeft: null }, 4)).toBe('O máximo por compra é 4 ingressos.');
+    // Uma vaga só: não tem seletor, não tem aviso.
+    expect(quantityLimitText({ ...paid, spotsLeft: 1 }, 1)).toBeNull();
   });
 
   it('links to the ticket checkout of the event with the quantity', () => {

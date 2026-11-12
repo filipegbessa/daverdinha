@@ -47,9 +47,31 @@ describe('/agenda/[slug]/ingressos', () => {
   });
 
   it('sends an event without sales on the site back to its page', async () => {
-    await expect(renderPage('plantar-e-brindar-kokedama')).rejects.toThrow(
-      'NEXT_REDIRECT /agenda/plantar-e-brindar-kokedama',
-    );
+    process.env.NEXT_PUBLIC_API_URL = 'https://api.test';
+    const noSales = {
+      id: 'e9',
+      title: 'Aula aberta',
+      slug: 'aula-aberta',
+      description: 'd',
+      startsAt: '2099-01-10T13:00:00.000Z',
+      endsAt: '2099-01-10T15:00:00.000Z',
+      locationName: null,
+      locationAddress: null,
+      price: null,
+      spots: null,
+      imageUrl: null,
+      ticketSales: false,
+      maxTicketsPerOrder: 10,
+      spotsLeft: null,
+      soldOut: false,
+    };
+    global.fetch = jest.fn(async (url: string) =>
+      url.endsWith('/events/aula-aberta')
+        ? ({ ok: true, json: async () => noSales } as Response)
+        : ({ ok: false } as Response),
+    ) as jest.Mock;
+
+    await expect(renderPage('aula-aberta')).rejects.toThrow('NEXT_REDIRECT /agenda/aula-aberta');
   });
 
   it('is a 404 for an unknown event', async () => {

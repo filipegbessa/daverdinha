@@ -1,3 +1,4 @@
+import { eventEndTime } from '@/lib/format';
 import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import {
   getActiveCategories,
@@ -101,7 +102,7 @@ describe('public API reads', () => {
 
       const events = await getUpcomingEvents();
       expect(events.length).toBeGreaterThan(0);
-      expect(events.every((e) => new Date(e.endsAt).getTime() > Date.now())).toBe(true);
+      expect(events.every((e) => eventEndTime(e) > Date.now())).toBe(true);
     });
 
     it('resolves sample products and events by slug', async () => {

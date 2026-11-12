@@ -8,7 +8,7 @@ import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
-import { formatCurrency, formatDateTime } from '@/lib/format';
+import { eventEndTime, formatCurrency, formatDateTime } from '@/lib/format';
 import { TablePagination } from '@/features/admin/components/TablePagination';
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { FilterBar } from '@/features/admin/components/FilterBar';
@@ -95,7 +95,7 @@ export default function AgendaPage() {
         >
           {events.map((event) => {
             const sales = salesLabel(event, storeSettings?.ticketsEnabled);
-            const past = new Date(event.endsAt).getTime() < now;
+            const past = eventEndTime(event) < now;
             const details = [
               formatDateTime(event.startsAt),
               event.price === null ? 'Gratuito' : formatCurrency(event.price, 'BRL'),

@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { CalendarDays, ExternalLink, MapPin, MessageCircle, Ticket } from 'lucide-react';
+import { CalendarDays, MapPin, MessageCircle, Ticket } from 'lucide-react';
 import { businessInfo } from '@/data/business';
 import { SiteShell, shellProps } from '@/features/site/components/SiteShell';
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { ContactLink } from '@/features/site/components/ContactLink';
-import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButton';
+import { siteButtonClass } from '@/features/site/components/SiteButton';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import { JsonLd } from '@/features/site/components/JsonLd';
 import { eventDetails, eventPlace } from '@/features/site/components/EventCard';
@@ -13,7 +13,7 @@ import { TicketPurchaseBox } from '@/features/store/components/TicketPurchaseBox
 import { EventsSection } from '@/features/site/components/EventsSection';
 import { Location } from '@/features/site/components/Location';
 import { isSample } from '@/features/site/data/samples';
-import { formatEventShort, formatEventWhen } from '@/lib/format';
+import { eventEndTime, formatEventShort, formatEventWhen } from '@/lib/format';
 import { AGENDA_HREF, eventHref } from '@/features/site/lib/paths';
 import { getEventBySlug, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
@@ -49,7 +49,7 @@ export default async function EventPage({ params }: Props) {
   if (!event) notFound();
 
   const now = Date.now();
-  const past = new Date(event.endsAt).getTime() < now;
+  const past = eventEndTime(event) < now;
   // Venda pelo site só até o começo do evento (a API recusa depois disso).
   // Independe da loja de produtos: só do `ticketSales`, já combinado com o
   // interruptor "Venda de ingressos" do Dashboard.
@@ -109,24 +109,18 @@ export default async function EventPage({ params }: Props) {
               {sellsHere && <TicketPurchaseBox event={event} />}
               <p className="mt-6 leading-relaxed whitespace-pre-line text-ink-soft">{event.description}</p>
 
-              {!past &&
-                !sellsHere &&
-                (event.ctaUrl ? (
-                  <SiteButton href={event.ctaUrl} target="_blank" rel="noopener" className="mt-8 w-full sm:w-auto">
-                    <ExternalLink className="size-5" aria-hidden="true" />
-                    Fazer inscrição
-                  </SiteButton>
-                ) : (
-                  <ContactLink
-                    href={getWhatsAppUrl(signupMessage(event))}
-                    channel="whatsapp"
-                    location="event"
-                    className={siteButtonClass({ className: 'mt-8 w-full sm:w-auto' })}
-                  >
-                    <MessageCircle className="size-5" aria-hidden="true" />
-                    Quero me inscrever
-                  </ContactLink>
-                ))}
+              {/* Sem venda pelo site, a inscrição é pelo WhatsApp, com mensagem pronta. */}
+              {!past && !sellsHere && (
+                <ContactLink
+                  href={getWhatsAppUrl(signupMessage(event))}
+                  channel="whatsapp"
+                  location="event"
+                  className={siteButtonClass({ className: 'mt-8 w-full sm:w-auto' })}
+                >
+                  <MessageCircle className="size-5" aria-hidden="true" />
+                  Quero me inscrever
+                </ContactLink>
+              )}
             </div>
           </div>
         </div>

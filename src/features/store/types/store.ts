@@ -95,7 +95,7 @@ export interface PublicSiteOrder {
     title: string;
     slug: string;
     startsAt: string;
-    endsAt: string;
+    endsAt: string | null;
     locationName: string | null;
     locationAddress: string | null;
   } | null;

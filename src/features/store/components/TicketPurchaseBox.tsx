@@ -7,7 +7,13 @@ import { signupMessage } from '@/features/site/lib/whatsapp-messages';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { SiteButton } from '@/features/site/components/SiteButton';
 import { QuantityStepper } from '@/features/store/components/QuantityStepper';
-import { isFreeEvent, ticketCheckoutHref, ticketLimit } from '@/features/store/lib/tickets';
+import {
+  isFreeEvent,
+  quantityLimitText,
+  spotsLeftText,
+  ticketCheckoutHref,
+  ticketLimit,
+} from '@/features/store/lib/tickets';
 import type { SiteEvent } from '@/features/site/types/event';
 
 /**
@@ -24,8 +30,9 @@ export function TicketPurchaseBox({ event }: { event: SiteEvent }) {
   const action = free ? 'Inscrever-se' : 'Comprar ingresso';
   const href = ticketCheckoutHref(event, quantity);
   const price = free ? 'Gratuito' : `${formatPrice(event.price ?? 0)} por pessoa`;
-  const spots =
-    event.spotsLeft === null ? null : event.spotsLeft === 1 ? 'Resta 1 vaga' : `Restam ${event.spotsLeft} vagas`;
+  // Vagas restantes sempre que o evento tem limite, pago ou gratuito.
+  const spots = spotsLeftText(event.spotsLeft);
+  const limitText = quantityLimitText(event, quantity);
 
   if (soldOut) {
     return (
@@ -54,16 +61,21 @@ export function TicketPurchaseBox({ event }: { event: SiteEvent }) {
           {spots && <p className="text-sm text-ink-soft">{spots}</p>}
         </div>
         {limit > 1 && (
-          <div className="flex items-center gap-3">
-            <span id="ticket-quantity-label" className="text-sm font-medium text-ink">
-              {free ? 'Pessoas' : 'Ingressos'}
-            </span>
-            <QuantityStepper
-              value={quantity}
-              max={limit}
-              onChange={setQuantity}
-              label={free ? 'Quantidade de pessoas' : 'Quantidade de ingressos'}
-            />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-ink">{free ? 'Pessoas' : 'Ingressos'}</span>
+              <QuantityStepper
+                value={quantity}
+                max={limit}
+                onChange={setQuantity}
+                label={free ? 'Quantidade de pessoas' : 'Quantidade de ingressos'}
+              />
+            </div>
+            {limitText && (
+              <p role="status" className="text-sm text-ink-soft">
+                {limitText}
+              </p>
+            )}
           </div>
         )}
         <SiteButton href={href} className="w-full sm:w-auto">

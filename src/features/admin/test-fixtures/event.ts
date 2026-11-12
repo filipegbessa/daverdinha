@@ -13,7 +13,6 @@ export const oficina: EventAdmin = {
   price: 120,
   spots: 8,
   imageUrl: 'https://blob/events/1.webp',
-  ctaUrl: null,
   ticketSales: true,
   maxTicketsPerOrder: 4,
   spotsLeft: 5,

@@ -31,6 +31,7 @@ describe('EventDialog', () => {
     render(<EventDialog event={null} onClose={jest.fn()} onSaved={onSaved} />);
 
     await fillRequired();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Sem limite de vagas' }));
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(apiFetch).toHaveBeenCalledWith('/events', expect.objectContaining({ method: 'POST' }));
@@ -43,11 +44,48 @@ describe('EventDialog', () => {
       locationAddress: '',
       price: '',
       spots: '',
-      ctaUrl: '',
       published: 'false',
       ticketSales: 'false',
     });
     expect(onSaved).toHaveBeenCalled();
+  });
+
+  it('saves an event without an end time', async () => {
+    const apiFetch = mockSave();
+    render(<EventDialog event={null} onClose={jest.fn()} onSaved={jest.fn()} />);
+
+    await userEvent.type(screen.getByLabelText('Título'), 'Festa na praça');
+    await userEvent.type(screen.getByLabelText('Descrição'), 'Até acabar.');
+    await userEvent.type(screen.getByLabelText('Início'), '2026-11-28T16:00');
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Sem limite de vagas' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(sentFields(apiFetch)).toMatchObject({ startsAt: '2026-11-28T19:00:00.000Z', endsAt: '' });
+  });
+
+  it('asks for the spots unless the event has no limit, like made-to-order products', async () => {
+    const apiFetch = mockSave();
+    render(<EventDialog event={null} onClose={jest.fn()} onSaved={jest.fn()} />);
+
+    await fillRequired();
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(screen.getByText('Informe a quantidade de vagas, ou marque "Sem limite de vagas".')).toBeInTheDocument();
+    expect(apiFetch).not.toHaveBeenCalled();
+
+    await userEvent.type(screen.getByLabelText('Vagas'), '30');
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Sem limite de vagas' }));
+    expect(screen.getByLabelText('Vagas')).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(sentFields(apiFetch)).toMatchObject({ spots: '' });
+  });
+
+  it('opens an event without a limit with the box checked', () => {
+    mockSave();
+    render(<EventDialog event={{ ...oficina, spots: null }} onClose={jest.fn()} onSaved={jest.fn()} />);
+
+    expect(screen.getByRole('checkbox', { name: 'Sem limite de vagas' })).toBeChecked();
+    expect(screen.getByLabelText('Vagas')).toBeDisabled();
   });
 
   it('does not send an event that ends before it starts', async () => {
@@ -91,7 +129,7 @@ describe('EventDialog', () => {
     await userEvent.click(screen.getByRole('switch', { name: 'Vender ingressos pelo site' }));
 
     expect(screen.getByLabelText('Máximo de ingressos por compra')).toHaveValue(10);
-    expect(screen.getByText(/O link de inscrição deixa de ser usado/)).toBeInTheDocument();
+    expect(screen.getByText(/Desligado, a inscrição é pelo/)).toBeInTheDocument();
   });
 
   it('rejects a per-order limit outside 1 to 50', async () => {

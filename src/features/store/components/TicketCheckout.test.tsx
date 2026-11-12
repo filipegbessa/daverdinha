@@ -22,7 +22,6 @@ const event: SiteEvent = {
   price: 45,
   spots: 20,
   imageUrl: null,
-  ctaUrl: null,
   ticketSales: true,
   maxTicketsPerOrder: 4,
   spotsLeft: 10,
@@ -97,7 +96,8 @@ describe('TicketCheckout', () => {
 
     expect(screen.getByLabelText('Participante 2')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Aumentar' })).toBeDisabled();
-    expect(screen.getByText('Até 2 por compra.')).toBeInTheDocument();
+    expect(screen.getByText('Restam 2 vagas')).toBeInTheDocument();
+    expect(screen.getByText('Só restam 2 vagas.')).toBeInTheDocument();
   });
 
   it('never trusts the quantity of the URL beyond the limit', () => {

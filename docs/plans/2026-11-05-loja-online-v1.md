@@ -12,6 +12,8 @@
 
 > **Atualizado em 2026-11-12 (interruptor dos ingressos):** a venda de ingressos ganha o **próprio interruptor no Dashboard**, "Venda de ingressos", independente do "Loja do site" (decisão 20 do plano irmão). Entra na Fase 3: Step 3 da Tarefa 13 (o interruptor) e Step 1 da Tarefa 14 (o formulário obedece a ele).
 
+> **Atualizado em 2026-11-12 (agenda):** não existe mais link de inscrição externo (`ctaUrl` saiu do cadastro, da API e do banco): sem venda pelo site, a inscrição é pelo WhatsApp. O horário de fim do evento é opcional; sem ele, o evento sai da agenda no fim do dia em que começa. As citações a `ctaUrl` abaixo são do desenho original.
+
 **Goal:** fechar o catálogo (a cliente cadastra categorias e produtos sozinha no admin, e a vitrine que já existe passa a mostrar dados reais) e abrir a venda pelo site: carrinho, checkout com entrega ou retirada, pagamento no Pagar.me (checkout hospedado, fora do site) e página do pedido; no admin, lista de pedidos, áreas de entrega, retirada, estoque e prazo de encomenda. Depois, venda de ingresso (e inscrição gratuita) na página do evento, com lista de presença no admin.
 
 **Plano irmão:** `daverdinha-api/docs/plans/2026-11-05-loja-online-v1.md` — contratos de API, regras de preço/frete/estoque e webhook. **Os contratos de lá são a fonte da verdade pros nomes de campo** usados aqui.

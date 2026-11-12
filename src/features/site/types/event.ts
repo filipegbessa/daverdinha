@@ -11,7 +11,7 @@ export interface SiteEvent {
   /** ISO 8601. */
   startsAt: string;
   /** ISO 8601. Depois dele o evento sai da faixa e da lista sozinho. */
-  endsAt: string;
+  endsAt: string | null;
   /** `null` = no ateliê, com o endereço da loja. */
   locationName: string | null;
   locationAddress: string | null;
@@ -19,12 +19,11 @@ export interface SiteEvent {
   price: number | null;
   spots: number | null;
   imageUrl: string | null;
-  /** `null` = inscrição pelo WhatsApp, com mensagem pronta montada pelo site. */
-  ctaUrl: string | null;
   /**
    * Venda ou inscrição pelo site. A API já combina o "Vender ingressos pelo
    * site" do evento com o interruptor "Venda de ingressos" do Dashboard: o
-   * site só olha este campo. Ligado, a página ignora `ctaUrl`.
+   * site só olha este campo. Desligado, a inscrição é pelo WhatsApp, com
+   * mensagem pronta montada pelo site.
    */
   ticketSales: boolean;
   /** Limite de ingressos por compra, configurado no evento. */

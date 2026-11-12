@@ -53,12 +53,14 @@ export function EventDialog({
   const [title, setTitle] = useState(event?.title ?? '');
   const [description, setDescription] = useState(event?.description ?? '');
   const [startsAt, setStartsAt] = useState(event ? toDatetimeLocal(event.startsAt) : '');
-  const [endsAt, setEndsAt] = useState(event ? toDatetimeLocal(event.endsAt) : '');
+  const [endsAt, setEndsAt] = useState(event?.endsAt ? toDatetimeLocal(event.endsAt) : '');
   const [locationName, setLocationName] = useState(event?.locationName ?? '');
   const [locationAddress, setLocationAddress] = useState(event?.locationAddress ?? '');
   const [price, setPrice] = useState(event?.price?.toString() ?? '');
   const [spots, setSpots] = useState(event?.spots?.toString() ?? '');
-  const [ctaUrl, setCtaUrl] = useState(event?.ctaUrl ?? '');
+  // Como o "Sob encomenda" dos produtos: sem limite desliga o número (festa
+  // na praça). Evento novo começa com limite, pra ninguém esquecer as vagas.
+  const [unlimited, setUnlimited] = useState(event ? event.spots === null : false);
   const [published, setPublished] = useState(event?.published ?? false);
   const [ticketSales, setTicketSales] = useState(event?.ticketSales ?? false);
   const [maxPerOrder, setMaxPerOrder] = useState(String(event?.maxTicketsPerOrder ?? DEFAULT_PER_ORDER));
@@ -72,8 +74,8 @@ export function EventDialog({
     const priceValue = normalizePrice(price);
     if (priceValue && !(Number(priceValue) >= 0))
       found.price = 'Informe o preço em reais, ou deixe vazio se for gratuito.';
-    if (spots && !(Number.isInteger(Number(spots)) && Number(spots) >= 1)) {
-      found.spots = 'Informe a quantidade de vagas, ou deixe vazio se não tiver limite.';
+    if (!unlimited && !(Number.isInteger(Number(spots)) && Number(spots) >= 1)) {
+      found.spots = 'Informe a quantidade de vagas, ou marque "Sem limite de vagas".';
     }
     const max = Number(maxPerOrder);
     if (ticketSales && !(Number.isInteger(max) && max >= MIN_PER_ORDER && max <= MAX_PER_ORDER)) {
@@ -87,18 +89,19 @@ export function EventDialog({
     const end = fromDatetimeLocal(endsAt);
     const found = validate(start, end);
     setErrors(found);
-    if (Object.keys(found).length > 0 || !start || !end) return;
+    if (Object.keys(found).length > 0 || !start) return;
 
     const form = new FormData();
     form.append('title', title.trim());
     form.append('description', description.trim());
     form.append('startsAt', start);
-    form.append('endsAt', end);
+    // Fim é opcional: vazio grava `null`.
+    form.append('endsAt', end ?? '');
     form.append('locationName', locationName.trim());
     form.append('locationAddress', locationAddress.trim());
     form.append('price', normalizePrice(price));
-    form.append('spots', spots.trim());
-    form.append('ctaUrl', ctaUrl.trim());
+    // Vazio = sem limite (a API grava `null`).
+    form.append('spots', unlimited ? '' : spots.trim());
     form.append('published', String(published));
     form.append('ticketSales', String(ticketSales));
     // Só com a venda ligada: desligada, o limite salvo fica guardado na API.
@@ -157,14 +160,8 @@ export function EventDialog({
             required
           />
         </FormField>
-        <FormField id="eventEndsAt" label="Fim" error={errors.endsAt}>
-          <Input
-            id="eventEndsAt"
-            type="datetime-local"
-            value={endsAt}
-            onChange={(e) => setEndsAt(e.target.value)}
-            required
-          />
+        <FormField id="eventEndsAt" label="Fim" hint="Opcional." error={errors.endsAt}>
+          <Input id="eventEndsAt" type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />
         </FormField>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -183,17 +180,37 @@ export function EventDialog({
         <FormField id="eventPrice" label="Preço (R$)" hint="Vazio = gratuito." error={errors.price}>
           <Input id="eventPrice" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
         </FormField>
-        <FormField id="eventSpots" label="Vagas" hint="Vazio = sem limite." error={errors.spots}>
-          <Input
+        <div>
+          <FormField
             id="eventSpots"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            step={1}
-            value={spots}
-            onChange={(e) => setSpots(e.target.value)}
-          />
-        </FormField>
+            label="Vagas"
+            hint={unlimited ? 'O site não mostra contagem de vagas.' : 'O site mostra quantas vagas restam.'}
+            error={errors.spots}
+          >
+            <Input
+              id="eventSpots"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              step={1}
+              value={unlimited ? '' : spots}
+              onChange={(e) => setSpots(e.target.value)}
+              disabled={unlimited}
+            />
+          </FormField>
+          <label className="mt-2 flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={unlimited}
+              onChange={(e) => {
+                setUnlimited(e.target.checked);
+                setErrors((prev) => ({ ...prev, spots: undefined }));
+              }}
+              className="h-4 w-4 accent-primary"
+            />
+            Sem limite de vagas
+          </label>
+        </div>
       </div>
       <div>
         <FormField
@@ -224,29 +241,12 @@ export function EventDialog({
           </div>
         )}
       </div>
-      <FormField
-        id="eventCtaUrl"
-        label="Link de inscrição externo"
-        hint={
-          ticketSales
-            ? 'Não é usado enquanto a venda pelo site estiver ligada.'
-            : 'Vazio = inscrição pelo WhatsApp, com mensagem pronta.'
-        }
-      >
-        <Input
-          id="eventCtaUrl"
-          type="url"
-          placeholder="https://"
-          value={ctaUrl}
-          onChange={(e) => setCtaUrl(e.target.value)}
-        />
-      </FormField>
       <SwitchField label="Publicado" checked={published} onCheckedChange={setPublished} />
       <div>
         <SwitchField label="Vender ingressos pelo site" checked={ticketSales} onCheckedChange={setTicketSales} />
         <p className="mt-1 text-sm text-muted-foreground">
-          Pago vira &quot;Comprar ingresso&quot;, gratuito vira &quot;Inscrever-se&quot;. O link de inscrição deixa de
-          ser usado. Só vende com &quot;Venda de ingressos&quot; ligada no Dashboard.
+          Pago vira &quot;Comprar ingresso&quot;, gratuito vira &quot;Inscrever-se&quot;. Desligado, a inscrição é pelo
+          WhatsApp. Só vende com &quot;Venda de ingressos&quot; ligada no Dashboard.
         </p>
       </div>
       {ticketSales && (
