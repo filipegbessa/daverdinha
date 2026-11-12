@@ -212,10 +212,7 @@ export default function ProdutosPage() {
             mutation.clearError();
           }}
         >
-          <p>
-            O produto sai do site e desta lista. O cadastro fica guardado para os pedidos antigos continuarem mostrando
-            o que foi vendido. Pra só esconder por um tempo, desligue a chave ao lado. Não dá pra desfazer.
-          </p>
+          <p>Remove o produto e as fotos pra sempre, sem desfazer. Quer só tirar do site? Desligue a chave "Ativo" ao lado.</p>
         </ConfirmDialog>
       )}
     </div>
