@@ -35,8 +35,11 @@ export function SiteShell({
   preview?: boolean;
   children: React.ReactNode;
 }) {
+  // Coluna com no mínimo a altura da tela e o <main> crescendo: em página
+  // curta (carrinho com poucos itens) o rodapé fica no fim da tela, sem faixa
+  // vazia embaixo dele.
   const page = (
-    <>
+    <div className="flex min-h-dvh flex-col">
       {preview && (
         <p className="bg-berry px-4 py-1.5 text-center text-xs font-medium text-paper">
           Prévia do site: os produtos, preços e eventos são exemplos para validar o layout.
@@ -46,7 +49,7 @@ export function SiteShell({
       {/* Fundo das seções da página: claro e areia alternados, contados pelas
           seções que de fato aparecem (seção vazia que retorna null não
           quebra a sequência). Nenhuma seção de página define o próprio fundo. */}
-      <main className="[&>section:nth-of-type(even)]:bg-sand">{children}</main>
+      <main className="flex-1 [&>section:nth-of-type(even)]:bg-sand">{children}</main>
       <Footer home={home} />
       <ContactLink
         href={getWhatsAppUrl(WHATSAPP_GREETING)}
@@ -57,7 +60,7 @@ export function SiteShell({
       >
         <MessageCircle className="size-6" aria-hidden="true" />
       </ContactLink>
-    </>
+    </div>
   );
   return (
     <StoreEnabledProvider value={storeEnabled}>
