@@ -10,8 +10,9 @@ import { cache } from 'react';
  *   compra é pelo WhatsApp e as rotas da loja respondem 404.
  *
  * Substituem as antigas variáveis `SITE_MODE` e `NEXT_PUBLIC_STORE_ENABLED`:
- * não precisa de redeploy, a mudança aparece em até um minuto (o cache da
- * leitura).
+ * não precisa de redeploy. O Dashboard limpa o cache na hora em que muda um
+ * interruptor (`refreshPublicSite`); o cache de 1 minuto é só a rede de
+ * segurança.
  *
  * Server-only. Os componentes de cliente recebem o valor da loja pelo
  * `StoreEnabledProvider` que o `SiteShell` monta.
@@ -26,6 +27,8 @@ export interface SiteSettings {
 }
 
 export const SITE_SETTINGS_REVALIDATE_SECONDS = 60;
+/** Tag da leitura em cache, que o Dashboard invalida ao mudar um interruptor. */
+export const SITE_SETTINGS_TAG = 'site-settings';
 
 const OFF: SiteSettings = { siteEnabled: false, storeEnabled: false };
 
@@ -34,7 +37,7 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   if (!apiUrl) return OFF;
   try {
     const response = await fetch(`${apiUrl}/store-settings/public`, {
-      next: { revalidate: SITE_SETTINGS_REVALIDATE_SECONDS },
+      next: { revalidate: SITE_SETTINGS_REVALIDATE_SECONDS, tags: [SITE_SETTINGS_TAG] },
     });
     if (!response.ok) return OFF;
     const body = (await response.json()) as Partial<Record<keyof SiteSettings, unknown>>;

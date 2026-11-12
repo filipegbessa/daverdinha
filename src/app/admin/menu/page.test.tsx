@@ -6,8 +6,24 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 jest.mock('@/features/admin/lib/api-client');
 
 const items = [
-  { id: 'm1', order: 0, topic: 'Locais de entrega', type: 'entrega' as const, isSystem: true, reply: null, active: true },
-  { id: 'm2', order: 1, topic: 'Bingo de Plantas', type: 'texto' as const, isSystem: false, reply: 'Todo sábado', active: true },
+  {
+    id: 'm1',
+    order: 0,
+    topic: 'Locais de entrega',
+    type: 'entrega' as const,
+    isSystem: true,
+    reply: null,
+    active: true,
+  },
+  {
+    id: 'm2',
+    order: 1,
+    topic: 'Bingo de Plantas',
+    type: 'texto' as const,
+    isSystem: false,
+    reply: 'Todo sábado',
+    active: true,
+  },
 ];
 
 describe('MenuPage', () => {
@@ -108,7 +124,9 @@ describe('MenuPage', () => {
     screen.getAllByRole('button', { name: 'Editar' }).forEach((button) => expect(button).toBeDisabled());
 
     resolveReorder();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra cima' })).not.toBeDisabled());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Mover Bingo de Plantas pra cima' })).not.toBeDisabled(),
+    );
   });
 
   it('toggling active calls PATCH with the flipped value', async () => {

@@ -3,8 +3,12 @@ import userEvent from '@testing-library/user-event';
 import DashboardPage from './page';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { mockApi as mockAdminApi } from '@/features/admin/test-fixtures/mock-api';
+import { refreshPublicSite } from '@/features/admin/actions/refresh-public-site';
 
 jest.mock('@/features/admin/lib/api-client');
+jest.mock('@/features/admin/actions/refresh-public-site', () => ({
+  refreshPublicSite: jest.fn().mockResolvedValue(undefined),
+}));
 
 const emptySettings = { botEnabled: false, welcomeMessage: '' };
 
@@ -13,7 +17,7 @@ const emptySettings = { botEnabled: false, welcomeMessage: '' };
  * re-reads one after a toggle, so an ordered `mockResolvedValueOnce` chain
  * would break on any change to how often the page refetches.
  */
-const storeSettingsOff = { siteEnabled: false, storeEnabled: false };
+const storeSettingsOff = { siteEnabled: false, storeEnabled: false, paymentConfigured: false };
 
 function mockApi(handlers: {
   settings?: () => unknown;
@@ -205,18 +209,28 @@ describe('DashboardPage', () => {
       );
     });
 
-    it('shows why the store did not open, e.g. no Pagar.me key yet', async () => {
+    it('refreshes the public site right after a switch changes', async () => {
       mockApi({
         menuItems: () => [{ id: '1', active: true }],
-        patchStore: () => {
-          throw new Error('O pagamento ainda não está configurado (chave do Pagar.me). A loja continua desligada.');
-        },
+        patchStore: () => ({ ...storeSettingsOff, siteEnabled: true }),
       });
 
       render(<DashboardPage />);
-      await userEvent.click(await screen.findByRole('switch', { name: 'Loja do site' }));
+      await userEvent.click(await screen.findByRole('switch', { name: 'Site completo' }));
 
-      expect(await screen.findByText(/A loja continua desligada/)).toBeInTheDocument();
+      await waitFor(() => expect(refreshPublicSite).toHaveBeenCalled());
+    });
+
+    it('turns the store on without the Pagar.me key, warning that checkout will not work yet', async () => {
+      mockApi({
+        menuItems: () => [{ id: '1', active: true }],
+        storeSettings: () => ({ ...storeSettingsOff, storeEnabled: true }),
+      });
+
+      render(<DashboardPage />);
+
+      expect(await screen.findByRole('switch', { name: 'Loja do site' })).toBeChecked();
+      expect(screen.getByText(/O pagamento ainda não está configurado/)).toBeInTheDocument();
     });
 
     it('keeps the bot switch usable when the store settings fail to load', async () => {

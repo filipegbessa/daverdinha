@@ -7,6 +7,7 @@ import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { StorageUsageNotice } from '@/features/admin/components/StorageUsageNotice';
 import type { BotSettings, MenuItem, StoreSettings } from '@/features/admin/types/admin';
+import { refreshPublicSite } from '@/features/admin/actions/refresh-public-site';
 
 export default function DashboardPage() {
   const { apiFetch } = useApiClient();
@@ -29,8 +30,12 @@ export default function DashboardPage() {
   function patchStoreSettings(changes: Partial<Pick<StoreSettings, 'siteEnabled' | 'storeEnabled'>>) {
     storeToggle
       .run(() => apiFetch('/store-settings', { method: 'PATCH', body: JSON.stringify(changes) }))
-      .then((ok) => {
-        if (ok) refetchStoreSettings();
+      .then(async (ok) => {
+        if (!ok) return;
+        refetchStoreSettings();
+        // Sem isso o site levaria até 1 minuto pra refletir. Se falhar, o
+        // cache vence sozinho: não é motivo pra acusar erro no interruptor.
+        await refreshPublicSite().catch(() => {});
       });
   }
 
@@ -122,7 +127,12 @@ export default function DashboardPage() {
                   : 'Sem carrinho: os produtos levam pra comprar pelo WhatsApp.'
               }
             />
-            <p className="text-xs text-muted-foreground">A mudança aparece no site em até 1 minuto.</p>
+            {storeSettings.storeEnabled && !storeSettings.paymentConfigured && (
+              <p role="status" className="text-xs text-amber-700 dark:text-amber-400">
+                O pagamento ainda não está configurado (chave do Pagar.me): a loja aparece no site, mas finalizar a
+                compra não funciona.
+              </p>
+            )}
             {storeToggle.error && <ErrorText>{storeToggle.error}</ErrorText>}
           </>
         ) : storeSettingsError ? (

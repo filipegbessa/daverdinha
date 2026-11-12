@@ -58,6 +58,8 @@ export interface StoreSettings {
   siteEnabled: boolean;
   /** Venda pelo site (carrinho + Pagar.me); desligada, a compra é pelo WhatsApp. */
   storeEnabled: boolean;
+  /** A chave do Pagar.me está configurada na API? Sem ela a loja aparece, mas o pagamento não inicia. */
+  paymentConfigured: boolean;
   pickupEnabled: boolean;
   pickupAddress: string;
   pickupHours: string;

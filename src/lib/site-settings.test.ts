@@ -31,7 +31,7 @@ describe('getSiteSettings', () => {
 
     await expect(load()).resolves.toEqual({ siteEnabled: true, storeEnabled: false });
     expect(fetchMock).toHaveBeenCalledWith('https://api.example/store-settings/public', {
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags: ['site-settings'] },
     });
   });
 

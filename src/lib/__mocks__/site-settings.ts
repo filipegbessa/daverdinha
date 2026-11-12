@@ -18,6 +18,7 @@ function current(): SiteSettings {
 }
 
 export const SITE_SETTINGS_REVALIDATE_SECONDS = 60;
+export const SITE_SETTINGS_TAG = 'site-settings';
 
 export const getSiteSettings = jest.fn(async (): Promise<SiteSettings> => ({ ...current() }));
 

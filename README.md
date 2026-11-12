@@ -12,7 +12,7 @@ Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/busin
 
 ### Site e loja: interruptores no Dashboard
 
-Dois interruptores no Dashboard do admin, ao lado do bot, ligam o site e a loja sem deploy. Ficam nas configurações da loja na API (`store_settings.site_enabled` e `store_enabled`), e o site lê por `GET /store-settings/public` (`src/lib/site-settings.ts`) com cache de 1 minuto: a mudança aparece em até 1 minuto.
+Dois interruptores no Dashboard do admin, ao lado do bot, ligam o site e a loja sem deploy. Ficam nas configurações da loja na API (`store_settings.site_enabled` e `store_enabled`), e o site lê por `GET /store-settings/public` (`src/lib/site-settings.ts`) com cache de 1 minuto. Ao mudar um interruptor, o Dashboard limpa esse cache e as páginas geradas (`refreshPublicSite`, uma server action só pra quem está logado), então a mudança aparece no próximo acesso; o minuto é só a rede de segurança. A loja liga mesmo sem a chave do Pagar.me (o layout aparece), e o Dashboard avisa que finalizar a compra ainda não funciona.
 
 - **Site completo** desligado: `/` serve a landing **em breve** (`ComingSoon.tsx`), e o site completo — home, catálogo (`/produtos`), agenda (`/agenda`), entregas, FAQ — fica na prévia **`/site`**, pra cliente validar. Na prévia, lista vazia da API vira produtos e eventos **de exemplo**, com a faixa "Prévia do site", e as páginas são `noindex` e ficam fora do sitemap. Ligado: `/` é o site completo e exemplo nunca aparece (lista vazia esconde a seção).
 - **Loja do site**: ver "Loja online" abaixo.
