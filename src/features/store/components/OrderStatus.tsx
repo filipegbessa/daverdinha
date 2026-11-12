@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { CheckCircle2, Clock, MessageCircle, XCircle } from 'lucide-react';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButton';
-import { formatClock, formatPrice } from '@/lib/format';
-import { PRODUCTS_HREF } from '@/features/site/lib/paths';
+import { formatClock, formatEventWhen, formatPrice } from '@/lib/format';
+import { eventHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
+import { eventPlace } from '@/features/site/components/EventCard';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import type { FulfillmentStatus, PublicSiteOrder } from '@/features/store/types/store';
 import { orderStatusMessage } from '@/features/site/lib/whatsapp-messages';
@@ -26,10 +27,19 @@ const HEADLINE: Record<PublicSiteOrder['status'], { title: string; icon: typeof 
 
 /**
  * A página do pedido, de acordo com o status. Sem endereço completo nem
- * contato: quem tem o link vê esta página.
+ * contato: quem tem o link vê esta página. Pedido de ingresso mostra o evento
+ * e os participantes no lugar de itens, entrega e preparo.
  */
 export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; reloadHref: string }) {
-  const { title, icon: Icon, tone } = HEADLINE[order.status];
+  const tickets = order.kind === 'tickets' && order.event !== null;
+  const headline = HEADLINE[order.status];
+  const { icon: Icon, tone } = headline;
+  const title =
+    tickets && order.status === 'paid'
+      ? order.total === 0
+        ? 'Inscrição confirmada!'
+        : 'Ingresso confirmado!'
+      : headline.title;
   const maxLeadTime = Math.max(0, ...order.items.map((i) => i.leadTimeDays ?? 0));
   const whatsapp = getWhatsAppUrl(orderStatusMessage(order.code));
 
@@ -48,7 +58,7 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
           <div className="space-y-4 rounded-2xl border border-sand-line bg-sand/60 p-5">
             <p>
               Você tem até <strong>{formatClock(order.expiresAt)}</strong> pra pagar. Depois disso o pedido é cancelado
-              e os itens voltam pra loja.
+              {tickets ? ' e as vagas são liberadas.' : ' e os itens voltam pra loja.'}
             </p>
             <div className="flex flex-wrap gap-3">
               {order.paymentUrl && <SiteButton href={order.paymentUrl}>Pagar agora</SiteButton>}
@@ -60,7 +70,26 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
           </div>
         )}
 
-        {order.status === 'paid' && (
+        {tickets && order.event && (
+          <div className="space-y-1 rounded-2xl border border-moss-line bg-paper p-5">
+            <Link
+              href={eventHref(order.event)}
+              className="font-serif text-xl font-semibold text-ink underline-offset-4 hover:underline"
+            >
+              {order.event.title}
+            </Link>
+            <p className="text-ink-soft">{formatEventWhen(order.event.startsAt, order.event.endsAt)}</p>
+            <p className="text-ink-soft">
+              {eventPlace(order.event)}
+              {order.event.locationAddress && ` · ${order.event.locationAddress}`}
+            </p>
+            {order.status === 'paid' && (
+              <p className="pt-2 font-semibold text-moss">Apresente esta página ou diga o nome na entrada.</p>
+            )}
+          </div>
+        )}
+
+        {order.status === 'paid' && !tickets && (
           <div className="space-y-2 rounded-2xl border border-moss-line bg-moss/5 p-5">
             <p className="font-semibold text-ink">{FULFILLMENT[order.fulfillmentStatus]}</p>
             {order.deliveryMethod === 'delivery' && <p>Entrega em {order.bairro}.</p>}
@@ -80,15 +109,24 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
           </div>
         )}
 
-        {order.status === 'expired' && (
-          <p>
-            Nenhum valor foi cobrado.{' '}
-            <Link href={PRODUCTS_HREF} className="font-semibold text-moss underline underline-offset-4">
-              Ver produtos
-            </Link>{' '}
-            pra montar o carrinho de novo.
-          </p>
-        )}
+        {order.status === 'expired' &&
+          (tickets && order.event ? (
+            <p>
+              Nenhum valor foi cobrado.{' '}
+              <Link href={eventHref(order.event)} className="font-semibold text-moss underline underline-offset-4">
+                Voltar ao evento
+              </Link>{' '}
+              pra tentar de novo.
+            </p>
+          ) : (
+            <p>
+              Nenhum valor foi cobrado.{' '}
+              <Link href={PRODUCTS_HREF} className="font-semibold text-moss underline underline-offset-4">
+                Ver produtos
+              </Link>{' '}
+              pra montar o carrinho de novo.
+            </p>
+          ))}
 
         {(order.status === 'cancelled' || order.status === 'refunded') && (
           <p>Se tiver alguma dúvida sobre o cancelamento, fale com a gente pelo WhatsApp.</p>
@@ -105,36 +143,56 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
         </ContactLink>
       </div>
 
-      <aside className="h-fit space-y-3 rounded-2xl border border-sand-line bg-sand/60 p-5">
-        <h2 className="font-serif text-xl font-semibold text-ink">Itens</h2>
-        <ul className="space-y-2 text-sm">
-          {order.items.map((item) => (
-            <li key={`${item.name}-${item.slug}`} className="flex justify-between gap-3">
-              <span>
-                {item.quantity}× {item.name}
-                {item.leadTimeDays && (
-                  <span className="block text-ink-soft">Sob encomenda · até {item.leadTimeDays} dias</span>
-                )}
-              </span>
-              <span className="tabular-nums">{formatPrice(item.unitPrice * item.quantity)}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="space-y-1 border-t border-sand-line pt-3">
-          <p className="flex justify-between">
-            <span>Subtotal</span>
-            <span className="tabular-nums">{formatPrice(order.subtotal)}</span>
-          </p>
-          <p className="flex justify-between">
-            <span>{order.deliveryMethod === 'pickup' ? 'Retirada' : 'Entrega'}</span>
-            <span className="tabular-nums">{order.deliveryFee === 0 ? 'Grátis' : formatPrice(order.deliveryFee)}</span>
-          </p>
-          <p className="flex justify-between text-lg font-semibold">
+      {tickets ? (
+        <aside className="h-fit space-y-3 rounded-2xl border border-sand-line bg-sand/60 p-5">
+          <h2 className="font-serif text-xl font-semibold text-ink">Participantes</h2>
+          <ul className="space-y-2 text-sm">
+            {order.tickets.map((ticket, index) => (
+              <li key={`${ticket.attendeeName}-${index}`} className="flex justify-between gap-3">
+                <span>{ticket.attendeeName}</span>
+                {ticket.unitPrice > 0 && <span className="tabular-nums">{formatPrice(ticket.unitPrice)}</span>}
+              </li>
+            ))}
+          </ul>
+          <p className="flex justify-between border-t border-sand-line pt-3 text-lg font-semibold">
             <span>Total</span>
-            <span className="tabular-nums">{formatPrice(order.total)}</span>
+            <span className="tabular-nums">{order.total === 0 ? 'Gratuito' : formatPrice(order.total)}</span>
           </p>
-        </div>
-      </aside>
+        </aside>
+      ) : (
+        <aside className="h-fit space-y-3 rounded-2xl border border-sand-line bg-sand/60 p-5">
+          <h2 className="font-serif text-xl font-semibold text-ink">Itens</h2>
+          <ul className="space-y-2 text-sm">
+            {order.items.map((item) => (
+              <li key={`${item.name}-${item.slug}`} className="flex justify-between gap-3">
+                <span>
+                  {item.quantity}× {item.name}
+                  {item.leadTimeDays && (
+                    <span className="block text-ink-soft">Sob encomenda · até {item.leadTimeDays} dias</span>
+                  )}
+                </span>
+                <span className="tabular-nums">{formatPrice(item.unitPrice * item.quantity)}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="space-y-1 border-t border-sand-line pt-3">
+            <p className="flex justify-between">
+              <span>Subtotal</span>
+              <span className="tabular-nums">{formatPrice(order.subtotal)}</span>
+            </p>
+            <p className="flex justify-between">
+              <span>{order.deliveryMethod === 'pickup' ? 'Retirada' : 'Entrega'}</span>
+              <span className="tabular-nums">
+                {order.deliveryFee === 0 ? 'Grátis' : formatPrice(order.deliveryFee)}
+              </span>
+            </p>
+            <p className="flex justify-between text-lg font-semibold">
+              <span>Total</span>
+              <span className="tabular-nums">{formatPrice(order.total)}</span>
+            </p>
+          </div>
+        </aside>
+      )}
     </div>
   );
 }

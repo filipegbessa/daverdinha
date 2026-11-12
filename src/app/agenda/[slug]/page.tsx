@@ -8,11 +8,12 @@ import { ContactLink } from '@/features/site/components/ContactLink';
 import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButton';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import { JsonLd } from '@/features/site/components/JsonLd';
-import { eventPlace } from '@/features/site/components/EventCard';
+import { eventDetails, eventPlace } from '@/features/site/components/EventCard';
+import { TicketForm } from '@/features/store/components/TicketForm';
 import { EventsSection } from '@/features/site/components/EventsSection';
 import { Location } from '@/features/site/components/Location';
 import { isSample } from '@/features/site/data/samples';
-import { formatEventPrice, formatEventShort, formatEventWhen } from '@/lib/format';
+import { formatEventShort, formatEventWhen } from '@/lib/format';
 import { AGENDA_HREF, eventHref } from '@/features/site/lib/paths';
 import { getEventBySlug, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
@@ -47,14 +48,17 @@ export default async function EventPage({ params }: Props) {
   const [event, upcoming] = await Promise.all([getEventBySlug(slug), getUpcomingEvents()]);
   if (!event) notFound();
 
-  const past = new Date(event.endsAt).getTime() < Date.now();
+  const now = Date.now();
+  const past = new Date(event.endsAt).getTime() < now;
+  // Venda pelo site só até o começo do evento (a API recusa depois disso).
+  // Independe da loja de produtos: só do `ticketSales`, já combinado com o
+  // interruptor "Venda de ingressos" do Dashboard.
+  const sellsHere = event.ticketSales && new Date(event.startsAt).getTime() > now;
   const { home, storeEnabled } = await shellProps();
   const atAtelier = event.locationName === null;
   const address = atAtelier ? businessInfo.address.formatted : event.locationAddress;
   const others = upcoming.filter((e) => e.id !== event.id);
-  const priceText = [formatEventPrice(event.price), event.spots ? `${event.spots} vagas` : null]
-    .filter(Boolean)
-    .join(' · ');
+  const priceText = eventDetails(event);
 
   return (
     <SiteShell home={home} storeEnabled={storeEnabled} preview={isSample(event)}>
@@ -103,7 +107,9 @@ export default async function EventPage({ params }: Props) {
               </ul>
               <p className="mt-6 leading-relaxed whitespace-pre-line text-ink-soft">{event.description}</p>
 
+              {sellsHere && <TicketForm event={event} />}
               {!past &&
+                !sellsHere &&
                 (event.ctaUrl ? (
                   <SiteButton href={event.ctaUrl} target="_blank" rel="noopener" className="mt-8 w-full sm:w-auto">
                     <ExternalLink className="size-5" aria-hidden="true" />

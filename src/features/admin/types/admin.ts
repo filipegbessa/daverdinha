@@ -1,3 +1,5 @@
+import type { SiteEvent } from '@/features/site/types/event';
+
 export interface BotSettings {
   botEnabled: boolean;
   welcomeMessage: string;
@@ -58,6 +60,8 @@ export interface StoreSettings {
   siteEnabled: boolean;
   /** Venda pelo site (carrinho + Pagar.me); desligada, a compra é pelo WhatsApp. */
   storeEnabled: boolean;
+  /** Venda e inscrição de eventos pelo site, junto com o "Vender ingressos pelo site" de cada evento. */
+  ticketsEnabled: boolean;
   /** A chave do Pagar.me está configurada na API? Sem ela a loja aparece, mas o pagamento não inicia. */
   paymentConfigured: boolean;
   pickupEnabled: boolean;
@@ -185,6 +189,33 @@ export interface ConversationList extends Paginated<Conversation> {
 export type SiteOrderStatus = 'pending_payment' | 'paid' | 'expired' | 'cancelled' | 'refunded';
 export type FulfillmentStatus = 'awaiting' | 'preparing' | 'ready' | 'completed';
 
+/**
+ * Evento da agenda no admin (`/events`). `ticketSales` aqui é o do próprio
+ * evento, sem combinar com o interruptor do Dashboard; `sold` conta os
+ * ingressos de pedidos pagos e `reserved` os de pedidos ainda no prazo.
+ */
+export interface EventAdmin extends SiteEvent {
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+  sold: number;
+  reserved: number;
+}
+
+/** Um participante na lista de presença (`/events/:id/attendees`). */
+export interface Attendee {
+  id: string;
+  attendeeName: string;
+  checkedInAt: string | null;
+  order: { id: string; code: string; customerName: string; customerPhone: string };
+}
+
+/** A lista de presença: página de participantes mais a lotação do evento. */
+export interface AttendeeList extends Paginated<Attendee> {
+  sold: number;
+  spots: number | null;
+}
+
 /** Pedido feito no site (`/site-orders`). Não confundir com o pedido de catálogo do WhatsApp. */
 export interface SiteOrderAdmin {
   id: string;
@@ -216,6 +247,10 @@ export interface SiteOrderAdmin {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  /** Só em pedido de ingresso. */
+  event: { id: string; title: string; slug: string; startsAt: string } | null;
+  /** Um por participante; `[]` em pedido de produto. */
+  tickets: { id: string; attendeeName: string; unitPrice: number; checkedInAt: string | null }[];
   payment: { linkId: string | null; orderId: string | null; chargeId: string | null; status: string | null };
   paymentUrl: string | null;
   paidAt: string | null;

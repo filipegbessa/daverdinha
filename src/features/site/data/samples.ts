@@ -210,6 +210,11 @@ export function sampleEvents(now: Date = new Date()): SiteEvent[] {
       spots: 8,
       imageUrl: null,
       ctaUrl: null,
+      // Venda pelo site ligada: a prévia mostra o formulário de ingresso pago.
+      ticketSales: true,
+      maxTicketsPerOrder: 4,
+      spotsLeft: 5,
+      soldOut: false,
     },
     {
       id: 'sample-e2',
@@ -224,6 +229,11 @@ export function sampleEvents(now: Date = new Date()): SiteEvent[] {
       spots: null,
       imageUrl: null,
       ctaUrl: null,
+      // Gratuito com inscrição pelo site: a prévia mostra "Inscrever-se".
+      ticketSales: true,
+      maxTicketsPerOrder: 10,
+      spotsLeft: null,
+      soldOut: false,
     },
     {
       id: 'sample-e3',
@@ -238,6 +248,10 @@ export function sampleEvents(now: Date = new Date()): SiteEvent[] {
       spots: 10,
       imageUrl: null,
       ctaUrl: null,
+      ticketSales: false,
+      maxTicketsPerOrder: 10,
+      spotsLeft: null,
+      soldOut: false,
     },
   ];
 }

@@ -15,6 +15,10 @@ const event: SiteEvent = {
   spots: 8,
   imageUrl: 'https://example.com/terrario.jpg',
   ctaUrl: null,
+  ticketSales: false,
+  maxTicketsPerOrder: 10,
+  spotsLeft: null,
+  soldOut: false,
 };
 
 describe('EventCard', () => {
@@ -54,5 +58,16 @@ describe('EventCard', () => {
       '/agenda/oficina-de-terrario',
     );
     expect(screen.getByText('22')).toBeInTheDocument();
+  });
+
+  it('shows "Esgotado" in place of the spots when the site sale is sold out', () => {
+    render(<EventCard event={{ ...event, ticketSales: true, spotsLeft: 0, soldOut: true }} />);
+    expect(screen.getByText(/Esgotado/)).toBeInTheDocument();
+    expect(screen.queryByText(/8 vagas/)).not.toBeInTheDocument();
+  });
+
+  it('shows the spots left while the site sale is open', () => {
+    render(<EventCard event={{ ...event, ticketSales: true, spotsLeft: 3 }} variant="compact" />);
+    expect(screen.getByText(/Restam 3 vagas/)).toBeInTheDocument();
   });
 });

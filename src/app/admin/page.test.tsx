@@ -17,7 +17,7 @@ const emptySettings = { botEnabled: false, welcomeMessage: '' };
  * re-reads one after a toggle, so an ordered `mockResolvedValueOnce` chain
  * would break on any change to how often the page refetches.
  */
-const storeSettingsOff = { siteEnabled: false, storeEnabled: false, paymentConfigured: false };
+const storeSettingsOff = { siteEnabled: false, storeEnabled: false, ticketsEnabled: false, paymentConfigured: false };
 
 function mockApi(handlers: {
   settings?: () => unknown;
@@ -231,6 +231,39 @@ describe('DashboardPage', () => {
 
       expect(await screen.findByRole('switch', { name: 'Loja do site' })).toBeChecked();
       expect(screen.getByText(/O pagamento ainda não está configurado/)).toBeInTheDocument();
+    });
+
+    it('turns ticket sales on with its own switch, independent from the store', async () => {
+      const apiFetch = mockApi({
+        menuItems: () => [{ id: '1', active: true }],
+        patchStore: () => ({ ...storeSettingsOff, ticketsEnabled: true }),
+      });
+
+      render(<DashboardPage />);
+
+      const tickets = await screen.findByRole('switch', { name: 'Venda de ingressos' });
+      expect(tickets).not.toBeChecked();
+      await userEvent.click(tickets);
+
+      await waitFor(() =>
+        expect(apiFetch).toHaveBeenCalledWith('/store-settings', {
+          method: 'PATCH',
+          body: JSON.stringify({ ticketsEnabled: true }),
+        }),
+      );
+      await waitFor(() => expect(refreshPublicSite).toHaveBeenCalled());
+    });
+
+    it('warns that paid tickets need the Pagar.me key while free sign-ups still work', async () => {
+      mockApi({
+        menuItems: () => [{ id: '1', active: true }],
+        storeSettings: () => ({ ...storeSettingsOff, ticketsEnabled: true }),
+      });
+
+      render(<DashboardPage />);
+
+      expect(await screen.findByRole('switch', { name: 'Venda de ingressos' })).toBeChecked();
+      expect(screen.getByText(/ingresso pago não funciona/)).toBeInTheDocument();
     });
 
     it('keeps the bot switch usable when the store settings fail to load', async () => {

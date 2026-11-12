@@ -10,6 +10,8 @@
 
 > **Atualizado em 2026-11-09 (escopo do MVP):** **ingressos ficam fora do MVP** — a primeira entrega é só a venda de produtos. A Fase 3 (Tarefas 13–16) fica como desenho pra depois, e a Tarefa 12 lança só com a página de trocas e devoluções.
 
+> **Atualizado em 2026-11-12 (interruptor dos ingressos):** a venda de ingressos ganha o **próprio interruptor no Dashboard**, "Venda de ingressos", independente do "Loja do site" (decisão 20 do plano irmão). Entra na Fase 3: Step 3 da Tarefa 13 (o interruptor) e Step 1 da Tarefa 14 (o formulário obedece a ele).
+
 **Goal:** fechar o catálogo (a cliente cadastra categorias e produtos sozinha no admin, e a vitrine que já existe passa a mostrar dados reais) e abrir a venda pelo site: carrinho, checkout com entrega ou retirada, pagamento no Pagar.me (checkout hospedado, fora do site) e página do pedido; no admin, lista de pedidos, áreas de entrega, retirada, estoque e prazo de encomenda. Depois, venda de ingresso (e inscrição gratuita) na página do evento, com lista de presença no admin.
 
 **Plano irmão:** `daverdinha-api/docs/plans/2026-11-05-loja-online-v1.md` — contratos de API, regras de preço/frete/estoque e webhook. **Os contratos de lá são a fonte da verdade pros nomes de campo** usados aqui.
@@ -24,7 +26,8 @@
 | Ligar a vitrine na API real | ⏳ Fase 1, Tarefa 4 (era a Tarefa 8 do plano do catálogo) |
 | Loja V1 — produtos | ⏳ **Fase 2** deste plano — depende das Tarefas 1–9 do plano irmão no ar. Já feitos em 2026-11-09, antecipados: estoque e sob encomenda no cadastro de produto e o selo na vitrine (partes das Tarefas 7 e 11), áreas de entrega em `/admin/entregas` e `/admin/loja` (Tarefa 11, Steps 3, 3b e 3c). Também prontos, sem pagamento: Tarefas 5–10 (carrinho, `/carrinho`, `/checkout`, `/pedido/[token]`) e o admin de pedidos da Tarefa 11. A prévia `/site` roda a loja inteira com os exemplos (decisão 4). Falta o pagamento de verdade (API, Tarefas 6–8) e a Tarefa 12 (políticas, depende do questionário) |
 | Agenda — página pública (`/agenda`, `/agenda/[slug]`) | ✅ feita, lendo `src/features/site/types/event.ts` |
-| Agenda no admin e ingressos | ⏸️ **Fase 3**, Tarefas 13–16 — fora do MVP (2026-11-09) |
+| Agenda no admin e ingressos | ✅ **Fase 3**, Tarefas 13–16, implementada em 2026-11-12 com o interruptor "Venda de ingressos" no Dashboard. Diferenças: sem o aceite da política de cancelamento (a página espera o `questionario-ingressos.md`); a lista de participantes recebe o título do evento por `?evento=`, porque a API não o devolve |
+| Botão "Atualizar pagamento" (Tarefa 11) | ✅ 2026-11-12, no detalhe do pedido; só aparece quando o pedido tem link de pagamento |
 | V2 — pagamento dentro do site | fora deste plano (ver "Depois da V1") |
 
 **A Fase 1 não depende de nada novo no backend** e pode ser entregue sozinha: a cliente começa a cadastrar enquanto a loja é construída.
@@ -35,6 +38,7 @@
 - **Carrinho** (Fase 2): estado só no navegador (`localStorage`, chave `daverdinha:cart:v1`), num `CartProvider` client-side montado no `SiteShell`. O carrinho guarda `{ productId, slug, categorySlug, name, price, imageUrl, quantity }` só pra desenhar a tela; **preço e frete que valem são os do `POST /checkout/quote`**, sempre chamado antes de mostrar total e de enviar o pedido.
 - **Chamadas da loja** ficam num arquivo só, `src/features/store/lib/store-api.ts` (como `public-api.ts` é pro catálogo): `quoteCart`, `createCheckout`, `getOrderByToken`. As duas primeiras rodam no navegador (precisam do carrinho); `getOrderByToken` roda no servidor (página do pedido).
 - **Liga/desliga da loja:** interruptor "Loja do site" no Dashboard (desde 2026-11-12; antes era `NEXT_PUBLIC_STORE_ENABLED`). Desligada, nada muda no site de hoje (página do produto só com "Pedir pelo WhatsApp", sem ícone de carrinho, `/carrinho`/`/checkout` respondem 404). Assim a loja pode ser lançada depois do site, ou desligada num problema, sem deploy.
+- **Liga/desliga dos ingressos (Fase 3):** interruptor "Venda de ingressos" no mesmo Dashboard, independente da loja. A API já devolve o `ticketSales` de cada evento combinado com ele, então a página do evento só olha `event.ticketSales`. Desligado, os eventos voltam a "Saiba mais"/WhatsApp como hoje.
 - Código novo de loja em `src/features/store/` (componentes, lib, types), separado de `src/features/site/` — o site continua funcionando sem ele.
 
 **Tech Stack:** Next.js 16 App Router, React 19, Server Components onde há fetch no servidor, `next/navigation` (`notFound`), Clerk no admin, GA4 (`window.gtag`, já carregado por `src/components/analytics.tsx`).
@@ -325,7 +329,7 @@ Tela por status (`PublicSiteOrder.status`):
 
 # Fase 3 — Ingressos dos eventos
 
-> ⏸️ **Fora do MVP (2026-11-09).** Desenho pronto pra depois da loja de produtos no ar.
+> ✅ **Implementada em 2026-11-12** (era fora do MVP desde 2026-11-09), junto com a agenda e os ingressos da API.
 
 Pré-requisito: plano da agenda da API (Tarefas 1–5) e Tarefas 11–13 do plano irmão no ar. A Tarefa 13 só precisa da agenda da API.
 
@@ -344,8 +348,9 @@ Ingresso **não usa o carrinho** (decisão 12 do plano irmão): a página do eve
 
 - [ ] **Step 1: Testes da lista** — `usePaginatedResource('/events', { q })` com busca por título; linha com data (fuso `America/Sao_Paulo`), "Rascunho"/"Publicado", "Já aconteceu" quando `endsAt` passou e, com venda ligada, "8 de 20 vagas" (`sold` de `spots`) ou "8 inscritos" sem limite; link "Participantes" (Tarefa 16); excluir com `ConfirmDialog` mostrando o 409 da API como está.
 - [ ] **Step 2: Testes do dialog** (`FormDialog`) — título, descrição, início/fim (`datetime-local`, convertido de/para UTC), local (vazio = no ateliê), preço (vazio = gratuito), vagas (vazio = sem limite), "Máximo de ingressos por compra" (número, padrão 10, de 1 a 50, só aparece com a venda ligada), foto, link de inscrição externo, `Switch` "Publicado" e `Switch` "Vender ingressos pelo site" (ajuda: "Pago vira 'Comprar ingresso', gratuito vira 'Inscrever-se'. O link de inscrição deixa de ser usado."); campo vazio envia `""` (a API grava `null`); fim antes do início não envia.
-- [ ] **Step 3: Rodar e confirmar que falha. Implementar. Rodar e confirmar que passa.**
-- [ ] **Step 4: Commit** — `feat(admin): add event agenda CRUD`
+- [ ] **Step 3: Testes do interruptor no Dashboard** (`src/app/admin/page.tsx`, seção "Site e loja") — terceiro `SwitchRow`, "Venda de ingressos" (ajuda: "Os eventos com 'Vender ingressos pelo site' marcado passam a vender e inscrever pelo site. Desligado, todos usam o link de inscrição ou o WhatsApp."), no mesmo molde de "Loja do site": `PATCH /store-settings { ticketsEnabled }`, depois `refreshPublicSite()`; mesmo aviso de pagamento não configurado quando ligado sem `paymentConfigured` (inscrição gratuita funciona assim mesmo). `StoreSettings` em `admin.ts` ganha `ticketsEnabled`. Na lista da agenda, com o interruptor desligado, evento com venda marcada mostra "Venda pausada no Dashboard" no lugar das vagas.
+- [ ] **Step 4: Rodar e confirmar que falha. Implementar. Rodar e confirmar que passa.**
+- [ ] **Step 5: Commit** — `feat(admin): add event agenda CRUD and the ticket sales switch`
 
 ---
 
@@ -361,7 +366,7 @@ O formulário aparece **só** com a loja ligada, `ticketSales: true` e o evento 
 
 Blocos: **Participantes** (um campo de nome por ingresso, começa com 1, "+ Adicionar participante" até `maxTicketsPerOrder` do evento ou até `spotsLeft`, o que for menor, com o aviso "Máximo de N ingressos por compra"; remover), **Seus dados** (nome, e-mail, WhatsApp, como no checkout), **Resumo** ("2 × R$ 45,00 = R$ 90,00" ou "Gratuito", aceite da política de cancelamento com link pra `/cancelamento-de-ingressos`), botão "Ir para o pagamento" / "Confirmar inscrição".
 
-- [ ] **Step 1: Testes** — não aparece com loja desligada, `ticketSales: false` ou evento começado; `soldOut` → "Esgotado"; não deixa adicionar além de `spotsLeft`/`maxTicketsPerOrder`; 409 `too_many` → "O máximo por compra é N ingressos"; nomes vazios bloqueiam o envio com mensagem no campo; envio manda só `{ eventId, attendees, customer, notes }`; pago → `window.location.assign(paymentUrl)`; gratuito (`paymentUrl: null`) → `router.push('/pedido/<token>')`; 409 `sold_out` → "Restam N vagas" e ajusta o limite; 409 `not_available` → "As vendas desse evento foram encerradas"; 503/rede → mensagem e o botão volta; botão com `loading` durante o envio; dispara `begin_checkout` com o evento como item. `EventCard` mostra "Esgotado" quando `soldOut`.
+- [ ] **Step 1: Testes** — não aparece com `ticketSales: false` (o que inclui o interruptor "Venda de ingressos" desligado, já combinado pela API) ou evento começado; **aparece com a loja de produtos desligada** (os interruptores são independentes); 409 `tickets_closed` (interruptor desligado entre abrir a página e enviar) → "A venda de ingressos pelo site está fechada no momento" com o link do WhatsApp; `soldOut` → "Esgotado"; não deixa adicionar além de `spotsLeft`/`maxTicketsPerOrder`; 409 `too_many` → "O máximo por compra é N ingressos"; nomes vazios bloqueiam o envio com mensagem no campo; envio manda só `{ eventId, attendees, customer, notes }`; pago → `window.location.assign(paymentUrl)`; gratuito (`paymentUrl: null`) → `router.push('/pedido/<token>')`; 409 `sold_out` → "Restam N vagas" e ajusta o limite; 409 `not_available` → "As vendas desse evento foram encerradas"; 503/rede → mensagem e o botão volta; botão com `loading` durante o envio; dispara `begin_checkout` com o evento como item. `EventCard` mostra "Esgotado" quando `soldOut`.
 - [ ] **Step 2: Rodar e confirmar que falha. Implementar. Rodar e confirmar que passa.** Conferir em 375 px.
 - [ ] **Step 3: Commit** — `feat(store): buy event tickets from the event page`
 

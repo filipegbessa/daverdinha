@@ -27,7 +27,9 @@ export default function DashboardPage() {
   } = useApiResource<StoreSettings>('/store-settings');
   const storeToggle = useApiMutation('Erro ao atualizar o site.');
 
-  function patchStoreSettings(changes: Partial<Pick<StoreSettings, 'siteEnabled' | 'storeEnabled'>>) {
+  function patchStoreSettings(
+    changes: Partial<Pick<StoreSettings, 'siteEnabled' | 'storeEnabled' | 'ticketsEnabled'>>,
+  ) {
     storeToggle
       .run(() => apiFetch('/store-settings', { method: 'PATCH', body: JSON.stringify(changes) }))
       .then(async (ok) => {
@@ -131,6 +133,20 @@ export default function DashboardPage() {
               <p role="status" className="text-xs text-amber-700 dark:text-amber-400">
                 O pagamento ainda não está configurado (chave do Pagar.me): a loja aparece no site, mas finalizar a
                 compra não funciona.
+              </p>
+            )}
+            <SwitchRow
+              label="Venda de ingressos"
+              checked={storeSettings.ticketsEnabled}
+              disabled={storeToggle.isPending}
+              onCheckedChange={(checked) => patchStoreSettings({ ticketsEnabled: checked })}
+              state={storeSettings.ticketsEnabled ? 'Venda de ingressos ativa' : 'Venda de ingressos desativada'}
+              hint="Os eventos com 'Vender ingressos pelo site' marcado passam a vender e inscrever pelo site. Desligado, todos usam o link de inscrição ou o WhatsApp."
+            />
+            {storeSettings.ticketsEnabled && !storeSettings.paymentConfigured && (
+              <p role="status" className="text-xs text-amber-700 dark:text-amber-400">
+                O pagamento ainda não está configurado (chave do Pagar.me): ingresso pago não funciona. Inscrição
+                gratuita funciona normalmente.
               </p>
             )}
             {storeToggle.error && <ErrorText>{storeToggle.error}</ErrorText>}

@@ -33,9 +33,32 @@ export const order: SiteOrderAdmin = {
   subtotal: 89.9,
   deliveryFee: 15,
   total: 104.9,
+  event: null,
+  tickets: [],
   payment: { linkId: null, orderId: null, chargeId: 'ch_1', status: 'paid' },
   paymentUrl: null,
   paidAt: '2026-11-09T15:05:00Z',
   expiresAt: '2026-11-09T16:00:00Z',
   createdAt: '2026-11-09T15:00:00Z',
+};
+
+/** Um pedido de ingresso pago, com dois participantes. */
+export const ticketOrder: SiteOrderAdmin = {
+  ...order,
+  id: 'o2',
+  code: 'DV-0043',
+  kind: 'tickets',
+  fulfillmentStatus: 'awaiting',
+  deliveryMethod: null,
+  address: null,
+  notes: null,
+  items: [],
+  event: { id: 'e1', title: 'Oficina de terrário', slug: 'oficina-de-terrario', startsAt: '2026-11-21T13:00:00Z' },
+  tickets: [
+    { id: 't1', attendeeName: 'Ana Lima', unitPrice: 120, checkedInAt: null },
+    { id: 't2', attendeeName: 'Bruno Lima', unitPrice: 120, checkedInAt: null },
+  ],
+  subtotal: 240,
+  deliveryFee: 0,
+  total: 240,
 };

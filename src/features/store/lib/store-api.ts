@@ -2,9 +2,13 @@ import type {
   CheckoutQuote,
   CreateCheckoutInput,
   CreateCheckoutResult,
+  CreateTicketCheckoutInput,
+  CreateTicketCheckoutResult,
   PublicSiteOrder,
+  TicketCheckoutFailureReason,
 } from '@/features/store/types/store';
 import { isPreviewCart, previewQuote } from '@/features/store/lib/preview-quote';
+import { isSample } from '@/features/site/data/samples';
 
 /**
  * As chamadas da loja à API, como `public-api.ts` é pro catálogo. Rodam no
@@ -75,6 +79,48 @@ export async function createCheckout(input: CreateCheckoutInput): Promise<Create
       message: known && typeof body.message === 'string' ? body.message : PAYMENT_UNAVAILABLE,
       ...(Array.isArray(body.problems) && { problems: body.problems as CheckoutQuote['problems'] }),
       ...(typeof body.reason === 'string' && { reason: body.reason as CheckoutFailure['reason'] }),
+    };
+  } catch {
+    return { ok: false, status: 0, message: PAYMENT_UNAVAILABLE };
+  }
+}
+
+/**
+ * Compra de ingresso (ou inscrição gratuita) direto da página do evento, sem
+ * carrinho. Nunca lança: 409 traz o `reason` e os números pra tela ajustar o
+ * formulário; o resto é "tente de novo". Evento de exemplo da prévia não
+ * chega à API.
+ */
+export async function createTicketCheckout(input: CreateTicketCheckoutInput): Promise<CreateTicketCheckoutResult> {
+  if (isSample({ id: input.eventId })) {
+    return { ok: false, status: 0, message: PREVIEW_CHECKOUT };
+  }
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return { ok: false, status: 0, message: PAYMENT_UNAVAILABLE };
+
+  try {
+    const response = await fetch(`${apiUrl}/checkout/tickets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+    if (response.ok) {
+      return {
+        ok: true,
+        code: String(body.code),
+        token: String(body.token),
+        paymentUrl: typeof body.paymentUrl === 'string' ? body.paymentUrl : null,
+      };
+    }
+    const known = response.status === 409;
+    return {
+      ok: false,
+      status: response.status,
+      message: known && typeof body.message === 'string' ? body.message : PAYMENT_UNAVAILABLE,
+      ...(typeof body.reason === 'string' && { reason: body.reason as TicketCheckoutFailureReason }),
+      ...(typeof body.spotsLeft === 'number' && { spotsLeft: body.spotsLeft }),
+      ...(typeof body.max === 'number' && { max: body.max }),
     };
   } catch {
     return { ok: false, status: 0, message: PAYMENT_UNAVAILABLE };

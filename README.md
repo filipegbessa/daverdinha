@@ -10,12 +10,13 @@ Frontend do projeto Daverdinha (Next.js + Tailwind + shadcn/ui + Clerk).
 
 Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/business.ts`, não em `.env` — edite ali pra atualizar. As áreas de entrega **não** ficam ali: vêm da API (ver abaixo).
 
-### Site e loja: interruptores no Dashboard
+### Site, loja e ingressos: interruptores no Dashboard
 
-Dois interruptores no Dashboard do admin, ao lado do bot, ligam o site e a loja sem deploy. Ficam nas configurações da loja na API (`store_settings.site_enabled` e `store_enabled`), e o site lê por `GET /store-settings/public` (`src/lib/site-settings.ts`) com cache de 1 minuto. Ao mudar um interruptor, o Dashboard limpa esse cache e as páginas geradas (`refreshPublicSite`, uma server action só pra quem está logado), então a mudança aparece no próximo acesso; o minuto é só a rede de segurança. A loja liga mesmo sem a chave do Pagar.me (o layout aparece), e o Dashboard avisa que finalizar a compra ainda não funciona.
+Três interruptores no Dashboard do admin, ao lado do bot, ligam o site, a loja e a venda de ingressos sem deploy. Ficam nas configurações da loja na API (`store_settings.site_enabled`, `store_enabled` e `tickets_enabled`), e o site lê por `GET /store-settings/public` (`src/lib/site-settings.ts`) com cache de 1 minuto. Ao mudar um interruptor, o Dashboard limpa esse cache e as páginas geradas (`refreshPublicSite`, uma server action só pra quem está logado), então a mudança aparece no próximo acesso; o minuto é só a rede de segurança. A loja liga mesmo sem a chave do Pagar.me (o layout aparece), e o Dashboard avisa que finalizar a compra ainda não funciona.
 
 - **Site completo** desligado: `/` serve a landing **em breve** (`ComingSoon.tsx`), e o site completo — home, catálogo (`/produtos`), agenda (`/agenda`), entregas, FAQ — fica na prévia **`/site`**, pra cliente validar. Na prévia, lista vazia da API vira produtos e eventos **de exemplo**, com a faixa "Prévia do site", e as páginas são `noindex` e ficam fora do sitemap. Ligado: `/` é o site completo e exemplo nunca aparece (lista vazia esconde a seção).
 - **Loja do site**: ver "Loja online" abaixo.
+- **Venda de ingressos**: ver "Ingressos dos eventos" abaixo. Independente da loja.
 
 **Falha segura:** com a API fora do ar (ou sem `NEXT_PUBLIC_API_URL`), os dois contam como desligados: `/` volta pra "em breve" e a loja some até a API responder.
 
@@ -23,9 +24,17 @@ A landing é **indexável de propósito**: `robots.ts` segue liberando `/`, o si
 
 Os canais de contato são WhatsApp, Instagram e o e-mail `contato@daverdinha.com.br` (mostrado em Localização e no JSON-LD). Hoje esse endereço só redireciona pra caixa pessoal do desenvolvedor; no lançamento o redirecionamento passa pra caixa da cliente.
 
+### Ingressos dos eventos (interruptor "Venda de ingressos")
+
+Um evento vende pelo site só com o interruptor geral ligado e "Vender ingressos pelo site" marcado no cadastro do evento. A API já devolve `ticketSales` combinado, então a página do evento só olha esse campo. Desligado, os eventos voltam ao link de inscrição ou ao WhatsApp.
+
+- **Cadastro** em `/admin/agenda`: rascunho/publicado, datas no horário do Rio (a API guarda em UTC), preço vazio = gratuito, vagas vazias = sem limite, máximo de ingressos por compra (1 a 50), uma capa. A lista mostra "8 de 20 vagas", "8 inscritos" ou "Venda pausada no Dashboard". Evento com ingresso não pode ser excluído (a API responde 409): despublique.
+- **Compra** na página do evento (`TicketForm`): um nome por ingresso, até o menor entre o limite por compra e as vagas restantes. Pago vai pro Pagar.me; gratuito confirma na hora e vai pra `/pedido/<token>`. Não usa o carrinho e funciona com a loja de produtos desligada. Ainda sem o aceite da política de cancelamento: a página `/cancelamento-de-ingressos` espera o `docs/questionario-ingressos.md`.
+- **Admin**: lista de presença em `/admin/agenda/<id>/participantes` (busca e "Presente" por participante) e, em Pedidos, o filtro por tipo; o pedido de ingresso mostra o evento e os participantes no lugar do endereço.
+
 ### Loja online (interruptor "Loja do site")
 
-A loja só aparece com o interruptor ligado no Dashboard (`isStoreEnabled()` no servidor; `useStoreEnabled()` nos componentes de cliente, pelo `StoreEnabledProvider` que o `SiteShell` monta). Desligada, o site fica só com WhatsApp, e `/carrinho`, `/checkout` e `/pedido` respondem 404. A API não deixa ligar sem a chave do Pagar.me e recusa pedido com a loja desligada.
+A loja só aparece com o interruptor ligado no Dashboard (`isStoreEnabled()` no servidor; `useStoreEnabled()` nos componentes de cliente, pelo `StoreEnabledProvider` que o `SiteShell` monta). Desligada, o site fica só com WhatsApp, e `/carrinho` e `/checkout` respondem 404, assim como `/pedido` de produtos (o de ingresso continua no ar). A loja liga mesmo sem a chave do Pagar.me (o Dashboard avisa), e a API recusa pedido com a loja desligada. No admin, o pedido tem o botão "Atualizar pagamento", que consulta o Pagar.me na hora (`POST /site-orders/:id/sync`) sem esperar o webhook.
 
 - **Carrinho** (`src/features/store`): fica no `localStorage` (`daverdinha:cart:v1`), num `CartProvider` que o `SiteShell` monta com a loja ligada. Guarda só o necessário pra desenhar a tela; leitura tolerante (JSON inválido, item sem id ou armazenamento bloqueado viram carrinho vazio), quantidade de 1 a 20, até 30 produtos, e acompanha outra aba pelo evento `storage`.
 - **Página do produto**: "Adicionar ao carrinho" vira o botão principal e "Pedir pelo WhatsApp" o secundário. Esgotado fica "Esgotado", desabilitado. Produto de exemplo da prévia entra no carrinho com o aviso "Prévia: produto de exemplo": com o carrinho só de exemplos, a cotação é montada no navegador (`preview-quote.ts`: preços dos exemplos, retirada no endereço do ateliê, entrega de R$ 15 pra qualquer CEP, até 3x) e finalizar mostra um aviso em vez de chamar a API. É assim que a cliente valida a loja em `/site` antes de ela existir. Dispara `add_to_cart` no GA.

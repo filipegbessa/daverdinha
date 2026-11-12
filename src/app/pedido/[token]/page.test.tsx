@@ -38,6 +38,38 @@ describe('/pedido/[token]', () => {
     await expect(renderPage('abc')).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
+  it('shows a ticket order even with the products store off', async () => {
+    mockSiteSettings({ storeEnabled: false });
+    (getOrderByToken as jest.Mock).mockResolvedValue({
+      ...previewOrder('paid'),
+      code: 'DV-0043',
+      kind: 'tickets',
+      items: [],
+      event: {
+        title: 'Oficina de terrário',
+        slug: 'oficina-de-terrario',
+        startsAt: '2026-11-21T13:00:00.000Z',
+        endsAt: '2026-11-21T15:00:00.000Z',
+        locationName: null,
+        locationAddress: null,
+      },
+      tickets: [{ attendeeName: 'Ana Lima', unitPrice: 45 }],
+      deliveryMethod: null,
+      pickup: null,
+    });
+
+    await renderPage('abc');
+
+    expect(screen.getByRole('heading', { name: 'Ingresso confirmado!' })).toBeInTheDocument();
+  });
+
+  it('keeps a products order a 404 with the store off', async () => {
+    mockSiteSettings({ storeEnabled: false });
+    (getOrderByToken as jest.Mock).mockResolvedValue(previewOrder('paid'));
+
+    await expect(renderPage('abc')).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+
   it('shows the order read from the API by its token', async () => {
     (getOrderByToken as jest.Mock).mockResolvedValue({ ...previewOrder('paid'), code: 'DV-0042' });
 

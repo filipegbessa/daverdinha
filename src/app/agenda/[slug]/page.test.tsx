@@ -6,6 +6,7 @@ jest.mock('next/navigation', () => ({
   notFound: jest.fn(() => {
     throw new Error('NEXT_NOT_FOUND');
   }),
+  useRouter: () => ({ push: jest.fn() }),
 }));
 
 const pastEvent = {
@@ -21,6 +22,10 @@ const pastEvent = {
   spots: null,
   imageUrl: null,
   ctaUrl: null,
+  ticketSales: false,
+  maxTicketsPerOrder: 10,
+  spotsLeft: null,
+  soldOut: false,
 };
 
 const renderPage = async (slug: string) => render(await Page({ params: Promise.resolve({ slug }) }));
@@ -39,17 +44,54 @@ describe('/agenda/[slug]', () => {
   });
 
   it('shows when, where and how much, with a WhatsApp signup naming the event', async () => {
-    await renderPage('oficina-de-terrario');
+    await renderPage('plantar-e-brindar-kokedama');
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Oficina de terrário');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Plantar e brindar: kokedama');
     const details = screen.getByRole('list', { name: 'Detalhes do evento' });
     expect(within(details).getByText('No ateliê')).toBeInTheDocument();
     expect(
       within(details).getByText('R. Capiberibe, 32 - Santo Cristo, Rio de Janeiro - RJ, 20220-030'),
     ).toBeInTheDocument();
-    expect(within(details).getByText('R$ 120,00 · 8 vagas')).toBeInTheDocument();
+    expect(within(details).getByText('R$ 150,00 · 10 vagas')).toBeInTheDocument();
     const signup = screen.getByRole('link', { name: 'Quero me inscrever' });
-    expect(decodeURIComponent(signup.getAttribute('href')!)).toContain('*Oficina de terrário*');
+    expect(decodeURIComponent(signup.getAttribute('href')!)).toContain('*Plantar e brindar: kokedama*');
+  });
+
+  it('sells tickets on the page when the event sells through the site, even with the products store off', async () => {
+    mockSiteSettings({ storeEnabled: false });
+    await renderPage('oficina-de-terrario');
+
+    expect(screen.getByRole('form', { name: 'Comprar ingresso' })).toBeInTheDocument();
+    expect(screen.getByText('R$ 120,00 · Restam 5 vagas')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Quero me inscrever' })).not.toBeInTheDocument();
+  });
+
+  it('offers a free sign-up for a free event that signs up through the site', async () => {
+    await renderPage('feirinha-verde-do-santo-cristo');
+
+    expect(screen.getByRole('button', { name: 'Confirmar inscrição' })).toBeInTheDocument();
+  });
+
+  it('stops selling once the event has started', async () => {
+    process.env.NEXT_PUBLIC_API_URL = 'https://api.test';
+    const started = {
+      ...pastEvent,
+      slug: 'comecou',
+      startsAt: new Date(Date.now() - 60_000).toISOString(),
+      endsAt: new Date(Date.now() + 3_600_000).toISOString(),
+      ticketSales: true,
+      spotsLeft: 3,
+    };
+    global.fetch = jest.fn(async (url: string) =>
+      url.endsWith('/events/comecou')
+        ? ({ ok: true, json: async () => started } as Response)
+        : ({ ok: false } as Response),
+    ) as jest.Mock;
+
+    await renderPage('comecou');
+
+    expect(screen.queryByRole('form', { name: 'Comprar ingresso' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Quero me inscrever' })).toBeInTheDocument();
   });
 
   // Link antigo compartilhado no Instagram cai numa página que explica.

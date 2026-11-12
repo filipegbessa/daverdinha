@@ -7,7 +7,8 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
-import { formatCurrency } from '@/lib/format';
+import Link from 'next/link';
+import { formatCurrency, formatDateTime } from '@/lib/format';
 import { formatPhone } from '@/features/admin/lib/format-phone';
 import {
   deliveryLabel,
@@ -41,6 +42,7 @@ export default function PedidoPage() {
   const { data: order, isLoading, isRefreshing, error, refetch } = useApiResource<SiteOrderAdmin>(`/site-orders/${id}`);
   const fulfillment = useApiMutation('Erro ao atualizar o preparo.');
   const cancel = useApiMutation('Erro ao cancelar o pedido.');
+  const sync = useApiMutation('Erro ao consultar o pagamento.');
   const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   // O título aparece sempre; o carregando ou o erro ficam embaixo dele.
@@ -72,9 +74,17 @@ export default function PedidoPage() {
     }
   }
 
+  // Pergunta ao Pagar.me agora, sem esperar o webhook nem o intervalo de um
+  // minuto da consulta automática. A API grava o que achar; aqui só relê.
+  async function refreshPayment() {
+    const ok = await sync.run(() => apiFetch(`/site-orders/${id}/sync`, { method: 'POST' }));
+    if (ok) refetch();
+  }
+
   const phoneDigits = order.customer.phone.replace(/\D/g, '');
   const canCancel = order.status === 'paid' || order.status === 'pending_payment';
   const maxLeadTime = Math.max(0, ...order.items.map((i) => i.leadTimeDays ?? 0));
+  const tickets = order.kind === 'tickets';
 
   return (
     <div>
@@ -92,7 +102,10 @@ export default function PedidoPage() {
       </PageHeader>
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
-      <BusyRegion busy={isRefreshing || fulfillment.isPending} className="mt-6 grid gap-4 lg:grid-cols-2">
+      <BusyRegion
+        busy={isRefreshing || fulfillment.isPending || sync.isPending}
+        className="mt-6 grid gap-4 lg:grid-cols-2"
+      >
         <Section title="Cliente">
           <p className="font-medium">{order.customer.name}</p>
           <p>
@@ -112,33 +125,64 @@ export default function PedidoPage() {
           </p>
         </Section>
 
-        <Section title={deliveryLabel(order)}>
-          {order.address ? (
-            <>
-              <p>
-                {order.address.street}, {order.address.number}
-                {order.address.complement && ` · ${order.address.complement}`}
+        {tickets ? (
+          <Section title="Evento">
+            {order.event ? (
+              <>
+                <p className="font-medium">{order.event.title}</p>
+                <p className="text-sm text-muted-foreground">{formatDateTime(order.event.startsAt)}</p>
+                <Link
+                  href={`/admin/agenda/${order.event.id}/participantes?evento=${encodeURIComponent(order.event.title)}`}
+                  className="text-sm text-primary underline"
+                >
+                  Lista de presença
+                </Link>
+              </>
+            ) : (
+              <p>Evento excluído.</p>
+            )}
+            {order.notes && <p className="mt-2 rounded bg-muted p-2 text-sm">Observação: {order.notes}</p>}
+          </Section>
+        ) : (
+          <Section title={deliveryLabel(order)}>
+            {order.address ? (
+              <>
+                <p>
+                  {order.address.street}, {order.address.number}
+                  {order.address.complement && ` · ${order.address.complement}`}
+                </p>
+                <p>
+                  {order.address.bairro} · CEP {order.address.cep}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {order.address.zone} · área {order.address.area}
+                </p>
+              </>
+            ) : (
+              <p>O cliente retira no ateliê.</p>
+            )}
+            {maxLeadTime > 0 && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Tem item sob encomenda: até {maxLeadTime} dias de confecção.
               </p>
-              <p>
-                {order.address.bairro} · CEP {order.address.cep}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {order.address.zone} · área {order.address.area}
-              </p>
-            </>
-          ) : (
-            <p>O cliente retira no ateliê.</p>
-          )}
-          {maxLeadTime > 0 && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              Tem item sob encomenda: até {maxLeadTime} dias de confecção.
-            </p>
-          )}
-          {order.notes && <p className="mt-2 rounded bg-muted p-2 text-sm">Observação: {order.notes}</p>}
-        </Section>
+            )}
+            {order.notes && <p className="mt-2 rounded bg-muted p-2 text-sm">Observação: {order.notes}</p>}
+          </Section>
+        )}
 
-        <Section title="Itens">
+        <Section title={tickets ? 'Participantes' : 'Itens'}>
           <ul className="space-y-1">
+            {order.tickets.map((ticket) => (
+              <li key={ticket.id} className="flex justify-between gap-3">
+                <span>
+                  {ticket.attendeeName}
+                  {ticket.checkedInAt && <span className="block text-sm text-muted-foreground">Presente</span>}
+                </span>
+                <span className="tabular-nums">
+                  {ticket.unitPrice === 0 ? 'Gratuito' : formatCurrency(ticket.unitPrice, 'BRL')}
+                </span>
+              </li>
+            ))}
             {order.items.map((item) => (
               <li key={`${item.productId}-${item.name}`} className="flex justify-between gap-3">
                 <span>
@@ -158,10 +202,12 @@ export default function PedidoPage() {
               <span>Subtotal</span>
               <span className="tabular-nums">{formatCurrency(order.subtotal, 'BRL')}</span>
             </p>
-            <p className="flex justify-between">
-              <span>Entrega</span>
-              <span className="tabular-nums">{formatCurrency(order.deliveryFee, 'BRL')}</span>
-            </p>
+            {!tickets && (
+              <p className="flex justify-between">
+                <span>Entrega</span>
+                <span className="tabular-nums">{formatCurrency(order.deliveryFee, 'BRL')}</span>
+              </p>
+            )}
             <p className="flex justify-between text-base font-semibold">
               <span>Total</span>
               <span className="tabular-nums">{formatCurrency(order.total, 'BRL')}</span>
@@ -169,8 +215,8 @@ export default function PedidoPage() {
           </div>
         </Section>
 
-        <Section title="Preparo e pagamento">
-          {order.status === 'paid' ? (
+        <Section title={tickets ? 'Pagamento' : 'Preparo e pagamento'}>
+          {tickets ? null : order.status === 'paid' ? (
             <FormField id="fulfillment" label="Preparo" error={fulfillment.error}>
               <NativeSelect
                 id="fulfillment"
@@ -193,6 +239,15 @@ export default function PedidoPage() {
             Pagamento: {order.payment.status ?? 'sem resposta do gateway ainda'}
             {order.payment.chargeId && ` · ${order.payment.chargeId}`}
           </p>
+          {/* Só pedido que chegou a ter link de pagamento tem o que consultar. */}
+          {order.payment.linkId && (
+            <>
+              <Button variant="outline" size="sm" className="mt-2" onClick={refreshPayment} loading={sync.isPending}>
+                Atualizar pagamento
+              </Button>
+              {sync.error && <ErrorText>{sync.error}</ErrorText>}
+            </>
+          )}
           {canCancel && (
             <Button variant="destructive" className="mt-4" onClick={() => setConfirmingCancel(true)}>
               Cancelar pedido
@@ -214,7 +269,13 @@ export default function PedidoPage() {
             cancel.clearError();
           }}
         >
-          {order.status === 'paid' ? (
+          {tickets ? (
+            <p>
+              As vagas são liberadas.
+              {order.status === 'paid' &&
+                ' O estorno do pagamento é feito no painel do Pagar.me: este botão não devolve o dinheiro.'}
+            </p>
+          ) : order.status === 'paid' ? (
             <p>
               Os itens voltam pro estoque. O estorno do pagamento é feito no painel do Pagar.me: este botão não devolve
               o dinheiro.

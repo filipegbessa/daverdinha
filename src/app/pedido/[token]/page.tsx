@@ -23,15 +23,17 @@ type Props = {
 
 export default async function OrderPage({ params, searchParams }: Props) {
   const shell = await shellProps();
-  if (!shell.storeEnabled) notFound();
   const { token } = await params;
 
   // Antes do lançamento, `/pedido/exemplo?status=paid` mostra um pedido de
   // exemplo em cada estado, pra cliente validar a página.
-  const preview = token === PREVIEW_ORDER_TOKEN && (await getSiteMode()) !== 'full';
+  const preview = shell.storeEnabled && token === PREVIEW_ORDER_TOKEN && (await getSiteMode()) !== 'full';
   const query = await searchParams;
   const order = preview ? previewOrder(query.status, query.entrega !== 'retirada') : await getOrderByToken(token);
-  if (!order) notFound();
+  // Pedido de produto só com a loja ligada. Ingresso não depende dela (a
+  // venda de ingressos tem o próprio interruptor), e pedido já feito continua
+  // com a página no ar mesmo se a venda for desligada depois.
+  if (!order || (order.kind === 'products' && !shell.storeEnabled)) notFound();
 
   return (
     <SiteShell {...shell} preview={preview}>

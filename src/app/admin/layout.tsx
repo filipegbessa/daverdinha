@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { href: '/admin/marcadores', label: 'Marcadores' },
   { href: '/admin/produtos', label: 'Produtos' },
   { href: '/admin/categorias', label: 'Categorias' },
+  { href: '/admin/agenda', label: 'Agenda' },
   { href: '/admin/conversas', label: 'Conversas' },
   { href: '/admin/loja', label: 'Loja' },
 ];

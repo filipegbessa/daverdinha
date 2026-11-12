@@ -23,24 +23,31 @@ export function maskPhone(value: string): string {
   const area = digits.slice(0, 2);
   const rest = digits.slice(2);
   const split = rest.length > 8 ? 5 : 4;
-  return rest.length > split
-    ? `(${area}) ${rest.slice(0, split)}-${rest.slice(split)}`
-    : `(${area}) ${rest}`;
+  return rest.length > split ? `(${area}) ${rest.slice(0, split)}-${rest.slice(split)}` : `(${area}) ${rest}`;
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Quem compra: as regras do `CustomerDto` da API, as mesmas no checkout de
+ * produtos e na compra de ingresso.
+ */
+export function validateCustomer(values: Pick<CheckoutFormValues, 'name' | 'email' | 'phone'>) {
+  const errors: Partial<Record<'name' | 'email' | 'phone', string>> = {};
+  const name = values.name.trim();
+  if (name.length < 2 || name.length > 100) errors.name = 'Informe seu nome.';
+  if (!EMAIL.test(values.email.trim())) errors.email = 'Informe um e-mail válido.';
+  const phone = onlyDigits(values.phone);
+  if (phone.length < 10 || phone.length > 11) errors.phone = 'Informe um WhatsApp com DDD.';
+  return errors;
+}
 
 /**
  * As mesmas regras da API (`POST /checkout`), conferidas antes de enviar pra
  * mensagem aparecer no campo, e não como um erro genérico depois.
  */
 export function validateCheckout(values: CheckoutFormValues): CheckoutFormErrors {
-  const errors: CheckoutFormErrors = {};
-  const name = values.name.trim();
-  if (name.length < 2 || name.length > 100) errors.name = 'Informe seu nome.';
-  if (!EMAIL.test(values.email.trim())) errors.email = 'Informe um e-mail válido.';
-  const phone = onlyDigits(values.phone);
-  if (phone.length < 10 || phone.length > 11) errors.phone = 'Informe um WhatsApp com DDD.';
+  const errors: CheckoutFormErrors = validateCustomer(values);
   if (values.deliveryMethod === 'delivery') {
     if (onlyDigits(values.cep).length !== 8) errors.cep = 'Informe um CEP com 8 números.';
     if (!values.street.trim()) errors.street = 'Informe a rua.';

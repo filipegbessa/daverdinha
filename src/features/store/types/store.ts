@@ -50,6 +50,29 @@ export type CreateCheckoutResult =
       reason?: DeliveryUnavailableReason | 'pickup_disabled';
     };
 
+/** Corpo de `POST /checkout/tickets`: preço e vagas são do servidor. */
+export interface CreateTicketCheckoutInput {
+  eventId: string;
+  attendees: { name: string }[];
+  customer: { name: string; email: string; phone: string };
+  notes?: string;
+}
+
+export type TicketCheckoutFailureReason = 'tickets_closed' | 'not_available' | 'sold_out' | 'too_many';
+
+export type CreateTicketCheckoutResult =
+  /** `paymentUrl: null` = inscrição gratuita, já confirmada. */
+  | { ok: true; code: string; token: string; paymentUrl: string | null }
+  | {
+      ok: false;
+      /** 409 = venda fechada, esgotado ou acima do limite; 503 = pagamento fora; 0 = rede. */
+      status: number;
+      message: string;
+      reason?: TicketCheckoutFailureReason;
+      spotsLeft?: number;
+      max?: number;
+    };
+
 export type SiteOrderStatus = 'pending_payment' | 'paid' | 'expired' | 'cancelled' | 'refunded';
 export type FulfillmentStatus = 'awaiting' | 'preparing' | 'ready' | 'completed';
 
@@ -67,7 +90,16 @@ export interface PublicSiteOrder {
     imageUrl: string | null;
     leadTimeDays: number | null;
   }[];
-  event: null;
+  /** Só em pedido de ingresso. */
+  event: {
+    title: string;
+    slug: string;
+    startsAt: string;
+    endsAt: string;
+    locationName: string | null;
+    locationAddress: string | null;
+  } | null;
+  /** Um por participante; `[]` em pedido de produto. */
   tickets: { attendeeName: string; unitPrice: number }[];
   subtotal: number;
   deliveryFee: number;

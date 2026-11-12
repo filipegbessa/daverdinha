@@ -9,10 +9,25 @@ export function eventPlace(event: Pick<SiteEvent, 'locationName'>): string {
   return event.locationName ?? 'No ateliê';
 }
 
+/**
+ * Preço e vagas numa linha: "R$ 120,00 · 8 vagas". Com venda pelo site, as
+ * vagas são as que sobram ("Restam 3 vagas") ou "Esgotado".
+ */
+export function eventDetails(
+  event: Pick<SiteEvent, 'price' | 'spots' | 'ticketSales' | 'spotsLeft' | 'soldOut'>,
+): string {
+  let spots: string | null = event.spots ? `${event.spots} vagas` : null;
+  if (event.soldOut) spots = 'Esgotado';
+  else if (event.ticketSales && event.spotsLeft !== null) {
+    spots = event.spotsLeft === 1 ? 'Resta 1 vaga' : `Restam ${event.spotsLeft} vagas`;
+  }
+  return [formatEventPrice(event.price), spots].filter(Boolean).join(' · ');
+}
+
 /** `full`: foto grande, usada na listagem e na página do evento. `compact`: card antigo, só texto, usado na home. */
 export function EventCard({ event, variant = 'full' }: { event: SiteEvent; variant?: 'full' | 'compact' }) {
   const { day, month } = eventCalendar(event.startsAt);
-  const details = [formatEventPrice(event.price), event.spots ? `${event.spots} vagas` : null].filter(Boolean);
+  const details = eventDetails(event);
 
   if (variant === 'compact') {
     return (
@@ -28,7 +43,7 @@ export function EventCard({ event, variant = 'full' }: { event: SiteEvent; varia
           <h3 className="font-semibold text-ink">{event.title}</h3>
           <p className="text-sm text-ink-soft">{formatEventWhen(event.startsAt, event.endsAt)}</p>
           <p className="text-sm text-ink-soft">{eventPlace(event)}</p>
-          <p className="text-sm text-berry">{details.join(' · ')}</p>
+          <p className="text-sm text-berry">{details}</p>
         </div>
       </Link>
     );
@@ -58,7 +73,7 @@ export function EventCard({ event, variant = 'full' }: { event: SiteEvent; varia
         <h3 className="font-semibold text-ink">{event.title}</h3>
         <p className="text-sm text-ink-soft">{formatEventWhen(event.startsAt, event.endsAt)}</p>
         <p className="text-sm text-ink-soft">{eventPlace(event)}</p>
-        <p className="text-sm text-berry">{details.join(' · ')}</p>
+        <p className="text-sm text-berry">{details}</p>
         <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-moss">
           Ver evento
           <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />

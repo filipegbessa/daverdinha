@@ -19,7 +19,21 @@ import { AdminList, AdminListItem } from '@/features/admin/components/AdminList'
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { SiteOrderAdmin, SiteOrderStatus } from '@/features/admin/types/admin';
 
-const DEFAULT_FILTERS: { q: string; status: SiteOrderStatus } = { q: '', status: 'paid' };
+const DEFAULT_FILTERS: { q: string; status: SiteOrderStatus; kind: '' | SiteOrderAdmin['kind'] } = {
+  q: '',
+  status: 'paid',
+  kind: '',
+};
+
+/** O que a linha mostra no lugar da entrega: o evento e quantos ingressos. */
+function orderSummary(order: SiteOrderAdmin): string {
+  if (order.kind === 'tickets') {
+    const count = order.tickets.length;
+    return `${order.event?.title ?? 'Ingresso'} · ${count} ${count === 1 ? 'ingresso' : 'ingressos'}`;
+  }
+  const preparation = order.status === 'paid' ? ` · ${FULFILLMENT_LABELS[order.fulfillmentStatus]}` : '';
+  return `${deliveryLabel(order)}${preparation}`;
+}
 
 /**
  * Pedidos feitos no site. Abre nos pagos, que é o que a cliente acompanha;
@@ -27,7 +41,7 @@ const DEFAULT_FILTERS: { q: string; status: SiteOrderStatus } = { q: '', status:
  */
 export default function PedidosPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const { status } = filters;
+  const { status, kind } = filters;
   const q = useDebouncedValue(filters.q.trim());
   const {
     data,
@@ -36,7 +50,11 @@ export default function PedidosPage() {
     isRefreshing,
     error,
     pagination,
-  } = usePaginatedResource<SiteOrderAdmin>('/site-orders', { status, q: q || undefined });
+  } = usePaginatedResource<SiteOrderAdmin>('/site-orders', {
+    status,
+    kind: kind || undefined,
+    q: q || undefined,
+  });
 
   return (
     <div>
@@ -63,6 +81,16 @@ export default function PedidosPage() {
                 </option>
               ))}
             </NativeSelect>
+            <NativeSelect
+              value={values.kind}
+              onChange={(e) => set({ kind: e.target.value as typeof values.kind })}
+              aria-label="Filtrar por tipo"
+              className="w-auto"
+            >
+              <option value="">Produtos e ingressos</option>
+              <option value="products">Produtos</option>
+              <option value="tickets">Ingressos</option>
+            </NativeSelect>
           </>
         )}
       </FilterBar>
@@ -80,8 +108,7 @@ export default function PedidosPage() {
                 <span className="font-medium">{order.code}</span>
                 <span className="text-muted-foreground"> · {order.customer.name}</span>
                 <span className="block text-sm text-muted-foreground">
-                  {formatOrderDate(order.createdAt)} · {deliveryLabel(order)}
-                  {order.status === 'paid' && ` · ${FULFILLMENT_LABELS[order.fulfillmentStatus]}`}
+                  {formatOrderDate(order.createdAt)} · {orderSummary(order)}
                 </span>
               </Link>
               <span className="font-semibold tabular-nums">{formatCurrency(order.total, 'BRL')}</span>

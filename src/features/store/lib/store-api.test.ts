@@ -1,4 +1,4 @@
-import { createCheckout, getOrderByToken, quoteCart } from './store-api';
+import { createCheckout, createTicketCheckout, getOrderByToken, PREVIEW_CHECKOUT, quoteCart } from './store-api';
 
 /** Resposta mínima de `fetch`: o jsdom dos testes não tem `Response`. */
 function reply(status: number, body: unknown) {
@@ -103,6 +103,74 @@ describe('createCheckout', () => {
 
     fetchMock.mockRejectedValueOnce(new Error('offline'));
     await expect(createCheckout(input)).resolves.toEqual(expect.objectContaining({ ok: false, status: 0 }));
+  });
+});
+
+describe('createTicketCheckout', () => {
+  const originalUrl = process.env.NEXT_PUBLIC_API_URL;
+  let fetchMock: jest.Mock;
+  const input = {
+    eventId: 'e1',
+    attendees: [{ name: 'Ana' }, { name: 'Bruno' }],
+    customer: { name: 'Maria', email: 'maria@exemplo.com', phone: '21999998888' },
+  };
+
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_API_URL = 'https://api.test';
+    fetchMock = jest.fn();
+    global.fetch = fetchMock;
+  });
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_API_URL = originalUrl;
+  });
+
+  it('posts the purchase and returns the payment URL, or null for a free sign-up', async () => {
+    fetchMock.mockResolvedValue(reply(201, { code: 'DV-0043', token: 't', paymentUrl: null }));
+
+    await expect(createTicketCheckout(input)).resolves.toEqual({
+      ok: true,
+      code: 'DV-0043',
+      token: 't',
+      paymentUrl: null,
+    });
+    expect(fetchMock).toHaveBeenCalledWith('https://api.test/checkout/tickets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+  });
+
+  it('passes on the reason and the numbers of a 409', async () => {
+    fetchMock.mockResolvedValue(reply(409, { message: 'Restam 1 vagas.', reason: 'sold_out', spotsLeft: 1 }));
+
+    await expect(createTicketCheckout(input)).resolves.toEqual({
+      ok: false,
+      status: 409,
+      message: 'Restam 1 vagas.',
+      reason: 'sold_out',
+      spotsLeft: 1,
+    });
+  });
+
+  it('turns other errors and network failures into a retry message', async () => {
+    fetchMock.mockResolvedValue(reply(503, { message: 'x' }));
+    expect(await createTicketCheckout(input)).toMatchObject({
+      ok: false,
+      status: 503,
+      message: expect.stringMatching(/Tente de novo/),
+    });
+    fetchMock.mockRejectedValue(new Error('offline'));
+    expect(await createTicketCheckout(input)).toMatchObject({ ok: false, status: 0 });
+  });
+
+  it('never reaches the API for a preview event', async () => {
+    expect(await createTicketCheckout({ ...input, eventId: 'sample-e1' })).toEqual({
+      ok: false,
+      status: 0,
+      message: PREVIEW_CHECKOUT,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 
