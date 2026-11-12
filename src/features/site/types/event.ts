@@ -1,7 +1,7 @@
 /**
  * Contrato público da agenda, igual ao que a API devolve em
- * `GET /events/upcoming` e `GET /events/:slug` (ver
- * `docs/plans/2026-11-04-agenda-eventos.md` no daverdinha-api).
+ * `GET /events/upcoming` e `GET /events/:slug` (ver o README do
+ * daverdinha-api, "Agenda de eventos").
  */
 export interface SiteEvent {
   id: string;

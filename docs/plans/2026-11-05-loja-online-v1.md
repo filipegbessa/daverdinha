@@ -20,13 +20,14 @@
 
 | Parte | Situação |
 |---|---|
-| Vitrine: home (destaques), `/produtos`, `/produtos/[categoria]`, `/produtos/[categoria]/[produto]` | ✅ feito na prévia `/site` (`docs/plans/2026-11-04-catalogo-produtos.md`, Tarefas 1–7), lendo `public-api.ts` |
+| Vitrine: home (destaques), `/produtos`, `/produtos/[categoria]`, `/produtos/[categoria]/[produto]` | ✅ feito na prévia `/site` (plano do catálogo, Tarefas 1–7; concluído e removido em 2026-11-12, está no histórico do git), lendo `public-api.ts` |
 | API do catálogo | ✅ feita e aplicada na Neon |
 | Telas de cadastro no admin | ✅ **Fase 1**, Tarefas 1–3, implementadas em 2026-11-05 (substituem as Tarefas 9–11 do plano do catálogo). Diferença do texto abaixo: a lista de produtos não tem filtro por categoria, porque `GET /products` não filtra e a lista é paginada; fica pra quando o catálogo crescer |
 | Ligar a vitrine na API real | ⏳ Fase 1, Tarefa 4 (era a Tarefa 8 do plano do catálogo) |
 | Loja V1 — produtos | ⏳ **Fase 2** deste plano — depende das Tarefas 1–9 do plano irmão no ar. Já feitos em 2026-11-09, antecipados: estoque e sob encomenda no cadastro de produto e o selo na vitrine (partes das Tarefas 7 e 11), áreas de entrega em `/admin/entregas` e `/admin/loja` (Tarefa 11, Steps 3, 3b e 3c). Também prontos, sem pagamento: Tarefas 5–10 (carrinho, `/carrinho`, `/checkout`, `/pedido/[token]`) e o admin de pedidos da Tarefa 11. A prévia `/site` roda a loja inteira com os exemplos (decisão 4). Falta o pagamento de verdade (API, Tarefas 6–8) e a Tarefa 12 (políticas, depende do questionário) |
 | Agenda — página pública (`/agenda`, `/agenda/[slug]`) | ✅ feita, lendo `src/features/site/types/event.ts` |
 | Agenda no admin e ingressos | ✅ **Fase 3**, Tarefas 13–16, implementada em 2026-11-12 com o interruptor "Venda de ingressos" no Dashboard. Diferenças: sem o aceite da política de cancelamento (a página espera o `questionario-ingressos.md`); a lista de participantes recebe o título do evento por `?evento=`, porque a API não o devolve |
+| Compra de ingresso em duas telas | ✅ 2026-11-12, depois do benchmark (`docs/benchmark-compra-ingresso.md`): a página do evento só tem preço, vagas, quantidade e o botão; os dados vão num checkout próprio em `/agenda/<slug>/ingressos`. Substitui o formulário dentro da página do evento da Tarefa 14 |
 | Botão "Atualizar pagamento" (Tarefa 11) | ✅ 2026-11-12, no detalhe do pedido; só aparece quando o pedido tem link de pagamento |
 | V2 — pagamento dentro do site | fora deste plano (ver "Depois da V1") |
 

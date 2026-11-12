@@ -61,7 +61,13 @@ describe('/agenda/[slug]', () => {
     mockSiteSettings({ storeEnabled: false });
     await renderPage('oficina-de-terrario');
 
-    expect(screen.getByRole('form', { name: 'Comprar ingresso' })).toBeInTheDocument();
+    // Só o botão: os dados ficam no checkout do ingresso, em outra página.
+    const box = screen.getByRole('region', { name: 'Comprar ingresso' });
+    expect(within(box).getByRole('link', { name: 'Comprar ingresso' })).toHaveAttribute(
+      'href',
+      '/agenda/oficina-de-terrario/ingressos?quantidade=1',
+    );
+    expect(within(box).queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.getByText('R$ 120,00 · Restam 5 vagas')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Quero me inscrever' })).not.toBeInTheDocument();
   });
@@ -69,7 +75,7 @@ describe('/agenda/[slug]', () => {
   it('offers a free sign-up for a free event that signs up through the site', async () => {
     await renderPage('feirinha-verde-do-santo-cristo');
 
-    expect(screen.getByRole('button', { name: 'Confirmar inscrição' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Inscrever-se' })).toBeInTheDocument();
   });
 
   it('stops selling once the event has started', async () => {
@@ -90,7 +96,7 @@ describe('/agenda/[slug]', () => {
 
     await renderPage('comecou');
 
-    expect(screen.queryByRole('form', { name: 'Comprar ingresso' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Comprar ingresso' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Quero me inscrever' })).toBeInTheDocument();
   });
 

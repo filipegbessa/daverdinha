@@ -9,7 +9,7 @@ import { SiteButton, siteButtonClass } from '@/features/site/components/SiteButt
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import { JsonLd } from '@/features/site/components/JsonLd';
 import { eventDetails, eventPlace } from '@/features/site/components/EventCard';
-import { TicketForm } from '@/features/store/components/TicketForm';
+import { TicketPurchaseBox } from '@/features/store/components/TicketPurchaseBox';
 import { EventsSection } from '@/features/site/components/EventsSection';
 import { Location } from '@/features/site/components/Location';
 import { isSample } from '@/features/site/data/samples';
@@ -105,9 +105,10 @@ export default async function EventPage({ params }: Props) {
                   {priceText}
                 </li>
               </ul>
+              {/* A compra vem antes da descrição: dá pra decidir sem rolar. */}
+              {sellsHere && <TicketPurchaseBox event={event} />}
               <p className="mt-6 leading-relaxed whitespace-pre-line text-ink-soft">{event.description}</p>
 
-              {sellsHere && <TicketForm event={event} />}
               {!past &&
                 !sellsHere &&
                 (event.ctaUrl ? (

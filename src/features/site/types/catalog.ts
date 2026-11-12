@@ -1,7 +1,7 @@
 /**
  * Contrato público do catálogo, igual ao que a API devolve em
- * `GET /product-categories/active` e `GET /products/active` (ver
- * `docs/plans/2026-11-04-catalogo-produtos.md` nos dois repositórios).
+ * `GET /product-categories/active` e `GET /products/active` (ver o README
+ * do daverdinha-api, "Catálogo do site").
  */
 export interface ProductCategory {
   id: string;
