@@ -79,7 +79,7 @@ describe("/site preview — always renders the full institutional site", () => {
     );
     expect(metadata.openGraph?.images).toEqual([
       {
-        url: "/logo.png",
+        url: "/logo-circle.png",
         width: 1200,
         height: 1200,
         alt: "Daverdinha — Ateliê de Plantas",

@@ -21,7 +21,7 @@ export function ComingSoon() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6 py-16 text-center">
       <Image
-        src="/logo.png"
+        src="/logo-circle.png"
         alt="Daverdinha — Ateliê de Plantas"
         width={176}
         height={176}

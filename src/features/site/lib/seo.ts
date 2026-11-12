@@ -41,7 +41,7 @@ export function pageMetadata({
       description,
       type: 'website',
       url: path,
-      images: [image ? { url: image } : { url: '/logo.png', width: 1200, height: 1200, alt: 'Daverdinha' }],
+      images: [image ? { url: image } : { url: '/logo-circle.png', width: 1200, height: 1200, alt: 'Daverdinha' }],
     },
   };
 }

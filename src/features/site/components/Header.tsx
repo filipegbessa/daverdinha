@@ -11,8 +11,7 @@ import { isStoreEnabled } from '@/features/store/lib/store-enabled';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 
 /**
- * Logo pequena com o nome ao lado (o nome é o que o Google e um leitor de
- * tela leem — a logo sozinha tinha `alt=""`), menu de navegação e o botão de
+ * Logo horizontal (já com o nome escrito, por isso o `alt` é o nome), menu de navegação e o botão de
  * WhatsApp. No celular o menu vira gaveta e o WhatsApp fica no botão
  * flutuante, então o cabeçalho fixo ocupa pouco da tela.
  */
@@ -24,9 +23,9 @@ export function Header({ home }: { home: string }) {
     // posiciona contra o cabeçalho inteiro e ocupa a largura toda da tela.
     <header className="sticky top-0 z-20 border-b border-moss-line/70 bg-paper/90 px-4 py-2.5 backdrop-blur-md md:px-6">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-        <Link href={home} className="flex shrink-0 items-center gap-2.5 font-serif text-xl font-semibold text-ink">
-          <Image src="/logo.png" alt="" width={44} height={44} className="size-11 rounded-full shadow-soft" />
-          Daverdinha
+        <Link href={home} className="shrink-0">
+          {/* A logo horizontal já traz o nome escrito; o `alt` é o que o Google e o leitor de tela leem. */}
+          <Image src="/logo-horizontal.png" alt="Daverdinha" width={132} height={44} priority className="h-11 w-auto" />
         </Link>
 
         {/* Só a partir de `lg`: entre 768 e ~800 px os 5 links, a logo e o botão não cabem numa linha. */}

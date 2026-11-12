@@ -2,9 +2,10 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Header } from './Header';
 
 describe('Header', () => {
-  it('shows the Daverdinha name next to the logo, linking home', () => {
+  it('shows the horizontal logo, named Daverdinha, linking home', () => {
     render(<Header home="/site" />);
     expect(screen.getByRole('link', { name: 'Daverdinha' })).toHaveAttribute('href', '/site');
+    expect(screen.getByRole('img', { name: 'Daverdinha' }).getAttribute('src')).toContain('logo-horizontal.png');
   });
 
   it('navigates to the catalog, the events page and the home sections', () => {
@@ -25,6 +26,8 @@ describe('Header', () => {
   it('opens the mobile menu as a drawer', () => {
     render(<Header home="/" />);
     fireEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
-    expect(within(screen.getByRole('navigation', { name: 'Menu' })).getByRole('link', { name: 'Eventos' })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('navigation', { name: 'Menu' })).getByRole('link', { name: 'Eventos' }),
+    ).toBeInTheDocument();
   });
 });

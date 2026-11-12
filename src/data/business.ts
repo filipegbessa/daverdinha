@@ -77,7 +77,7 @@ export function generateLocalBusinessJsonLd(areaServed: string[] = []): Record<s
     name: businessInfo.name,
     legalName: businessInfo.legal.razaoSocial,
     description: businessInfo.description,
-    ...(siteUrl ? { url: siteUrl, image: `${siteUrl}/logo.png` } : {}),
+    ...(siteUrl ? { url: siteUrl, image: `${siteUrl}/logo-circle.png` } : {}),
     sameAs: [businessInfo.contact.instagram.url],
     areaServed,
     telephone: `+${businessInfo.contact.phone.number}`,

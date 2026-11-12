@@ -7,7 +7,7 @@ import { loadFullSite } from '@/features/site/lib/load-full-site';
 import { getSiteMode } from '@/lib/site-mode';
 
 const OG_IMAGE = {
-  url: '/logo.png',
+  url: '/logo-circle.png',
   width: 1200,
   height: 1200,
   alt: 'Daverdinha — Ateliê de Plantas',

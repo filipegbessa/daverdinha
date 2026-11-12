@@ -37,7 +37,7 @@ describe("Home page — full site (SITE_MODE=full)", () => {
     expect(screen.getByText("Onde entregamos")).toBeInTheDocument();
     expect(screen.getByText("Onde estamos")).toBeInTheDocument();
     expect(screen.getByText("Perguntas frequentes")).toBeInTheDocument();
-    expect(screen.getAllByText("Daverdinha").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "Daverdinha" })).toBeInTheDocument();
   });
 
   it("never shows sample products or events after launch", async () => {
@@ -94,7 +94,7 @@ describe("Home page — full site (SITE_MODE=full)", () => {
     );
     expect(metadata.openGraph?.images).toEqual([
       {
-        url: "/logo.png",
+        url: "/logo-circle.png",
         width: 1200,
         height: 1200,
         alt: "Daverdinha — Ateliê de Plantas",
@@ -165,7 +165,7 @@ describe("Home page — coming soon (SITE_MODE unset)", () => {
     expect(metadata.openGraph).toHaveProperty("type", "website");
     expect(metadata.openGraph?.images).toEqual([
       {
-        url: "/logo.png",
+        url: "/logo-circle.png",
         width: 1200,
         height: 1200,
         alt: "Daverdinha — Ateliê de Plantas",
