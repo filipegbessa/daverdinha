@@ -35,6 +35,7 @@ async function fillBuyer() {
   await userEvent.type(screen.getByLabelText('Seu nome'), 'Maria Souza');
   await userEvent.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
   await userEvent.type(screen.getByLabelText('WhatsApp'), '21999998888');
+  await userEvent.type(screen.getByLabelText('CPF, CNPJ ou passaporte'), '11144477735');
 }
 
 describe('TicketCheckout', () => {
@@ -67,7 +68,7 @@ describe('TicketCheckout', () => {
     expect(create).toHaveBeenCalledWith({
       eventId: 'e1',
       attendees: [{ name: 'Maria Souza' }, { name: 'Bruno Lima' }],
-      customer: { name: 'Maria Souza', email: 'maria@exemplo.com', phone: '21999998888' },
+      customer: { name: 'Maria Souza', email: 'maria@exemplo.com', phone: '21999998888', document: '11144477735' },
     });
     expect(window.gtag).toHaveBeenCalledWith(
       'event',

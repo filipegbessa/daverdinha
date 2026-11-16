@@ -5,10 +5,12 @@ import { CartProvider } from './CartProvider';
 import { CART_STORAGE_KEY, readCart, type CartItem } from '@/features/store/lib/cart-storage';
 import { createCheckout, quoteCart } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
+import { fetchStreetByCep } from '@/features/store/lib/address-by-cep';
 import type { CheckoutQuote } from '@/features/store/types/store';
 
 jest.mock('@/features/store/lib/store-api');
 jest.mock('@/features/store/lib/redirect-to-payment');
+jest.mock('@/features/store/lib/address-by-cep');
 const replace = jest.fn();
 jest.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
 
@@ -61,11 +63,12 @@ async function fillContact(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('Nome'), 'Maria Souza');
   await user.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
   await user.type(screen.getByLabelText('WhatsApp'), '21999998888');
+  await user.type(screen.getByLabelText('CPF, CNPJ ou passaporte'), '11144477735');
 }
 
 async function fillAddress(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('CEP'), '22220000');
-  await user.type(screen.getByLabelText('Rua'), 'Rua do Catete');
+  await screen.findByDisplayValue('Rua do Catete');
   await user.type(screen.getByLabelText('Número'), '100');
 }
 
@@ -74,6 +77,7 @@ describe('CheckoutForm', () => {
     localStorage.clear();
     jest.clearAllMocks();
     (quoteCart as jest.Mock).mockImplementation(async (_items, cep?: string) => (cep ? covered : quote()));
+    (fetchStreetByCep as jest.Mock).mockResolvedValue('Rua do Catete');
   });
 
   it('sends an empty cart back to the cart page', async () => {
@@ -94,6 +98,35 @@ describe('CheckoutForm', () => {
     expect(quoteCart).toHaveBeenLastCalledWith([{ productId: 'p1', quantity: 1 }], '22220000');
     expect(screen.getByText('R$ 104,90')).toBeInTheDocument();
     expect(screen.getByText(/a entrega acontece depois da confecção, em até 10 dias/)).toBeInTheDocument();
+  });
+
+  it('fills the street automatically from the CEP, and the field cannot be edited', async () => {
+    const user = userEvent.setup();
+    renderCheckout();
+    await screen.findByText('Total');
+
+    await user.type(screen.getByLabelText('CEP'), '22220000');
+
+    expect(await screen.findByLabelText('Rua')).toHaveValue('Rua do Catete');
+    expect(fetchStreetByCep).toHaveBeenCalledWith('22220000');
+    expect(screen.getByLabelText('Rua')).toHaveAttribute('readonly');
+
+    await user.type(screen.getByLabelText('Rua'), 'outra coisa');
+    expect(screen.getByLabelText('Rua')).toHaveValue('Rua do Catete');
+  });
+
+  it('shows an error when the street for the CEP cannot be found', async () => {
+    const user = userEvent.setup();
+    (fetchStreetByCep as jest.Mock).mockResolvedValue(null);
+    renderCheckout();
+    await screen.findByText('Total');
+
+    await user.type(screen.getByLabelText('CEP'), '22220000');
+
+    expect(await screen.findByLabelText('Rua')).toHaveAccessibleDescription(
+      'Não encontramos a rua desse CEP. Confira os números.',
+    );
+    expect(screen.getByLabelText('Rua')).toHaveValue('');
   });
 
   it('shows what is missing next to each field and does not send', async () => {
@@ -123,7 +156,12 @@ describe('CheckoutForm', () => {
 
     expect(createCheckout).toHaveBeenCalledWith({
       items: [{ productId: 'p1', quantity: 1 }],
-      customer: { name: 'Maria Souza', email: 'maria@exemplo.com', phone: '21999998888' },
+      customer: {
+        name: 'Maria Souza',
+        email: 'maria@exemplo.com',
+        phone: '21999998888',
+        document: '11144477735',
+      },
       deliveryMethod: 'delivery',
       address: { cep: '22220000', street: 'Rua do Catete', number: '100' },
     });

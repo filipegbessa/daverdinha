@@ -26,7 +26,7 @@ import {
 } from '@/features/store/lib/tickets';
 import type { SiteEvent } from '@/features/site/types/event';
 
-type Buyer = { name: string; email: string; phone: string; notes: string };
+type Buyer = { name: string; email: string; phone: string; document: string; notes: string };
 type Errors = Partial<Record<keyof Buyer, string>> & { attendees?: (string | undefined)[] };
 
 /** Fechado por um 409: a venda foi desligada ou encerrada depois que a página abriu. */
@@ -64,7 +64,7 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
   const [attendees, setAttendees] = useState(() => resize([], clampQuantity(initialQuantity, limit)));
   // A maioria compra pra si: o primeiro participante é o comprador até desmarcar.
   const [buyerAttends, setBuyerAttends] = useState(true);
-  const [buyer, setBuyer] = useState<Buyer>({ name: '', email: '', phone: '', notes: '' });
+  const [buyer, setBuyer] = useState<Buyer>({ name: '', email: '', phone: '', document: '', notes: '' });
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -144,7 +144,12 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
     const result = await createTicketCheckout({
       eventId: event.id,
       attendees: names.map((name) => ({ name: name.trim() })),
-      customer: { name: buyer.name.trim(), email: buyer.email.trim(), phone: onlyDigits(buyer.phone) },
+      customer: {
+        name: buyer.name.trim(),
+        email: buyer.email.trim(),
+        phone: onlyDigits(buyer.phone),
+        document: buyer.document.trim(),
+      },
       ...(buyer.notes.trim() && { notes: buyer.notes.trim() }),
     });
 
@@ -255,6 +260,14 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
               />
             </StoreField>
           </div>
+          <StoreField id="ticketBuyerDocument" label="CPF, CNPJ ou passaporte" error={errors.document}>
+            <input
+              id="ticketBuyerDocument"
+              value={buyer.document}
+              onChange={(e) => setBuyerField('document', e.target.value)}
+              className={STORE_INPUT}
+            />
+          </StoreField>
         </fieldset>
 
         <fieldset className="space-y-4">

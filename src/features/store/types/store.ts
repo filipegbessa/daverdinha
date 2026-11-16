@@ -33,7 +33,7 @@ export interface CheckoutQuote {
 /** Corpo de `POST /checkout`. Itens só com id e quantidade: preço e frete são do servidor. */
 export interface CreateCheckoutInput {
   items: { productId: string; quantity: number }[];
-  customer: { name: string; email: string; phone: string };
+  customer: { name: string; email: string; phone: string; document: string };
   deliveryMethod: 'pickup' | 'delivery';
   address?: { cep: string; street: string; number: string; complement?: string };
   notes?: string;
@@ -54,7 +54,7 @@ export type CreateCheckoutResult =
 export interface CreateTicketCheckoutInput {
   eventId: string;
   attendees: { name: string }[];
-  customer: { name: string; email: string; phone: string };
+  customer: { name: string; email: string; phone: string; document: string };
   notes?: string;
 }
 

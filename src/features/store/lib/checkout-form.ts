@@ -1,10 +1,12 @@
 import { onlyDigits } from '@/features/site/lib/cep-check';
+import { parseDocument } from '@/features/store/lib/document';
 
 /** O que a pessoa preenche no `/checkout`, como texto (máscaras incluídas). */
 export interface CheckoutFormValues {
   name: string;
   email: string;
   phone: string;
+  document: string;
   deliveryMethod: 'pickup' | 'delivery';
   cep: string;
   street: string;
@@ -46,8 +48,8 @@ export function isValidEmail(value: string): boolean {
  * Quem compra: as regras do `CustomerDto` da API, as mesmas no checkout de
  * produtos e na compra de ingresso.
  */
-export function validateCustomer(values: Pick<CheckoutFormValues, 'name' | 'email' | 'phone'>) {
-  const errors: Partial<Record<'name' | 'email' | 'phone', string>> = {};
+export function validateCustomer(values: Pick<CheckoutFormValues, 'name' | 'email' | 'phone' | 'document'>) {
+  const errors: Partial<Record<'name' | 'email' | 'phone' | 'document', string>> = {};
   const name = values.name.trim();
   if (name.length < 2) errors.name = 'Informe seu nome.';
   else if (name.length > CUSTOMER_NAME_MAX) errors.name = `Use até ${CUSTOMER_NAME_MAX} caracteres.`;
@@ -56,6 +58,7 @@ export function validateCustomer(values: Pick<CheckoutFormValues, 'name' | 'emai
   else if (!EMAIL.test(email)) errors.email = 'Informe um e-mail válido.';
   const phone = onlyDigits(values.phone);
   if (phone.length < 10 || phone.length > 11) errors.phone = 'Informe um WhatsApp com DDD.';
+  if (!parseDocument(values.document)) errors.document = 'Informe um CPF, CNPJ ou passaporte válido.';
   return errors;
 }
 
@@ -66,8 +69,15 @@ export function validateCustomer(values: Pick<CheckoutFormValues, 'name' | 'emai
 export function validateCheckout(values: CheckoutFormValues): CheckoutFormErrors {
   const errors: CheckoutFormErrors = validateCustomer(values);
   if (values.deliveryMethod === 'delivery') {
-    if (onlyDigits(values.cep).length !== 8) errors.cep = 'Informe um CEP com 8 números.';
-    if (!values.street.trim()) errors.street = 'Informe a rua.';
+    const cepComplete = onlyDigits(values.cep).length === 8;
+    if (!cepComplete) errors.cep = 'Informe um CEP com 8 números.';
+    // Rua vem sozinha do CEP (ViaCEP), nunca digitada: vazia com CEP completo
+    // é a ViaCEP não achando; vazia sem CEP é só faltar o CEP ainda.
+    if (!values.street.trim()) {
+      errors.street = cepComplete
+        ? 'Não encontramos a rua desse CEP. Confira os números.'
+        : 'Informe o CEP pra preencher a rua.';
+    }
     if (!values.number.trim()) errors.number = 'Informe o número (ou "s/n").';
   }
   if (values.notes.length > 500) errors.notes = 'Use até 500 caracteres.';

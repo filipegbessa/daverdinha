@@ -11,6 +11,7 @@ import { useCart } from '@/features/store/components/CartProvider';
 import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField';
 import { createCheckout, quoteCart } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
+import { fetchStreetByCep } from '@/features/store/lib/address-by-cep';
 import { RETURNS_HREF } from '@/features/site/lib/paths';
 import {
   maskPhone,
@@ -27,6 +28,7 @@ const EMPTY: CheckoutFormValues = {
   name: '',
   email: '',
   phone: '',
+  document: '',
   deliveryMethod: 'delivery',
   cep: '',
   street: '',
@@ -67,6 +69,7 @@ export function CheckoutForm() {
   const [quoteAttempt, setQuoteAttempt] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [addressLoading, setAddressLoading] = useState(false);
 
   const cepDigits = onlyDigits(values.cep);
   const quoteCep = cepDigits.length === 8 ? cepDigits : undefined;
@@ -95,6 +98,31 @@ export function CheckoutForm() {
     };
     // Só produtos, quantidades e CEP mudam a cotação (`itemsKey` cobre os itens).
   }, [ready, itemsKey, quoteCep, quoteAttempt]);
+
+  // Rua: sempre vem do CEP (ViaCEP), nunca digitada — evita endereço
+  // divergente do que o frete calculou.
+  useEffect(() => {
+    if (!quoteCep) {
+      setAddressLoading(false);
+      setValues((prev) => (prev.street ? { ...prev, street: '' } : prev));
+      setErrors((prev) => (prev.street ? { ...prev, street: undefined } : prev));
+      return;
+    }
+    let cancelled = false;
+    setAddressLoading(true);
+    fetchStreetByCep(quoteCep).then((street) => {
+      if (cancelled) return;
+      setAddressLoading(false);
+      setValues((prev) => ({ ...prev, street: street ?? '' }));
+      setErrors((prev) => ({
+        ...prev,
+        street: street ? undefined : 'Não encontramos a rua desse CEP. Confira os números.',
+      }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [quoteCep]);
 
   // Retirada desligada na loja: a única opção é entregar.
   useEffect(() => {
@@ -137,7 +165,12 @@ export function CheckoutForm() {
     setSubmitting(true);
     const result = await createCheckout({
       items: items.map(({ productId, quantity }) => ({ productId, quantity })),
-      customer: { name: values.name.trim(), email: values.email.trim(), phone: onlyDigits(values.phone) },
+      customer: {
+        name: values.name.trim(),
+        email: values.email.trim(),
+        phone: onlyDigits(values.phone),
+        document: values.document.trim(),
+      },
       deliveryMethod: values.deliveryMethod,
       ...(isDelivery && {
         address: {
@@ -213,6 +246,14 @@ export function CheckoutForm() {
               />
             </StoreField>
           </div>
+          <StoreField id="checkoutDocument" label="CPF, CNPJ ou passaporte" error={errors.document}>
+            <input
+              id="checkoutDocument"
+              value={values.document}
+              onChange={(e) => set('document', e.target.value)}
+              className={STORE_INPUT}
+            />
+          </StoreField>
         </fieldset>
 
         <fieldset className="space-y-4">
@@ -292,12 +333,18 @@ export function CheckoutForm() {
                   )}
                 </div>
               </div>
-              <StoreField id="checkoutStreet" label="Rua" error={errors.street}>
+              <StoreField
+                id="checkoutStreet"
+                label="Rua"
+                hint={addressLoading ? 'Buscando endereço...' : undefined}
+                error={errors.street}
+              >
                 <input
                   id="checkoutStreet"
                   autoComplete="address-line1"
                   value={values.street}
-                  onChange={(e) => set('street', e.target.value)}
+                  readOnly
+                  placeholder="Preenchido pelo CEP"
                   className={STORE_INPUT}
                 />
               </StoreField>

@@ -57,7 +57,7 @@ describe('createCheckout', () => {
   let fetchMock: jest.Mock;
   const input = {
     items: [{ productId: 'p1', quantity: 1 }],
-    customer: { name: 'Maria', email: 'maria@exemplo.com', phone: '21999998888' },
+    customer: { name: 'Maria', email: 'maria@exemplo.com', phone: '21999998888', document: '11144477735' },
     deliveryMethod: 'pickup' as const,
   };
 
@@ -119,7 +119,7 @@ describe('createTicketCheckout', () => {
   const input = {
     eventId: 'e1',
     attendees: [{ name: 'Ana' }, { name: 'Bruno' }],
-    customer: { name: 'Maria', email: 'maria@exemplo.com', phone: '21999998888' },
+    customer: { name: 'Maria', email: 'maria@exemplo.com', phone: '21999998888', document: '11144477735' },
   };
 
   beforeEach(() => {

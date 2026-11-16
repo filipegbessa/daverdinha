@@ -48,7 +48,7 @@ describe('preview quote', () => {
     await expect(
       createCheckout({
         items: [{ productId: vaso.id, quantity: 1 }],
-        customer: { name: 'Maria', email: 'm@exemplo.com', phone: '21999998888' },
+        customer: { name: 'Maria', email: 'm@exemplo.com', phone: '21999998888', document: '11144477735' },
         deliveryMethod: 'pickup',
       }),
     ).resolves.toEqual({ ok: false, status: 0, message: PREVIEW_CHECKOUT });

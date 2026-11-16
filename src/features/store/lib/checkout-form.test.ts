@@ -4,6 +4,7 @@ const valid: CheckoutFormValues = {
   name: 'Maria Souza',
   email: 'maria@exemplo.com',
   phone: '(21) 99999-8888',
+  document: '111.444.777-35',
   deliveryMethod: 'delivery',
   cep: '22220-000',
   street: 'Rua do Catete',
@@ -34,8 +35,15 @@ describe('validateCheckout', () => {
 
     expect(validateCheckout({ ...valid, cep: '2222', street: ' ', number: '' })).toEqual({
       cep: 'Informe um CEP com 8 números.',
-      street: 'Informe a rua.',
+      street: 'Informe o CEP pra preencher a rua.',
       number: 'Informe o número (ou "s/n").',
+    });
+  });
+
+  it('blames the CEP, not the buyer, when ViaCEP could not find the street', () => {
+    // CEP completo mas rua vazia: a ViaCEP não achou (o campo não é digitado).
+    expect(validateCheckout({ ...valid, street: '' })).toEqual({
+      street: 'Não encontramos a rua desse CEP. Confira os números.',
     });
   });
 
@@ -56,6 +64,14 @@ describe('validateCheckout', () => {
       email: 'Informe um e-mail válido.',
       phone: 'Informe um WhatsApp com DDD.',
       acceptedPolicy: 'Confirme que leu a política de trocas.',
+    });
+  });
+
+  it('accepts a CNPJ or a passport, and rejects anything else', () => {
+    expect(validateCheckout({ ...valid, document: '11.222.333/0001-81' })).toEqual({});
+    expect(validateCheckout({ ...valid, document: 'AB123456' })).toEqual({});
+    expect(validateCheckout({ ...valid, document: '123' })).toEqual({
+      document: 'Informe um CPF, CNPJ ou passaporte válido.',
     });
   });
 });
