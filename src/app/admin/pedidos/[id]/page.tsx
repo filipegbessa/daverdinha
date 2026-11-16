@@ -43,7 +43,9 @@ export default function PedidoPage() {
   const fulfillment = useApiMutation('Erro ao atualizar o preparo.');
   const cancel = useApiMutation('Erro ao cancelar o pedido.');
   const sync = useApiMutation('Erro ao consultar o pagamento.');
+  const resend = useApiMutation('Erro ao enviar o e-mail de confirmação.');
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [resent, setResent] = useState(false);
 
   // O título aparece sempre; o carregando ou o erro ficam embaixo dele.
   if (!order) {
@@ -79,6 +81,17 @@ export default function PedidoPage() {
   async function refreshPayment() {
     const ok = await sync.run(() => apiFetch(`/site-orders/${id}/sync`, { method: 'POST' }));
     if (ok) refetch();
+  }
+
+  // Manda de novo o e-mail de confirmação (com os QRs, nos ingressos), pra
+  // quando o comprador diz que não recebeu ou o envio automático falhou.
+  async function resendConfirmation() {
+    setResent(false);
+    const ok = await resend.run(() => apiFetch(`/site-orders/${id}/resend-confirmation`, { method: 'POST' }));
+    if (ok) {
+      setResent(true);
+      refetch();
+    }
   }
 
   const phoneDigits = order.customer.phone.replace(/\D/g, '');
@@ -247,6 +260,29 @@ export default function PedidoPage() {
               </Button>
               {sync.error && <ErrorText>{sync.error}</ErrorText>}
             </>
+          )}
+          {order.status === 'paid' && (
+            <div className="mt-3 border-t border-border pt-3">
+              <p className="text-sm text-muted-foreground">
+                E-mail de confirmação:{' '}
+                {order.confirmationSentAt ? `enviado em ${formatOrderDate(order.confirmationSentAt)}` : 'não enviado'}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={resendConfirmation}
+                loading={resend.isPending}
+              >
+                {order.confirmationSentAt ? 'Reenviar confirmação' : 'Enviar confirmação'}
+              </Button>
+              {resend.error && <ErrorText>{resend.error}</ErrorText>}
+              {resent && !resend.error && (
+                <p role="status" className="mt-1 text-sm text-muted-foreground">
+                  E-mail enviado para {order.customer.email}.
+                </p>
+              )}
+            </div>
           )}
           {canCancel && (
             <Button variant="destructive" className="mt-4" onClick={() => setConfirmingCancel(true)}>

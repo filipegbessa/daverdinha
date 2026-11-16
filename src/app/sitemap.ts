@@ -1,6 +1,14 @@
 import type { MetadataRoute } from 'next';
 import { getSiteMode } from '@/lib/site-mode';
-import { AGENDA_HREF, categoryHref, eventHref, PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
+import {
+  AGENDA_HREF,
+  categoryHref,
+  DELIVERY_INFO_HREF,
+  eventHref,
+  PRODUCTS_HREF,
+  productHref,
+  RETURNS_HREF,
+} from '@/features/site/lib/paths';
 import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -45,6 +53,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...base,
     page(PRODUCTS_HREF, 0.9),
+    page(RETURNS_HREF, 0.3),
+    page(DELIVERY_INFO_HREF, 0.3),
     page(AGENDA_HREF, 0.8),
     ...categories.filter((c) => withProducts.has(c.slug)).map((c) => page(categoryHref(c.slug), 0.8)),
     ...products.map((p) => page(productHref(p), 0.7)),

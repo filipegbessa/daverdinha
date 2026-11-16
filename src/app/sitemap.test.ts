@@ -69,6 +69,8 @@ describe('sitemap', () => {
         'https://daverdinha.com.br/produtos/vasos',
         'https://daverdinha.com.br/produtos/vasos/vaso',
         'https://daverdinha.com.br/agenda/oficina',
+        'https://daverdinha.com.br/trocas-e-devolucoes',
+        'https://daverdinha.com.br/entrega-e-retirada',
       ]),
     );
     // Kits não tem produto: a página dela é 404, não entra.

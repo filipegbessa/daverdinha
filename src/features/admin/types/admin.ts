@@ -254,6 +254,8 @@ export interface SiteOrderAdmin {
   payment: { linkId: string | null; orderId: string | null; chargeId: string | null; status: string | null };
   paymentUrl: string | null;
   paidAt: string | null;
+  /** Quando saiu o e-mail de confirmação; `null` se ainda não saiu (ou falhou). */
+  confirmationSentAt: string | null;
   expiresAt: string;
   createdAt: string;
 }

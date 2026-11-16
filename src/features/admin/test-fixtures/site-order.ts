@@ -38,6 +38,7 @@ export const order: SiteOrderAdmin = {
   payment: { linkId: null, orderId: null, chargeId: 'ch_1', status: 'paid' },
   paymentUrl: null,
   paidAt: '2026-11-09T15:05:00Z',
+  confirmationSentAt: '2026-11-09T15:05:10Z',
   expiresAt: '2026-11-09T16:00:00Z',
   createdAt: '2026-11-09T15:00:00Z',
 };

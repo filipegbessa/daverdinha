@@ -107,4 +107,41 @@ describe('PedidoPage', () => {
     expect(screen.queryByText(/retira no ateliê/)).not.toBeInTheDocument();
     expect(screen.queryByText('Entrega')).not.toBeInTheDocument();
   });
+
+  it('resends the confirmation email of a paid order and says where it went', async () => {
+    const apiFetch = mockApi();
+
+    render(<PedidoPage />);
+    expect(await screen.findByText(/E-mail de confirmação: enviado em/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Reenviar confirmação' }));
+
+    expect(apiFetch).toHaveBeenCalledWith('/site-orders/o1/resend-confirmation', { method: 'POST' });
+    expect(await screen.findByRole('status')).toHaveTextContent('E-mail enviado para maria@exemplo.com.');
+  });
+
+  it('offers to send a confirmation that never went out, and shows why it failed', async () => {
+    const apiFetch = mockApi({ ...order, confirmationSentAt: null });
+    apiFetch.mockImplementation(async (path: string) => {
+      if (path.endsWith('/resend-confirmation')) {
+        throw new Error('O envio de e-mail ainda não está configurado.');
+      }
+      return { ...order, confirmationSentAt: null };
+    });
+
+    render(<PedidoPage />);
+    expect(await screen.findByText('E-mail de confirmação: não enviado')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar confirmação' }));
+
+    expect(await screen.findByText('O envio de e-mail ainda não está configurado.')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('has no confirmation email for an order that is not paid', async () => {
+    mockApi({ ...order, status: 'expired', confirmationSentAt: null });
+
+    render(<PedidoPage />);
+
+    await screen.findByRole('heading', { name: 'Pedido DV-0042' });
+    expect(screen.queryByRole('button', { name: /confirmação/ })).not.toBeInTheDocument();
+  });
 });

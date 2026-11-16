@@ -16,6 +16,9 @@ export const PRODUCTS_HREF = '/produtos';
 export const AGENDA_HREF = '/agenda';
 /** Pede os links dos pedidos por e-mail (sem conta). */
 export const MY_ORDERS_HREF = '/meus-pedidos';
+/** Políticas da loja: o checkout pede pra ler a de trocas. */
+export const RETURNS_HREF = '/trocas-e-devolucoes';
+export const DELIVERY_INFO_HREF = '/entrega-e-retirada';
 
 export function categoryHref(categorySlug: string): string {
   return `${PRODUCTS_HREF}/${categorySlug}`;

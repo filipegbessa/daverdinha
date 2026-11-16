@@ -11,6 +11,7 @@ import { useCart } from '@/features/store/components/CartProvider';
 import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField';
 import { createCheckout, quoteCart } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
+import { RETURNS_HREF } from '@/features/site/lib/paths';
 import {
   maskPhone,
   validateCheckout,
@@ -34,8 +35,6 @@ const EMPTY: CheckoutFormValues = {
   notes: '',
   acceptedPolicy: false,
 };
-
-const POLICY_HREF = '/trocas-e-devolucoes';
 
 /** Por que não dá pra entregar, em palavras de cliente. */
 function deliveryUnavailableText(delivery: Extract<CheckoutQuote['delivery'], { available: false }>): string {
@@ -417,7 +416,7 @@ export function CheckoutForm() {
             />
             <span>
               Li a{' '}
-              <Link href={POLICY_HREF} target="_blank" className="font-semibold text-moss underline">
+              <Link href={RETURNS_HREF} target="_blank" className="font-semibold text-moss underline">
                 política de trocas
               </Link>
               .

@@ -4,7 +4,7 @@ import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { siteNav } from '@/features/site/components/site-nav';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
-import { MY_ORDERS_HREF } from '@/features/site/lib/paths';
+import { DELIVERY_INFO_HREF, MY_ORDERS_HREF, RETURNS_HREF } from '@/features/site/lib/paths';
 
 /**
  * Nome, endereço e telefone em todas as páginas, escritos igual ao perfil da
@@ -76,6 +76,12 @@ export function Footer({ home }: { home: string }) {
           <p className="mb-2 font-semibold text-paper">Legal</p>
           <Link href="/politica-de-privacidade" className="block underline underline-offset-4 hover:text-paper">
             Política de Privacidade
+          </Link>
+          <Link href={RETURNS_HREF} className="block underline underline-offset-4 hover:text-paper">
+            Trocas e devoluções
+          </Link>
+          <Link href={DELIVERY_INFO_HREF} className="block underline underline-offset-4 hover:text-paper">
+            Entrega e retirada
           </Link>
           <p>{legal.razaoSocial}</p>
           <p>CNPJ {legal.cnpj}</p>
