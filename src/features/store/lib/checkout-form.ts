@@ -28,9 +28,18 @@ export function maskPhone(value: string): string {
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Limite do Pagar.me pro comprador do link de pagamento (nome e e-mail com até
+ * 64 caracteres), o mesmo do `CustomerDto` da API. Vai no `maxLength` dos
+ * campos e na validação.
+ */
+export const CUSTOMER_NAME_MAX = 64;
+export const CUSTOMER_EMAIL_MAX = 64;
+
 /** O mesmo teste de e-mail do checkout, pra outros formulários do site. */
 export function isValidEmail(value: string): boolean {
-  return EMAIL.test(value.trim());
+  const email = value.trim();
+  return email.length <= CUSTOMER_EMAIL_MAX && EMAIL.test(email);
 }
 
 /**
@@ -40,8 +49,11 @@ export function isValidEmail(value: string): boolean {
 export function validateCustomer(values: Pick<CheckoutFormValues, 'name' | 'email' | 'phone'>) {
   const errors: Partial<Record<'name' | 'email' | 'phone', string>> = {};
   const name = values.name.trim();
-  if (name.length < 2 || name.length > 100) errors.name = 'Informe seu nome.';
-  if (!EMAIL.test(values.email.trim())) errors.email = 'Informe um e-mail válido.';
+  if (name.length < 2) errors.name = 'Informe seu nome.';
+  else if (name.length > CUSTOMER_NAME_MAX) errors.name = `Use até ${CUSTOMER_NAME_MAX} caracteres.`;
+  const email = values.email.trim();
+  if (email.length > CUSTOMER_EMAIL_MAX) errors.email = `Use um e-mail de até ${CUSTOMER_EMAIL_MAX} caracteres.`;
+  else if (!EMAIL.test(email)) errors.email = 'Informe um e-mail válido.';
   const phone = onlyDigits(values.phone);
   if (phone.length < 10 || phone.length > 11) errors.phone = 'Informe um WhatsApp com DDD.';
   return errors;

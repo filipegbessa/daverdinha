@@ -4,7 +4,7 @@ import { MailCheck } from 'lucide-react';
 import { SiteButton } from '@/features/site/components/SiteButton';
 import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField';
 import { requestOrderLinks } from '@/features/store/lib/store-api';
-import { isValidEmail } from '@/features/store/lib/checkout-form';
+import { isValidEmail, CUSTOMER_EMAIL_MAX } from '@/features/store/lib/checkout-form';
 
 const ERRORS = {
   too_many: 'Muitas tentativas. Tente de novo em uma hora.',
@@ -56,6 +56,7 @@ export function OrderLookupForm() {
       >
         <input
           id="lookupEmail"
+          maxLength={CUSTOMER_EMAIL_MAX}
           type="email"
           autoComplete="email"
           value={email}

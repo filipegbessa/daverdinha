@@ -16,6 +16,8 @@ import {
   validateCheckout,
   type CheckoutFormErrors,
   type CheckoutFormValues,
+  CUSTOMER_NAME_MAX,
+  CUSTOMER_EMAIL_MAX,
 } from '@/features/store/lib/checkout-form';
 import type { CheckoutQuote } from '@/features/store/types/store';
 import { checkoutNoDeliveryMessage } from '@/features/site/lib/whatsapp-messages';
@@ -175,6 +177,7 @@ export function CheckoutForm() {
           <StoreField id="checkoutName" label="Nome" error={errors.name}>
             <input
               id="checkoutName"
+              maxLength={CUSTOMER_NAME_MAX}
               autoComplete="name"
               value={values.name}
               onChange={(e) => set('name', e.target.value)}
@@ -190,6 +193,7 @@ export function CheckoutForm() {
             >
               <input
                 id="checkoutEmail"
+                maxLength={CUSTOMER_EMAIL_MAX}
                 type="email"
                 autoComplete="email"
                 value={values.email}

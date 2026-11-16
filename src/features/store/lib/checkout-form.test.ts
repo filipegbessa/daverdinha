@@ -1,4 +1,4 @@
-import { maskPhone, validateCheckout, type CheckoutFormValues } from './checkout-form';
+import { isValidEmail, maskPhone, validateCheckout, type CheckoutFormValues } from './checkout-form';
 
 const valid: CheckoutFormValues = {
   name: 'Maria Souza',
@@ -39,10 +39,19 @@ describe('validateCheckout', () => {
     });
   });
 
+  it('caps name and email at the 64 characters Pagar.me accepts', () => {
+    const email = (length: number) => `${'a'.repeat(length - '@exemplo.com'.length)}@exemplo.com`;
+    expect(validateCheckout({ ...valid, name: 'M'.repeat(64), email: email(64) })).toEqual({});
+    expect(validateCheckout({ ...valid, name: 'M'.repeat(65), email: email(65) })).toEqual({
+      name: 'Use até 64 caracteres.',
+      email: 'Use um e-mail de até 64 caracteres.',
+    });
+    expect(isValidEmail(email(64))).toBe(true);
+    expect(isValidEmail(email(65))).toBe(false);
+  });
+
   it('checks contact details and the policy', () => {
-    expect(
-      validateCheckout({ ...valid, name: 'M', email: 'maria@', phone: '9999', acceptedPolicy: false }),
-    ).toEqual({
+    expect(validateCheckout({ ...valid, name: 'M', email: 'maria@', phone: '9999', acceptedPolicy: false })).toEqual({
       name: 'Informe seu nome.',
       email: 'Informe um e-mail válido.',
       phone: 'Informe um WhatsApp com DDD.',

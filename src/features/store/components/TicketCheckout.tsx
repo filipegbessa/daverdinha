@@ -16,7 +16,7 @@ import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField'
 import { QuantityStepper } from '@/features/store/components/QuantityStepper';
 import { createTicketCheckout } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
-import { maskPhone, validateCustomer } from '@/features/store/lib/checkout-form';
+import { maskPhone, validateCustomer, CUSTOMER_NAME_MAX, CUSTOMER_EMAIL_MAX } from '@/features/store/lib/checkout-form';
 import {
   clampQuantity,
   isFreeEvent,
@@ -223,6 +223,7 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
           <StoreField id="ticketBuyerName" label="Seu nome" error={errors.name}>
             <input
               id="ticketBuyerName"
+              maxLength={CUSTOMER_NAME_MAX}
               autoComplete="name"
               value={buyer.name}
               onChange={(e) => setBuyerField('name', e.target.value)}
@@ -233,6 +234,7 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
             <StoreField id="ticketBuyerEmail" label="E-mail" error={errors.email}>
               <input
                 id="ticketBuyerEmail"
+                maxLength={CUSTOMER_EMAIL_MAX}
                 type="email"
                 autoComplete="email"
                 value={buyer.email}
