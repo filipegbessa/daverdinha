@@ -38,6 +38,16 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const CUSTOMER_NAME_MAX = 64;
 export const CUSTOMER_EMAIL_MAX = 64;
 
+/**
+ * Nome e sobrenome: pelo menos duas palavras com letra, a mesma regra do
+ * `CustomerDto` da API (o checkout do Pagar.me exige o nome completo).
+ */
+const FULL_NAME = /^\S*\p{L}\S*(?:\s+\S*\p{L}\S*)+$/u;
+
+export function isFullName(value: string): boolean {
+  return FULL_NAME.test(value.trim());
+}
+
 /** O mesmo teste de e-mail do checkout, pra outros formulários do site. */
 export function isValidEmail(value: string): boolean {
   const email = value.trim();
@@ -52,6 +62,7 @@ export function validateCustomer(values: Pick<CheckoutFormValues, 'name' | 'emai
   const errors: Partial<Record<'name' | 'email' | 'phone' | 'document', string>> = {};
   const name = values.name.trim();
   if (name.length < 2) errors.name = 'Informe seu nome.';
+  else if (!isFullName(name)) errors.name = 'Informe nome e sobrenome.';
   else if (name.length > CUSTOMER_NAME_MAX) errors.name = `Use até ${CUSTOMER_NAME_MAX} caracteres.`;
   const email = values.email.trim();
   if (email.length > CUSTOMER_EMAIL_MAX) errors.email = `Use um e-mail de até ${CUSTOMER_EMAIL_MAX} caracteres.`;

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, MessageCircle } from 'lucide-react';
@@ -16,6 +16,8 @@ import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField'
 import { QuantityStepper } from '@/features/store/components/QuantityStepper';
 import { createTicketCheckout } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
+import { clearBuyer, readBuyer, saveBuyer } from '@/features/store/lib/buyer-storage';
+import { RedirectingToPayment } from '@/features/store/components/RedirectingToPayment';
 import { maskPhone, validateCustomer, CUSTOMER_NAME_MAX, CUSTOMER_EMAIL_MAX } from '@/features/store/lib/checkout-form';
 import {
   clampQuantity,
@@ -69,6 +71,16 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [closed, setClosed] = useState<Closed | null>(event.soldOut || limit === 0 ? 'sold_out' : null);
+  const [remembered, setRemembered] = useState(false);
+  const [redirecting, setRedirecting] = useState<{ code: string; token: string; paymentUrl: string } | null>(null);
+
+  // Os dados de contato da última compra neste navegador (sem o documento).
+  useEffect(() => {
+    const saved = readBuyer();
+    if (!saved) return;
+    setBuyer((prev) => ({ ...prev, name: saved.name, email: saved.email, phone: saved.phone }));
+    setRemembered(true);
+  }, []);
 
   const quantity = attendees.length;
   const limitText = quantityLimitText({ maxTicketsPerOrder: maxPerOrder, spotsLeft, price: event.price }, quantity);
@@ -76,6 +88,8 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
   const names = buyerAttends ? [buyer.name, ...attendees.slice(1)] : attendees;
   const totalText = free ? 'Gratuito' : formatPrice(total);
   const back = eventHref(event);
+
+  if (redirecting) return <RedirectingToPayment {...redirecting} title="Ingressos reservados!" />;
 
   if (closed) {
     return (
@@ -99,6 +113,12 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
         </div>
       </div>
     );
+  }
+
+  function forgetBuyer() {
+    clearBuyer();
+    setRemembered(false);
+    setBuyer((prev) => ({ ...prev, name: '', email: '', phone: '' }));
   }
 
   function setBuyerField(key: keyof Buyer, value: string) {
@@ -154,8 +174,11 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
     });
 
     if (result.ok) {
-      if (result.paymentUrl) redirectToPayment(result.paymentUrl);
-      else router.push(`/pedido/${encodeURIComponent(result.token)}`);
+      saveBuyer({ name: buyer.name.trim(), email: buyer.email.trim(), phone: buyer.phone });
+      if (result.paymentUrl) {
+        setRedirecting({ code: result.code, token: result.token, paymentUrl: result.paymentUrl });
+        redirectToPayment(result.paymentUrl);
+      } else router.push(`/pedido/${encodeURIComponent(result.token)}`);
       return;
     }
     setSubmitting(false);
@@ -225,11 +248,24 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
         <fieldset className="space-y-4">
           <legend className="font-serif text-xl font-semibold text-ink">Seus dados</legend>
           <p className="text-sm text-ink-soft">Pra mandar a confirmação e avisar se algo mudar no evento.</p>
-          <StoreField id="ticketBuyerName" label="Seu nome" error={errors.name}>
+          {remembered && (
+            <p className="text-sm text-ink-soft">
+              Preenchemos com os dados da sua última compra neste aparelho.{' '}
+              <button
+                type="button"
+                onClick={forgetBuyer}
+                className="font-semibold text-moss underline underline-offset-4"
+              >
+                Não é você? Limpar dados
+              </button>
+            </p>
+          )}
+          <StoreField id="ticketBuyerName" label="Seu nome completo" error={errors.name}>
             <input
               id="ticketBuyerName"
               maxLength={CUSTOMER_NAME_MAX}
               autoComplete="name"
+              placeholder="Nome e sobrenome"
               value={buyer.name}
               onChange={(e) => setBuyerField('name', e.target.value)}
               className={STORE_INPUT}

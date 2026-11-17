@@ -49,13 +49,24 @@ describe('validateCheckout', () => {
 
   it('caps name and email at the 64 characters Pagar.me accepts', () => {
     const email = (length: number) => `${'a'.repeat(length - '@exemplo.com'.length)}@exemplo.com`;
-    expect(validateCheckout({ ...valid, name: 'M'.repeat(64), email: email(64) })).toEqual({});
-    expect(validateCheckout({ ...valid, name: 'M'.repeat(65), email: email(65) })).toEqual({
+    expect(validateCheckout({ ...valid, name: `Maria ${'S'.repeat(58)}`, email: email(64) })).toEqual({});
+    expect(validateCheckout({ ...valid, name: `Maria ${'S'.repeat(59)}`, email: email(65) })).toEqual({
       name: 'Use até 64 caracteres.',
       email: 'Use um e-mail de até 64 caracteres.',
     });
     expect(isValidEmail(email(64))).toBe(true);
     expect(isValidEmail(email(65))).toBe(false);
+  });
+
+  it.each(['Maria Souza', 'Ana de Sá', '  José  da Silva ', 'Ana Maria-Souza'])(
+    'accepts the full name "%s"',
+    (name) => {
+      expect(validateCheckout({ ...valid, name })).toEqual({});
+    },
+  );
+
+  it.each(['Maria', 'Maria .', 'M 2', '12 34'])('asks for name and surname on "%s"', (name) => {
+    expect(validateCheckout({ ...valid, name }).name).toBe('Informe nome e sobrenome.');
   });
 
   it('checks contact details and the policy', () => {

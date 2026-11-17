@@ -6,6 +6,7 @@ import { CART_STORAGE_KEY, readCart, type CartItem } from '@/features/store/lib/
 import { createCheckout, quoteCart } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
 import { fetchStreetByCep } from '@/features/store/lib/address-by-cep';
+import { BUYER_STORAGE_KEY, readBuyer } from '@/features/store/lib/buyer-storage';
 import type { CheckoutQuote } from '@/features/store/types/store';
 
 jest.mock('@/features/store/lib/store-api');
@@ -60,7 +61,7 @@ function renderCheckout(items: CartItem[] = [item]) {
 }
 
 async function fillContact(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText('Nome'), 'Maria Souza');
+  await user.type(screen.getByLabelText('Nome completo'), 'Maria Souza');
   await user.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
   await user.type(screen.getByLabelText('WhatsApp'), '21999998888');
   await user.type(screen.getByLabelText('CPF, CNPJ ou passaporte'), '11144477735');
@@ -136,7 +137,7 @@ describe('CheckoutForm', () => {
 
     await user.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
 
-    expect(screen.getByLabelText('Nome')).toHaveAccessibleDescription('Informe seu nome.');
+    expect(screen.getByLabelText('Nome completo')).toHaveAccessibleDescription('Informe seu nome.');
     expect(screen.getByLabelText('CEP')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('Confirme que leu a política de trocas.')).toBeInTheDocument();
     expect(createCheckout).not.toHaveBeenCalled();
@@ -144,7 +145,12 @@ describe('CheckoutForm', () => {
 
   it('creates the order with only ids and quantities, clears the cart and goes to the payment page', async () => {
     const user = userEvent.setup();
-    (createCheckout as jest.Mock).mockResolvedValue({ ok: true, code: 'DV-0001', token: 't', paymentUrl: 'https://pagar.me/x' });
+    (createCheckout as jest.Mock).mockResolvedValue({
+      ok: true,
+      code: 'DV-0001',
+      token: 't',
+      paymentUrl: 'https://pagar.me/x',
+    });
     renderCheckout();
     await screen.findByText('Total');
 
@@ -169,9 +175,105 @@ describe('CheckoutForm', () => {
     expect(readCart()).toEqual([]);
   });
 
+  it('shows the order and a fallback link while leaving for the payment, instead of the empty cart', async () => {
+    const user = userEvent.setup();
+    const gtag = jest.fn();
+    window.gtag = gtag;
+    (createCheckout as jest.Mock).mockResolvedValue({
+      ok: true,
+      code: 'DV-0007',
+      token: 'tok',
+      paymentUrl: 'https://pagar.me/x',
+    });
+    renderCheckout();
+    await screen.findByText('Total');
+
+    await fillContact(user);
+    await fillAddress(user);
+    await screen.findByText(/Entrega em Catete:/);
+    await user.click(screen.getByRole('checkbox', { name: /política de trocas/ }));
+    await user.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
+
+    expect(await screen.findByRole('heading', { name: 'Pedido criado!' })).toBeInTheDocument();
+    expect(screen.getByText('DV-0007')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'clique aqui para pagar' })).toHaveAttribute('href', 'https://pagar.me/x');
+    expect(screen.getByRole('link', { name: 'Ver meu pedido' })).toHaveAttribute('href', '/pedido/tok');
+    expect(replace).not.toHaveBeenCalled();
+    expect(gtag).toHaveBeenCalledWith(
+      'event',
+      'begin_checkout',
+      expect.objectContaining({ currency: 'BRL', value: 104.9 }),
+    );
+    delete window.gtag;
+  });
+
+  it('remembers the buyer for the next purchase, without the document', async () => {
+    const user = userEvent.setup();
+    (createCheckout as jest.Mock).mockResolvedValue({
+      ok: true,
+      code: 'DV-0001',
+      token: 't',
+      paymentUrl: 'https://pagar.me/x',
+    });
+    renderCheckout();
+    await screen.findByText('Total');
+
+    await fillContact(user);
+    await fillAddress(user);
+    await screen.findByText(/Entrega em Catete:/);
+    await user.click(screen.getByRole('checkbox', { name: /política de trocas/ }));
+    await user.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
+
+    await screen.findByRole('heading', { name: 'Pedido criado!' });
+    expect(readBuyer()).toMatchObject({ name: 'Maria Souza', email: 'maria@exemplo.com', number: '100' });
+    expect(localStorage.getItem(BUYER_STORAGE_KEY)).not.toContain('11144477735');
+  });
+
+  it('opens filled with the last buyer, and "Não é você?" clears it', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      BUYER_STORAGE_KEY,
+      JSON.stringify({
+        name: 'Maria Souza',
+        email: 'maria@exemplo.com',
+        phone: '(21) 99999-8888',
+        cep: '',
+        number: '',
+        complement: '',
+      }),
+    );
+    renderCheckout();
+    await screen.findByText('Total');
+
+    expect(screen.getByLabelText('Nome completo')).toHaveValue('Maria Souza');
+    expect(screen.getByLabelText('E-mail')).toHaveValue('maria@exemplo.com');
+    expect(screen.getByLabelText('CPF, CNPJ ou passaporte')).toHaveValue('');
+
+    await user.click(screen.getByRole('button', { name: 'Não é você? Limpar dados' }));
+
+    expect(screen.getByLabelText('Nome completo')).toHaveValue('');
+    expect(readBuyer()).toBeNull();
+  });
+
+  it('asks for name and surname', async () => {
+    const user = userEvent.setup();
+    renderCheckout();
+    await screen.findByText('Total');
+
+    await user.type(screen.getByLabelText('Nome completo'), 'Maria');
+    await user.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
+
+    expect(screen.getByLabelText('Nome completo')).toHaveAccessibleDescription('Informe nome e sobrenome.');
+  });
+
   it('picks up at the atelier without asking for an address', async () => {
     const user = userEvent.setup();
-    (createCheckout as jest.Mock).mockResolvedValue({ ok: true, code: 'DV-0002', token: 't', paymentUrl: 'https://pay' });
+    (createCheckout as jest.Mock).mockResolvedValue({
+      ok: true,
+      code: 'DV-0002',
+      token: 't',
+      paymentUrl: 'https://pay',
+    });
     renderCheckout();
     await screen.findByText('Total');
 
@@ -261,7 +363,12 @@ describe('CheckoutForm', () => {
 
   it('shows a 422 on the CEP field', async () => {
     const user = userEvent.setup();
-    (createCheckout as jest.Mock).mockResolvedValue({ ok: false, status: 422, message: 'Não entregamos nesse CEP.', reason: 'no_area' });
+    (createCheckout as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 422,
+      message: 'Não entregamos nesse CEP.',
+      reason: 'no_area',
+    });
     renderCheckout();
     await screen.findByText('Total');
     await fillContact(user);
@@ -271,8 +378,6 @@ describe('CheckoutForm', () => {
 
     await user.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
 
-    await waitFor(() =>
-      expect(screen.getByLabelText('CEP')).toHaveAccessibleDescription('Não entregamos nesse CEP.'),
-    );
+    await waitFor(() => expect(screen.getByLabelText('CEP')).toHaveAccessibleDescription('Não entregamos nesse CEP.'));
   });
 });

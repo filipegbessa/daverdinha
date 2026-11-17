@@ -36,12 +36,19 @@ export default async function PoliticaDePrivacidadePage() {
             <strong>Conversas pelo WhatsApp:</strong> quando você entra em contato, guardamos seu número de telefone,
             nome (se informado) e o conteúdo da conversa, pra dar continuidade ao atendimento e à entrega.
           </li>
+          <li>
+            <strong>Compras pelo site:</strong> nome, e-mail, WhatsApp, CPF, CNPJ ou passaporte e o endereço de entrega,
+            pra processar o pagamento e entregar o pedido. Pra facilitar a próxima compra, nome, e-mail, WhatsApp e
+            endereço ficam salvos só no seu navegador; dá pra apagar no checkout, em &quot;Não é você? Limpar
+            dados&quot;.
+          </li>
         </ul>
       </PolicySection>
       <PolicySection title="Como usamos esses dados">
         <p>
           Usamos suas informações só pra atender pedidos, responder dúvidas e organizar entregas. Não vendemos nem
-          compartilhamos seus dados com terceiros, exceto quando exigido por lei.
+          compartilhamos seus dados com terceiros, exceto com o Pagar.me, pra processar o pagamento, ou quando exigido
+          por lei.
         </p>
       </PolicySection>
       <PolicySection title="Seus direitos">

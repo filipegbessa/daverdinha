@@ -11,6 +11,8 @@ import { useCart } from '@/features/store/components/CartProvider';
 import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField';
 import { createCheckout, quoteCart } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
+import { clearBuyer, readBuyer, saveBuyer } from '@/features/store/lib/buyer-storage';
+import { RedirectingToPayment } from '@/features/store/components/RedirectingToPayment';
 import { fetchStreetByCep } from '@/features/store/lib/address-by-cep';
 import { RETURNS_HREF } from '@/features/site/lib/paths';
 import {
@@ -56,7 +58,11 @@ function deliveryUnavailableText(delivery: Extract<CheckoutQuote['delivery'], { 
  * O checkout numa página só: dados, entrega ou retirada, resumo. Preço e
  * frete são os da cotação, que é refeita quando o CEP fica completo; o
  * pedido é criado na API e o cliente vai pra página de pagamento. O carrinho
- * só é limpo quando o pedido foi criado.
+ * só é limpo quando o pedido foi criado, e aí a tela de "levando você pro
+ * pagamento" toma o lugar do formulário até o navegador sair do site.
+ *
+ * Os dados de contato e o endereço da última compra ficam neste navegador
+ * (`buyer-storage`) e voltam preenchidos; "Não é você?" apaga.
  */
 export function CheckoutForm() {
   const router = useRouter();
@@ -70,14 +76,25 @@ export function CheckoutForm() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
+  const [remembered, setRemembered] = useState(false);
+  const [redirecting, setRedirecting] = useState<{ code: string; token: string; paymentUrl: string } | null>(null);
 
   const cepDigits = onlyDigits(values.cep);
   const quoteCep = cepDigits.length === 8 ? cepDigits : undefined;
   const itemsKey = items.map((i) => `${i.productId}:${i.quantity}`).join(',');
 
   useEffect(() => {
-    if (ready && items.length === 0) router.replace('/carrinho');
-  }, [ready, items.length, router]);
+    // Depois do pedido criado o carrinho fica vazio de propósito: não é hora
+    // de mandar pro carrinho, e sim de esperar o navegador ir pro pagamento.
+    if (ready && items.length === 0 && !redirecting) router.replace('/carrinho');
+  }, [ready, items.length, router, redirecting]);
+
+  useEffect(() => {
+    const saved = readBuyer();
+    if (!saved) return;
+    setValues((prev) => ({ ...prev, ...saved }));
+    setRemembered(true);
+  }, []);
 
   useEffect(() => {
     if (!ready || items.length === 0) return;
@@ -131,12 +148,21 @@ export function CheckoutForm() {
     }
   }, [quote, values.deliveryMethod]);
 
+  if (redirecting) return <RedirectingToPayment {...redirecting} />;
+
   if (!ready || items.length === 0) {
     return (
       <p role="status" className="text-ink-soft">
         Carregando seu carrinho...
       </p>
     );
+  }
+
+  function forgetBuyer() {
+    clearBuyer();
+    setRemembered(false);
+    setValues((prev) => ({ ...prev, name: '', email: '', phone: '', cep: '', street: '', number: '', complement: '' }));
+    setErrors({});
   }
 
   function set<K extends keyof CheckoutFormValues>(key: K, value: CheckoutFormValues[K]) {
@@ -162,6 +188,16 @@ export function CheckoutForm() {
     setErrors(found);
     if (Object.keys(found).length > 0 || !quote) return;
 
+    window.gtag?.('event', 'begin_checkout', {
+      currency: 'BRL',
+      value: quote.subtotal + fee,
+      items: quote.items.map((item) => ({
+        item_id: item.productId,
+        item_name: item.name,
+        price: item.unitPrice,
+        quantity: item.quantity,
+      })),
+    });
     setSubmitting(true);
     const result = await createCheckout({
       items: items.map(({ productId, quantity }) => ({ productId, quantity })),
@@ -184,6 +220,14 @@ export function CheckoutForm() {
     });
 
     if (result.ok) {
+      saveBuyer({
+        name: values.name.trim(),
+        email: values.email.trim(),
+        phone: values.phone,
+        // Retirada não tem endereço: guarda o da última entrega.
+        ...(isDelivery && { cep: values.cep, number: values.number.trim(), complement: values.complement.trim() }),
+      });
+      setRedirecting({ code: result.code, token: result.token, paymentUrl: result.paymentUrl });
       clear();
       redirectToPayment(result.paymentUrl);
       return;
@@ -206,11 +250,24 @@ export function CheckoutForm() {
       <div className="space-y-8">
         <fieldset className="space-y-4">
           <legend className="font-serif text-xl font-semibold text-ink">Seus dados</legend>
-          <StoreField id="checkoutName" label="Nome" error={errors.name}>
+          {remembered && (
+            <p className="text-sm text-ink-soft">
+              Preenchemos com os dados da sua última compra neste aparelho.{' '}
+              <button
+                type="button"
+                onClick={forgetBuyer}
+                className="font-semibold text-moss underline underline-offset-4"
+              >
+                Não é você? Limpar dados
+              </button>
+            </p>
+          )}
+          <StoreField id="checkoutName" label="Nome completo" error={errors.name}>
             <input
               id="checkoutName"
               maxLength={CUSTOMER_NAME_MAX}
               autoComplete="name"
+              placeholder="Nome e sobrenome"
               value={values.name}
               onChange={(e) => set('name', e.target.value)}
               className={STORE_INPUT}

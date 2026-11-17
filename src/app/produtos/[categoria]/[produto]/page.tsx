@@ -23,6 +23,7 @@ import { productJsonLd } from '@/features/site/lib/structured-data';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { orderMessage } from '@/features/site/lib/whatsapp-messages';
 import { AddToCartButton } from '@/features/store/components/AddToCartButton';
+import { ViewItemTracker } from '@/features/store/components/ViewItemTracker';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
 
 type Props = { params: Promise<{ categoria: string; produto: string }> };
@@ -62,6 +63,7 @@ export default async function ProductPage({ params }: Props) {
   return (
     <SiteShell home={home} storeEnabled={storeEnabled} preview={isSample(product)}>
       <JsonLd data={productJsonLd(product)} />
+      <ViewItemTracker product={product} />
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs
