@@ -8,6 +8,7 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { fromDatetimeLocal, toDatetimeLocal } from '@/features/admin/lib/datetime-local';
 import { IMAGE_UPLOAD } from '@/features/admin/lib/image-upload';
+import { centsFromInput } from '@/features/admin/lib/currency-input';
 import { formatCurrency, formatDateTime } from '@/lib/format';
 import { FormCard } from '@/features/admin/components/FormCard';
 import { FormField, SwitchField } from '@/features/admin/components/FormField';
@@ -19,7 +20,7 @@ const MIN_PER_ORDER = 1;
 const MAX_PER_ORDER = 50;
 const DEFAULT_PER_ORDER = 10;
 
-type Errors = Partial<Record<'endsAt' | 'price' | 'spots' | 'maxTicketsPerOrder' | 'image', string>>;
+type Errors = Partial<Record<'endsAt' | 'spots' | 'maxTicketsPerOrder' | 'image', string>>;
 
 interface Values {
   title: string;
@@ -28,7 +29,8 @@ interface Values {
   endsAt: string;
   locationName: string;
   locationAddress: string;
-  price: string;
+  /** Em centavos; `null` = gratuito. */
+  priceCents: number | null;
   spots: string;
   unlimited: boolean;
   published: boolean;
@@ -44,7 +46,7 @@ function valuesOf(event: Partial<EventAdmin> | null): Values {
     endsAt: event?.endsAt ? toDatetimeLocal(event.endsAt) : '',
     locationName: event?.locationName ?? '',
     locationAddress: event?.locationAddress ?? '',
-    price: event?.price?.toString() ?? '',
+    priceCents: event?.price ? Math.round(event.price * 100) : null,
     spots: event?.spots?.toString() ?? '',
     // Como o "Sob encomenda" dos produtos: sem limite desliga o número. Evento
     // novo começa com limite, pra ninguém esquecer as vagas.
@@ -53,11 +55,6 @@ function valuesOf(event: Partial<EventAdmin> | null): Values {
     ticketSales: event?.ticketSales ?? false,
     maxPerOrder: String(event?.maxTicketsPerOrder ?? DEFAULT_PER_ORDER),
   };
-}
-
-/** "45,50" ou "45.50" → "45.50"; vazio continua vazio (gratuito). */
-function normalizePrice(value: string): string {
-  return value.trim().replace(',', '.');
 }
 
 function validImage(file: File): string | null {
@@ -136,10 +133,6 @@ export function EventForm({
   function validate(start: string | null, end: string | null): Errors {
     const found: Errors = {};
     if (start && end && end < start) found.endsAt = 'O fim tem que ser depois do início.';
-    const priceValue = normalizePrice(values.price);
-    if (priceValue && !(Number(priceValue) >= 0)) {
-      found.price = 'Informe o preço em reais, ou deixe vazio se for gratuito.';
-    }
     if (!values.unlimited && !(Number.isInteger(Number(values.spots)) && Number(values.spots) >= 1)) {
       found.spots = 'Informe a quantidade de vagas, ou marque "Sem limite de vagas".';
     }
@@ -165,7 +158,8 @@ export function EventForm({
     form.append('endsAt', end ?? '');
     form.append('locationName', values.locationName.trim());
     form.append('locationAddress', values.locationAddress.trim());
-    form.append('price', normalizePrice(values.price));
+    // Vazio = gratuito (a API grava `null`).
+    form.append('price', values.priceCents ? (values.priceCents / 100).toFixed(2) : '');
     form.append('spots', values.unlimited ? '' : values.spots.trim());
     form.append('published', String(values.published));
     form.append('ticketSales', String(values.ticketSales));
@@ -208,7 +202,6 @@ export function EventForm({
   }
 
   const cover = preview ?? (removeImage ? null : (event?.imageUrl ?? null));
-  const priceValue = normalizePrice(values.price);
   const start = fromDatetimeLocal(values.startsAt);
 
   return (
@@ -298,12 +291,17 @@ export function EventForm({
 
           <FormCard title="Ingressos e vagas">
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField id="eventPrice" label="Preço (R$)" hint="Vazio = gratuito." error={errors.price}>
+              <FormField id="eventPrice" label="Preço (R$)" hint="Vazio = gratuito.">
+                {/* A mesma máscara de centavos do produto; apagar tudo volta a "gratuito". */}
                 <Input
                   id="eventPrice"
-                  inputMode="decimal"
-                  value={values.price}
-                  onChange={(e) => set('price', e.target.value)}
+                  inputMode="numeric"
+                  placeholder="Gratuito"
+                  value={values.priceCents ? formatCurrency(values.priceCents / 100, 'BRL') : ''}
+                  onChange={(e) => {
+                    const cents = centsFromInput(e.target.value);
+                    set('priceCents', cents > 0 ? cents : null);
+                  }}
                 />
               </FormField>
               <div>
@@ -391,9 +389,7 @@ export function EventForm({
                 <p className="text-xs text-muted-foreground">{start ? formatDateTime(start) : 'Data e hora'}</p>
                 <p className="font-medium">{values.title.trim() || 'Título do evento'}</p>
                 <p className="text-sm">
-                  {!priceValue || Number(priceValue) === 0
-                    ? 'Gratuito'
-                    : formatCurrency(Number(priceValue) || 0, 'BRL')}
+                  {values.priceCents ? formatCurrency(values.priceCents / 100, 'BRL') : 'Gratuito'}
                   {' · '}
                   {values.locationName.trim() || 'No ateliê'}
                 </p>

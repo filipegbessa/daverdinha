@@ -193,4 +193,19 @@ describe('EventForm', () => {
       expect.stringContaining(`/admin/eventos/${oficina.id}/participantes`),
     );
   });
+
+  it('types the price with the reais mask, and clearing it makes the event free', async () => {
+    const apiFetch = mockSave();
+    render(<EventForm event={{ ...oficina, price: null }} onSaved={jest.fn()} />);
+
+    const price = screen.getByLabelText('Preço (R$)');
+    expect(price).toHaveValue('');
+    await userEvent.type(price, '4550');
+    expect(price).toHaveValue('R$ 45,50');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(sentFields(apiFetch)).toMatchObject({ price: '45.50' });
+
+    await userEvent.clear(price);
+    expect(screen.getByLabelText('Prévia do card na agenda')).toHaveTextContent('Gratuito');
+  });
 });
