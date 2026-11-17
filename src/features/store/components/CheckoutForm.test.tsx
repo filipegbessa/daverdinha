@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CheckoutForm } from './CheckoutForm';
 import { CartProvider } from './CartProvider';
@@ -96,7 +96,7 @@ describe('CheckoutForm', () => {
 
     expect(screen.getByLabelText('CEP')).toHaveValue('22220-000');
     expect(await screen.findByText(/Entrega em Catete:/)).toBeInTheDocument();
-    expect(quoteCart).toHaveBeenLastCalledWith([{ productId: 'p1', quantity: 1 }], '22220000');
+    expect(quoteCart).toHaveBeenLastCalledWith([{ productId: 'p1', quantity: 1 }], '22220000', undefined);
     expect(screen.getByText('R$ 104,90')).toBeInTheDocument();
     expect(screen.getByText(/a entrega acontece depois da confecção, em até 10 dias/)).toBeInTheDocument();
   });
@@ -296,6 +296,98 @@ describe('CheckoutForm', () => {
     await screen.findByText('Total');
 
     expect(screen.queryByRole('radio', { name: /Retirar no ateliê/ })).not.toBeInTheDocument();
+  });
+
+  describe('coupon', () => {
+    it('applies a coupon: discount line, new total, and the code sent with the order', async () => {
+      const user = userEvent.setup();
+      (quoteCart as jest.Mock).mockImplementation(async (_items, cep?: string, couponCode?: string) => ({
+        ...(cep ? covered : quote()),
+        coupon: couponCode ? { code: couponCode, discount: 8.99, freeShipping: false } : null,
+      }));
+      (createCheckout as jest.Mock).mockResolvedValue({
+        ok: true,
+        code: 'DV-0001',
+        token: 't',
+        paymentUrl: 'https://pagar.me/x',
+      });
+      renderCheckout();
+      await screen.findByText('Total');
+
+      await user.click(screen.getByRole('button', { name: 'Tem um cupom?' }));
+      await user.type(screen.getByLabelText('Cupom'), 'bemvinda10');
+      await user.click(screen.getByRole('button', { name: 'Aplicar' }));
+
+      expect(await screen.findByText('Cupom BEMVINDA10')).toBeInTheDocument();
+      expect(screen.getByText('−R$ 8,99')).toBeInTheDocument();
+      expect(quoteCart).toHaveBeenLastCalledWith([{ productId: 'p1', quantity: 1 }], undefined, 'BEMVINDA10');
+
+      await fillContact(user);
+      await fillAddress(user);
+      await screen.findByText(/Entrega em Catete:/);
+      // 89,90 − 8,99 + 15,00 de entrega
+      expect(screen.getByText('Total').parentElement).toHaveTextContent('R$ 95,91');
+      await user.click(screen.getByRole('checkbox', { name: /política de trocas/ }));
+      await user.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
+
+      expect(createCheckout).toHaveBeenCalledWith(expect.objectContaining({ couponCode: 'BEMVINDA10' }));
+    });
+
+    it('explains why a coupon does not apply, and does not send it', async () => {
+      const user = userEvent.setup();
+      (quoteCart as jest.Mock).mockImplementation(async (_items, cep?: string, couponCode?: string) => ({
+        ...(cep ? covered : quote()),
+        coupon: couponCode ? { code: couponCode, error: 'Cupom expirado.' } : null,
+      }));
+      renderCheckout();
+      await screen.findByText('Total');
+
+      await user.click(screen.getByRole('button', { name: 'Tem um cupom?' }));
+      await user.type(screen.getByLabelText('Cupom'), 'VELHO');
+      await user.click(screen.getByRole('button', { name: 'Aplicar' }));
+
+      expect(await screen.findByText('Cupom expirado.')).toBeInTheDocument();
+      expect(screen.queryByText(/^Cupom VELHO$/)).not.toBeInTheDocument();
+    });
+
+    it('shows free shipping from a coupon', async () => {
+      const user = userEvent.setup();
+      (quoteCart as jest.Mock).mockImplementation(async (_items, cep?: string, couponCode?: string) => ({
+        ...(cep ? covered : quote()),
+        coupon: couponCode ? { code: couponCode, discount: 0, freeShipping: true } : null,
+      }));
+      localStorage.setItem('daverdinha:coupon', 'FRETEGRATIS');
+      renderCheckout();
+      await screen.findByText('Total');
+
+      expect(screen.getByLabelText('Cupom')).toHaveValue('FRETEGRATIS');
+      await fillAddress(user);
+      expect(await screen.findByText('Grátis (cupom)')).toBeInTheDocument();
+    });
+  });
+
+  it('never shows the answer for the previous CEP while the new one is being calculated', async () => {
+    const user = userEvent.setup();
+    let release: (value: CheckoutQuote) => void = () => {};
+    (quoteCart as jest.Mock).mockImplementation(async (_items, cep?: string) => {
+      if (cep === '11111111') return quote({ delivery: { available: false, reason: 'unresolved' } });
+      if (cep === '22220000') return new Promise((resolve) => (release = resolve));
+      return quote();
+    });
+    renderCheckout();
+    await screen.findByText('Total');
+
+    await user.type(screen.getByLabelText('CEP'), '11111111');
+    expect(await screen.findByText(/Não encontramos esse CEP/)).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText('CEP'));
+    await user.type(screen.getByLabelText('CEP'), '22220000');
+    expect(await screen.findByText('Calculando a entrega...')).toBeInTheDocument();
+    expect(screen.queryByText(/Não encontramos esse CEP/)).not.toBeInTheDocument();
+
+    await act(async () => release(covered));
+    expect(await screen.findByText(/Entrega em Catete:/)).toBeInTheDocument();
+    expect(screen.queryByText(/Não encontramos esse CEP/)).not.toBeInTheDocument();
   });
 
   it('explains when there is no delivery to the CEP and blocks the order', async () => {

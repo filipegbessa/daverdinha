@@ -279,6 +279,9 @@ export interface SiteOrderAdmin {
     leadTimeDays: number | null;
   }[];
   subtotal: number;
+  /** Desconto do cupom (0 sem cupom), já tirado do total. */
+  discount?: number;
+  couponCode?: string | null;
   deliveryFee: number;
   total: number;
   /** Só em pedido de ingresso. */
@@ -291,5 +294,30 @@ export interface SiteOrderAdmin {
   /** Quando saiu o e-mail de confirmação; `null` se ainda não saiu (ou falhou). */
   confirmationSentAt: string | null;
   expiresAt: string;
+  createdAt: string;
+}
+
+/** `GET /coupons`: "Promoções → Cupons". Datas em ISO; dinheiro em reais. */
+export interface CouponAdmin {
+  id: string;
+  code: string;
+  description: string | null;
+  type: 'percent' | 'fixed' | 'free_shipping';
+  /** Porcentagem (1–100) ou reais; `null` no frete grátis. */
+  value: number | null;
+  maxDiscount: number | null;
+  scope: 'order' | 'categories' | 'products' | 'events';
+  minSubtotal: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  maxUses: number | null;
+  active: boolean;
+  categoryIds: string[];
+  productIds: string[];
+  eventIds: string[];
+  /** Pedidos pagos com o cupom. */
+  uses: number;
+  /** Pedidos pendentes ainda no prazo, segurando um uso. */
+  reserved: number;
   createdAt: string;
 }

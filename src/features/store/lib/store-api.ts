@@ -6,6 +6,7 @@ import type {
   CreateTicketCheckoutResult,
   PublicSiteOrder,
   TicketCheckoutFailureReason,
+  TicketQuote,
 } from '@/features/store/types/store';
 import { isPreviewCart, previewQuote } from '@/features/store/lib/preview-quote';
 import { isSample } from '@/features/site/data/samples';
@@ -18,6 +19,7 @@ import { isSample } from '@/features/site/data/samples';
 export async function quoteCart(
   items: { productId: string; quantity: number }[],
   cep?: string,
+  couponCode?: string,
 ): Promise<CheckoutQuote | null> {
   // Prévia (`/site` com produtos de exemplo): cotação montada aqui mesmo.
   if (isPreviewCart(items)) return previewQuote(items, cep);
@@ -28,7 +30,7 @@ export async function quoteCart(
     const response = await fetch(`${apiUrl}/checkout/quote`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items, ...(cep && { cep }) }),
+      body: JSON.stringify({ items, ...(cep && { cep }), ...(couponCode && { couponCode }) }),
     });
     if (!response.ok) return null;
     return (await response.json()) as CheckoutQuote;
@@ -113,7 +115,8 @@ export async function createTicketCheckout(input: CreateTicketCheckoutInput): Pr
         paymentUrl: typeof body.paymentUrl === 'string' ? body.paymentUrl : null,
       };
     }
-    const known = response.status === 409;
+    // 409: venda fechada ou vagas; 422: o cupom deixou de valer.
+    const known = response.status === 409 || response.status === 422;
     return {
       ok: false,
       status: response.status,
@@ -124,6 +127,23 @@ export async function createTicketCheckout(input: CreateTicketCheckoutInput): Pr
     };
   } catch {
     return { ok: false, status: 0, message: PAYMENT_UNAVAILABLE };
+  }
+}
+
+/** O total da compra de ingresso com o cupom. Falha ou prévia: `null`. */
+export async function quoteTickets(eventId: string, quantity: number, couponCode: string): Promise<TicketQuote | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl || isSample({ id: eventId })) return null;
+  try {
+    const response = await fetch(`${apiUrl}/checkout/tickets/quote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventId, quantity, couponCode }),
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as TicketQuote;
+  } catch {
+    return null;
   }
 }
 

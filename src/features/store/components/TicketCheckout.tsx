@@ -14,7 +14,7 @@ import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import { eventPlace } from '@/features/site/components/EventCard';
 import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField';
 import { QuantityStepper } from '@/features/store/components/QuantityStepper';
-import { createTicketCheckout } from '@/features/store/lib/store-api';
+import { createTicketCheckout, quoteTickets } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
 import { clearBuyer, readBuyer, saveBuyer } from '@/features/store/lib/buyer-storage';
 import { RedirectingToPayment } from '@/features/store/components/RedirectingToPayment';
@@ -27,6 +27,7 @@ import {
   ticketLimit,
 } from '@/features/store/lib/tickets';
 import type { SiteEvent } from '@/features/site/types/event';
+import type { TicketQuote } from '@/features/store/types/store';
 
 type Buyer = { name: string; email: string; phone: string; document: string; notes: string };
 type Errors = Partial<Record<keyof Buyer, string>> & { attendees?: (string | undefined)[] };
@@ -73,6 +74,11 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
   const [closed, setClosed] = useState<Closed | null>(event.soldOut || limit === 0 ? 'sold_out' : null);
   const [remembered, setRemembered] = useState(false);
   const [redirecting, setRedirecting] = useState<{ code: string; token: string; paymentUrl: string } | null>(null);
+  // Cupom de evento: o que está no campo, o aplicado e a cotação com ele.
+  const [couponOpen, setCouponOpen] = useState(false);
+  const [couponInput, setCouponInput] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [ticketQuote, setTicketQuote] = useState<TicketQuote | null>(null);
 
   // Os dados de contato da última compra neste navegador (sem o documento).
   useEffect(() => {
@@ -83,8 +89,26 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
   }, []);
 
   const quantity = attendees.length;
+
+  useEffect(() => {
+    if (!couponCode || free) {
+      setTicketQuote(null);
+      return;
+    }
+    let cancelled = false;
+    quoteTickets(event.id, quantity, couponCode).then((data) => {
+      if (!cancelled) setTicketQuote(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [couponCode, quantity, event.id, free]);
   const limitText = quantityLimitText({ maxTicketsPerOrder: maxPerOrder, spotsLeft, price: event.price }, quantity);
-  const total = (event.price ?? 0) * quantity;
+  const coupon = ticketQuote?.coupon ?? null;
+  const validCoupon = coupon && !('error' in coupon) ? coupon : null;
+  const couponError = coupon && 'error' in coupon ? coupon.error : null;
+  const discount = validCoupon ? (ticketQuote?.discount ?? 0) : 0;
+  const total = (event.price ?? 0) * quantity - discount;
   const names = buyerAttends ? [buyer.name, ...attendees.slice(1)] : attendees;
   const totalText = free ? 'Gratuito' : formatPrice(total);
   const back = eventHref(event);
@@ -171,6 +195,7 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
         document: buyer.document.trim(),
       },
       ...(buyer.notes.trim() && { notes: buyer.notes.trim() }),
+      ...(validCoupon && { couponCode: validCoupon.code }),
     });
 
     if (result.ok) {
@@ -219,8 +244,14 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
         <span>
           {quantity} × {free ? 'inscrição gratuita' : formatPrice(event.price ?? 0)}
         </span>
-        {!free && <span>{totalText}</span>}
+        {!free && <span>{formatPrice((event.price ?? 0) * quantity)}</span>}
       </p>
+      {discount > 0 && (
+        <p className="flex justify-between gap-3 text-moss tabular-nums">
+          <span>Cupom {validCoupon?.code}</span>
+          <span>−{formatPrice(discount)}</span>
+        </p>
+      )}
       <p className="flex justify-between gap-3 border-t border-sand-line pt-3 text-lg font-semibold text-ink tabular-nums">
         <span>Total</span>
         <span>{totalText}</span>
@@ -383,6 +414,43 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
           </div>
         </div>
         {summary}
+        {!free &&
+          (couponOpen ? (
+            <StoreField id="ticketCoupon" label="Cupom" error={couponError ?? undefined}>
+              <div className="flex gap-2">
+                <input
+                  id="ticketCoupon"
+                  value={couponInput}
+                  maxLength={30}
+                  autoCapitalize="characters"
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter') return;
+                    e.preventDefault();
+                    setCouponCode(couponInput.trim());
+                  }}
+                  className={`${STORE_INPUT} uppercase`}
+                />
+                <SiteButton
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={!couponInput.trim()}
+                  onClick={() => setCouponCode(couponInput.trim())}
+                >
+                  Aplicar
+                </SiteButton>
+              </div>
+            </StoreField>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setCouponOpen(true)}
+              className="text-sm font-semibold text-moss underline underline-offset-4"
+            >
+              Tem um cupom?
+            </button>
+          ))}
         {formError && (
           <p role="alert" className="text-sm font-medium text-berry">
             {formError}

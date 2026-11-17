@@ -12,6 +12,7 @@ import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField'
 import { createCheckout, quoteCart } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
 import { clearBuyer, readBuyer, saveBuyer } from '@/features/store/lib/buyer-storage';
+import { readSavedCoupon, saveCoupon } from '@/features/store/lib/coupon-storage';
 import { RedirectingToPayment } from '@/features/store/components/RedirectingToPayment';
 import { fetchStreetByCep } from '@/features/store/lib/address-by-cep';
 import { RETURNS_HREF } from '@/features/site/lib/paths';
@@ -70,6 +71,13 @@ export function CheckoutForm() {
   const [values, setValues] = useState<CheckoutFormValues>(EMPTY);
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [quote, setQuote] = useState<CheckoutQuote | null>(null);
+  // Pra qual CEP é a cotação na tela: enquanto o CEP novo está sendo
+  // calculado, a resposta do anterior não pode aparecer como se fosse dele.
+  const [quotedCep, setQuotedCep] = useState<string | undefined>(undefined);
+  // Cupom: o que está no campo e o que foi aplicado (vai na cotação).
+  const [couponInput, setCouponInput] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [couponOpen, setCouponOpen] = useState(false);
   const [quoting, setQuoting] = useState(false);
   const [quoteFailed, setQuoteFailed] = useState(false);
   const [quoteAttempt, setQuoteAttempt] = useState(0);
@@ -104,17 +112,29 @@ export function CheckoutForm() {
     quoteCart(
       items.map(({ productId, quantity }) => ({ productId, quantity })),
       quoteCep,
+      couponCode || undefined,
     ).then((data) => {
       if (cancelled) return;
       setQuoting(false);
-      if (data) setQuote(data);
-      else setQuoteFailed(true);
+      if (data) {
+        setQuote(data);
+        setQuotedCep(quoteCep);
+      } else setQuoteFailed(true);
     });
     return () => {
       cancelled = true;
     };
     // Só produtos, quantidades e CEP mudam a cotação (`itemsKey` cobre os itens).
-  }, [ready, itemsKey, quoteCep, quoteAttempt]);
+  }, [ready, itemsKey, quoteCep, quoteAttempt, couponCode]);
+
+  // Cupom que veio num link (`?cupom=`): já chega aplicado.
+  useEffect(() => {
+    const saved = readSavedCoupon();
+    if (!saved) return;
+    setCouponInput(saved);
+    setCouponCode(saved);
+    setCouponOpen(true);
+  }, []);
 
   // Rua: sempre vem do CEP (ViaCEP), nunca digitada — evita endereço
   // divergente do que o frete calculou.
@@ -172,10 +192,16 @@ export function CheckoutForm() {
 
   const isDelivery = values.deliveryMethod === 'delivery';
   const delivery = quote?.delivery;
-  const fee = isDelivery && delivery?.available ? delivery.fee : 0;
+  const coupon = quote?.coupon ?? null;
+  const validCoupon = coupon && !('error' in coupon) ? coupon : null;
+  const couponError = coupon && 'error' in coupon ? coupon.error : null;
+  const discount = validCoupon?.discount ?? 0;
+  const freeShipping = Boolean(validCoupon?.freeShipping);
+  const fee = isDelivery && delivery?.available && !freeShipping ? delivery.fee : 0;
   const problems = quote?.problems ?? [];
   const maxLeadTime = Math.max(0, ...(quote?.items.map((i) => i.leadTimeDays ?? 0) ?? []));
-  const deliveryBlocked = isDelivery && quoteCep !== undefined && delivery !== undefined && !delivery.available;
+  const quoteIsForCep = !quoting && quoteCep !== undefined && quotedCep === quoteCep;
+  const deliveryBlocked = isDelivery && quoteIsForCep && delivery !== undefined && !delivery.available;
   const canSubmit = quote !== null && !quoting && problems.length === 0 && !submitting;
 
   async function handleSubmit(event: React.FormEvent) {
@@ -190,7 +216,7 @@ export function CheckoutForm() {
 
     window.gtag?.('event', 'begin_checkout', {
       currency: 'BRL',
-      value: quote.subtotal + fee,
+      value: quote.subtotal - discount + fee,
       items: quote.items.map((item) => ({
         item_id: item.productId,
         item_name: item.name,
@@ -217,6 +243,8 @@ export function CheckoutForm() {
         },
       }),
       ...(values.notes.trim() && { notes: values.notes.trim() }),
+      // Só o cupom que a cotação aceitou; um inválido não trava o pedido.
+      ...(validCoupon && { couponCode: validCoupon.code }),
     });
 
     if (result.ok) {
@@ -228,12 +256,18 @@ export function CheckoutForm() {
         ...(isDelivery && { cep: values.cep, number: values.number.trim(), complement: values.complement.trim() }),
       });
       setRedirecting({ code: result.code, token: result.token, paymentUrl: result.paymentUrl });
+      saveCoupon('');
       clear();
       redirectToPayment(result.paymentUrl);
       return;
     }
     setSubmitting(false);
-    if (result.reason === 'store_paused' || result.reason === 'store_closed') {
+    if (result.reason === 'coupon_invalid') {
+      // O cupom deixou de valer entre a cotação e o pedido (esgotou, venceu):
+      // a cotação nova mostra o motivo no campo do cupom.
+      setFormError(result.message);
+      setQuoteAttempt((n) => n + 1);
+    } else if (result.reason === 'store_paused' || result.reason === 'store_closed') {
       // A loja entrou em pausa (ou foi fechada) com o carrinho aberto: o
       // carrinho fica, e a mensagem da cliente explica até quando.
       setFormError(result.message);
@@ -374,7 +408,7 @@ export function CheckoutForm() {
                 </StoreField>
                 <div aria-live="polite" className="self-end pb-2.5 text-sm">
                   {quoteCep && quoting && <span className="text-ink-soft">Calculando a entrega...</span>}
-                  {quoteCep && !quoting && delivery?.available && (
+                  {quoteIsForCep && delivery?.available && (
                     <span className="text-ink">
                       Entrega em {delivery.bairro}: <strong>{formatPrice(delivery.fee)}</strong>
                     </span>
@@ -476,20 +510,96 @@ export function CheckoutForm() {
                 </li>
               ))}
             </ul>
+            <div className="border-t border-sand-line pt-3">
+              {!couponOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setCouponOpen(true)}
+                  className="text-sm font-semibold text-moss underline underline-offset-4"
+                >
+                  Tem um cupom?
+                </button>
+              ) : (
+                <StoreField
+                  id="checkoutCoupon"
+                  label="Cupom"
+                  error={couponError ?? undefined}
+                  hint={
+                    validCoupon ? (validCoupon.freeShipping ? 'Frete grátis aplicado.' : 'Cupom aplicado.') : undefined
+                  }
+                >
+                  <div className="flex gap-2">
+                    <input
+                      id="checkoutCoupon"
+                      value={couponInput}
+                      maxLength={30}
+                      autoCapitalize="characters"
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter') return;
+                        e.preventDefault();
+                        setCouponCode(couponInput.trim());
+                        saveCoupon(couponInput.trim());
+                      }}
+                      className={`${STORE_INPUT} uppercase`}
+                    />
+                    {couponCode && couponCode === couponInput.trim() ? (
+                      <SiteButton
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setCouponInput('');
+                          setCouponCode('');
+                          saveCoupon('');
+                        }}
+                      >
+                        Remover
+                      </SiteButton>
+                    ) : (
+                      <SiteButton
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        disabled={!couponInput.trim()}
+                        onClick={() => {
+                          setCouponCode(couponInput.trim());
+                          saveCoupon(couponInput.trim());
+                        }}
+                      >
+                        Aplicar
+                      </SiteButton>
+                    )}
+                  </div>
+                </StoreField>
+              )}
+            </div>
             <div className="space-y-1 border-t border-sand-line pt-3">
               <p className="flex justify-between">
                 <span>Subtotal</span>
                 <span className="tabular-nums">{formatPrice(quote.subtotal)}</span>
               </p>
+              {discount > 0 && (
+                <p className="flex justify-between text-moss">
+                  <span>Cupom {validCoupon?.code}</span>
+                  <span className="tabular-nums">−{formatPrice(discount)}</span>
+                </p>
+              )}
               <p className="flex justify-between">
                 <span>{isDelivery ? 'Entrega' : 'Retirada'}</span>
                 <span className="tabular-nums">
-                  {isDelivery && !delivery?.available ? '—' : fee === 0 ? 'Grátis' : formatPrice(fee)}
+                  {isDelivery && !delivery?.available
+                    ? '—'
+                    : fee === 0
+                      ? freeShipping && isDelivery
+                        ? 'Grátis (cupom)'
+                        : 'Grátis'
+                      : formatPrice(fee)}
                 </span>
               </p>
               <p className="flex justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span className="tabular-nums">{formatPrice(quote.subtotal + fee)}</span>
+                <span className="tabular-nums">{formatPrice(quote.subtotal - discount + fee)}</span>
               </p>
               {quote.installments > 1 && (
                 <p className="text-sm text-ink-soft">Pix ou cartão em até {quote.installments}x sem juros.</p>

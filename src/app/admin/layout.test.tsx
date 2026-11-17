@@ -59,7 +59,14 @@ describe('AdminLayout', () => {
         .getAllByRole('link')
         .map((link) => link.textContent);
 
-    expect(linksOf('Loja')).toEqual(['Pedidos', 'Produtos', 'Categorias', 'Entregas', 'Configurações da loja']);
+    expect(linksOf('Loja')).toEqual([
+      'Pedidos',
+      'Produtos',
+      'Categorias',
+      'Entregas',
+      'Promoções',
+      'Configurações da loja',
+    ]);
     expect(linksOf('Site')).toEqual(['Eventos']);
     expect(linksOf('Bot (WhatsApp)')).toEqual(['Conversas', 'Menu', 'Mensagens', 'Marcadores']);
   });

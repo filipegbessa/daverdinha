@@ -9,6 +9,7 @@ import {
   type CartItem,
 } from '@/features/store/lib/cart-storage';
 import type { Product } from '@/features/site/types/catalog';
+import { captureCouponFromUrl } from '@/features/store/lib/coupon-storage';
 import type { CheckoutQuote } from '@/features/store/types/store';
 
 interface CartContextValue {
@@ -41,6 +42,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lastAddedAt, setLastAddedAt] = useState(0);
 
   useEffect(() => {
+    // Link de divulgação com `?cupom=`: guarda pro checkout.
+    captureCouponFromUrl(window.location.search);
     setItems(readCart());
     setReady(true);
     const onStorage = (event: StorageEvent) => {

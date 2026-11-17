@@ -225,6 +225,12 @@ export default function PedidoPage() {
               <span>Subtotal</span>
               <span className="tabular-nums">{formatCurrency(order.subtotal, 'BRL')}</span>
             </p>
+            {(order.discount ?? 0) > 0 && (
+              <p className="flex justify-between">
+                <span>Cupom {order.couponCode}</span>
+                <span className="tabular-nums">−{formatCurrency(order.discount ?? 0, 'BRL')}</span>
+              </p>
+            )}
             {!tickets && (
               <p className="flex justify-between">
                 <span>Entrega</span>

@@ -29,6 +29,7 @@ const NAV_GROUPS: { id: string; title?: string; items: NavItem[] }[] = [
       { href: '/admin/produtos', label: 'Produtos' },
       { href: '/admin/categorias', label: 'Categorias' },
       { href: '/admin/entregas', label: 'Entregas' },
+      { href: '/admin/promocoes', label: 'Promoções' },
       { href: '/admin/loja', label: 'Configurações da loja' },
     ],
   },

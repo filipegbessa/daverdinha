@@ -230,6 +230,12 @@ export function OrderStatus({
               <span>Subtotal</span>
               <span className="tabular-nums">{formatPrice(order.subtotal)}</span>
             </p>
+            {(order.discount ?? 0) > 0 && (
+              <p className="flex justify-between text-moss">
+                <span>Cupom {order.couponCode}</span>
+                <span className="tabular-nums">−{formatPrice(order.discount ?? 0)}</span>
+              </p>
+            )}
             <p className="flex justify-between">
               <span>{order.deliveryMethod === 'pickup' ? 'Retirada' : 'Entrega'}</span>
               <span className="tabular-nums">
