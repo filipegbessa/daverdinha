@@ -337,6 +337,28 @@ describe('CheckoutForm', () => {
     expect(readCart()).toHaveLength(1);
   });
 
+  it('keeps the cart and shows the pause message when the store was paused meanwhile', async () => {
+    const user = userEvent.setup();
+    (createCheckout as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 409,
+      reason: 'store_paused',
+      message: 'De férias até dia 6!',
+    });
+    renderCheckout();
+    await screen.findByText('Total');
+
+    await fillContact(user);
+    await fillAddress(user);
+    await screen.findByText(/Entrega em Catete:/);
+    await user.click(screen.getByRole('checkbox', { name: /política de trocas/ }));
+    await user.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
+
+    expect(await screen.findByText('De férias até dia 6!')).toBeInTheDocument();
+    expect(screen.queryByText('Alguns itens mudaram desde que você montou o carrinho.')).not.toBeInTheDocument();
+    expect(readCart()).toHaveLength(1);
+  });
+
   it('requotes when the stock changed in the meantime and points back to the cart', async () => {
     const user = userEvent.setup();
     (createCheckout as jest.Mock).mockResolvedValue({

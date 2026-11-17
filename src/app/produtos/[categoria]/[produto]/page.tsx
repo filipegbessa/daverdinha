@@ -58,10 +58,10 @@ export default async function ProductPage({ params }: Props) {
     getCoveredDeliveryZones(),
   ]);
   const related = bestSellers.filter((p) => p.id !== product.id).slice(0, RELATED_LIMIT);
-  const { home, storeEnabled } = await shellProps();
+  const { home, storeEnabled, storePause } = await shellProps();
 
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled} preview={isSample(product)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause} preview={isSample(product)}>
       <JsonLd data={productJsonLd(product)} />
       <ViewItemTracker product={product} />
       <section className="px-6 py-10 md:py-14">

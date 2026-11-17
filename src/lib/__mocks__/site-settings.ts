@@ -10,7 +10,7 @@ import type { SiteSettings } from '../site-settings';
  * como o mock de `@/lib/site-settings` e como o módulo que o teste importa
  * pra chamar `mockSiteSettings`. Os dois precisam ver o mesmo valor.
  */
-const OFF: SiteSettings = { siteEnabled: false, storeEnabled: false };
+const OFF: SiteSettings = { siteEnabled: false, storeEnabled: false, storePause: null };
 const store = globalThis as typeof globalThis & { __siteSettingsMock?: SiteSettings };
 
 function current(): SiteSettings {

@@ -12,6 +12,11 @@ const settings = {
   pickupInstructions: null,
   maxInstallments: 3,
   minInstallmentValue: 30,
+  lowStockThreshold: 2,
+  storePaused: false,
+  pauseMessage: null,
+  pausedUntil: null,
+  activePause: null,
 };
 
 function mockApi(save: () => Promise<unknown> = async () => settings) {
@@ -50,9 +55,34 @@ describe('LojaPage', () => {
         pickupInstructions: null,
         maxInstallments: 6,
         minInstallmentValue: 25,
+        lowStockThreshold: 2,
+        storePaused: false,
+        pauseMessage: null,
+        pausedUntil: null,
       }),
     });
     expect(await screen.findByText('Configurações salvas.')).toBeInTheDocument();
+  });
+
+  it('pauses the store with a message and a return day at midnight in Rio, and sets the low stock alert', async () => {
+    const apiFetch = mockApi();
+
+    render(<LojaPage />);
+    await userEvent.click(await screen.findByRole('switch', { name: 'Pausar a loja (férias, feriado)' }));
+    await userEvent.type(screen.getByLabelText('Aviso no site (opcional)'), 'Férias!');
+    await userEvent.type(screen.getByLabelText('Reabrir sozinha em (opcional)'), '2027-01-06');
+    await userEvent.clear(screen.getByLabelText('Avisar estoque baixo a partir de'));
+    await userEvent.type(screen.getByLabelText('Avisar estoque baixo a partir de'), '5');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    const patch = apiFetch.mock.calls.find(([, init]) => init?.method === 'PATCH');
+    const body = JSON.parse(String(patch?.[1]?.body));
+    expect(body).toMatchObject({
+      storePaused: true,
+      pauseMessage: 'Férias!',
+      pausedUntil: '2027-01-06T03:00:00.000Z',
+      lowStockThreshold: 5,
+    });
   });
 
   it('updates the installment example as the settings change', async () => {

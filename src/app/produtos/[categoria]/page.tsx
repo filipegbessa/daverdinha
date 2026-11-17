@@ -49,10 +49,15 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   if (!category || allProducts.length === 0) notFound();
 
   const { items: products, page, totalPages } = paginate(allProducts, pageParam);
-  const { home, storeEnabled } = await shellProps();
+  const { home, storeEnabled, storePause } = await shellProps();
 
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled} preview={allProducts.some(isSample) || events.some(isSample)}>
+    <SiteShell
+      home={home}
+      storeEnabled={storeEnabled}
+      storePause={storePause}
+      preview={allProducts.some(isSample) || events.some(isSample)}
+    >
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

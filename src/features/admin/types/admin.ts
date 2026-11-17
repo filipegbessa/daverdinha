@@ -1,6 +1,11 @@
 import type { SiteEvent } from '@/features/site/types/event';
 
 export interface BotSettings {
+  /**
+   * O módulo de WhatsApp no admin. Desligado, o menu esconde o grupo Bot, o
+   * bot fica desligado e não sai push de mensagem nova.
+   */
+  whatsappModuleEnabled: boolean;
   botEnabled: boolean;
   welcomeMessage: string;
   invalidAttemptsExceededMessage: string;
@@ -69,6 +74,27 @@ export interface StoreSettings {
   pickupInstructions: string | null;
   maxInstallments: number;
   minInstallmentValue: number;
+  /** Pronta entrega com este estoque ou menos entra no aviso do Dashboard. */
+  lowStockThreshold: number;
+  /** O interruptor da pausa e o texto dela, como estão salvos. */
+  storePaused: boolean;
+  pauseMessage: string | null;
+  /** ISO; a loja reabre sozinha nesse momento. */
+  pausedUntil: string | null;
+  /** A pausa valendo agora (`null` com o interruptor desligado ou depois da data de volta). */
+  activePause: { message: string | null; until: string | null } | null;
+}
+
+/** `GET /site-orders/summary`: o topo do Dashboard. */
+export interface SalesSummary {
+  today: { orders: number; revenue: number };
+  last7Days: { orders: number; revenue: number };
+  last30Days: { orders: number; revenue: number };
+  averageTicket30Days: number | null;
+  toPrepare: number;
+  readyToDeliver: number;
+  topProducts: { name: string; quantity: number }[];
+  lowStock: { threshold: number; products: { id: string; name: string; stock: number }[] };
 }
 
 /**

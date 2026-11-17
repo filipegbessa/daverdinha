@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PushNotificationBanner } from '@/features/admin/components/PushNotificationBanner';
 import { InstallAppNavItem } from '@/features/admin/components/InstallAppNavItem';
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
-import type { ConversationList } from '@/features/admin/types/admin';
+import type { BotSettings, ConversationList } from '@/features/admin/types/admin';
+import { BOT_SETTINGS_CHANGED, isWhatsappModuleOn } from '@/features/admin/lib/bot-settings-events';
 
 type NavItem = { href: string; label: string };
 
@@ -49,14 +50,36 @@ function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/** As páginas do grupo Bot: somem do menu e voltam pro Dashboard com o módulo desligado. */
+const BOT_HREFS = NAV_GROUPS.find((group) => group.id === 'bot')!.items.map((item) => item.href);
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [navOpen, setNavOpen] = useState(false);
+  // O módulo de WhatsApp, ligado e desligado no Dashboard. Enquanto não
+  // carrega (ou se falhar), conta como ligado: esconder por engano é pior.
+  const { data: botSettings, refetch: refetchBotSettings } = useApiResource<BotSettings>('/bot-settings');
+  const whatsappOn = isWhatsappModuleOn(botSettings);
+  const onBotPage = BOT_HREFS.some((href) => isActiveRoute(pathname, href));
   // Asks for a single row and reads the count off the envelope: the badge
   // needs the total, not the conversations, and this used to pull the whole
-  // table every 15 seconds just to run .filter() over it.
-  const { data } = useApiResource<ConversationList>('/conversations?perPage=1', { pollIntervalMs: 15000 });
-  const unreadCount = data?.unreadTotal ?? 0;
+  // table every 15 seconds just to run .filter() over it. Sem o módulo de
+  // WhatsApp, não há o que contar.
+  const { data } = useApiResource<ConversationList>(whatsappOn ? '/conversations?perPage=1' : null, {
+    pollIntervalMs: 15000,
+  });
+
+  useEffect(() => {
+    window.addEventListener(BOT_SETTINGS_CHANGED, refetchBotSettings);
+    return () => window.removeEventListener(BOT_SETTINGS_CHANGED, refetchBotSettings);
+  }, [refetchBotSettings]);
+
+  useEffect(() => {
+    if (!whatsappOn && onBotPage) router.replace('/admin');
+  }, [whatsappOn, onBotPage, router]);
+  const unreadCount = whatsappOn ? (data?.unreadTotal ?? 0) : 0;
+  const groups = whatsappOn ? NAV_GROUPS : NAV_GROUPS.filter((group) => group.id !== 'bot');
 
   useEffect(() => {
     // Chrome/Edge/Android PWAs support the Badging API; Safari/iOS and
@@ -117,7 +140,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Button>
           </div>
           <div className="flex-1 space-y-5 overflow-y-auto">
-            {NAV_GROUPS.map((group) => (
+            {groups.map((group) => (
               <div key={group.id}>
                 {group.title && (
                   <p

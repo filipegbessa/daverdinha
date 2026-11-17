@@ -54,14 +54,14 @@ export default async function EventPage({ params }: Props) {
   // Independe da loja de produtos: só do `ticketSales`, já combinado com o
   // interruptor "Venda de ingressos" do Dashboard.
   const sellsHere = event.ticketSales && new Date(event.startsAt).getTime() > now;
-  const { home, storeEnabled } = await shellProps();
+  const { home, storeEnabled, storePause } = await shellProps();
   const atAtelier = event.locationName === null;
   const address = atAtelier ? businessInfo.address.formatted : event.locationAddress;
   const others = upcoming.filter((e) => e.id !== event.id);
   const priceText = eventDetails(event);
 
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled} preview={isSample(event)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause} preview={isSample(event)}>
       <JsonLd data={eventJsonLd(event)} />
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">

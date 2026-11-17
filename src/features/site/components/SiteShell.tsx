@@ -8,11 +8,22 @@ import { StoreEnabledProvider } from '@/features/store/components/StoreEnabled';
 import { isStoreEnabled } from '@/features/store/lib/store-enabled';
 import { homeHref } from '@/features/site/lib/paths';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
+import { getSiteSettings, type StorePause } from '@/lib/site-settings';
 
 /** O que toda página passa pro `SiteShell`, lido dos interruptores do Dashboard. */
-export async function shellProps(): Promise<{ home: string; storeEnabled: boolean }> {
-  const [home, storeEnabled] = await Promise.all([homeHref(), isStoreEnabled()]);
-  return { home, storeEnabled };
+export async function shellProps(): Promise<{ home: string; storeEnabled: boolean; storePause: StorePause | null }> {
+  const [home, storeEnabled, settings] = await Promise.all([homeHref(), isStoreEnabled(), getSiteSettings()]);
+  return { home, storeEnabled, storePause: storeEnabled ? settings.storePause : null };
+}
+
+const RETURN_DATE = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' });
+
+/** O aviso da loja em pausa, no topo de toda página que o recebe. */
+function pauseText(pause: StorePause): string {
+  const message = pause.message?.trim() || 'A loja está em pausa e não está recebendo pedidos agora.';
+  return pause.until
+    ? `${message} Voltamos a receber pedidos em ${RETURN_DATE.format(new Date(pause.until))}.`
+    : message;
 }
 
 /**
@@ -26,6 +37,7 @@ export function SiteShell({
   home,
   storeEnabled,
   preview = false,
+  storePause = null,
   children,
 }: {
   home: string;
@@ -33,6 +45,8 @@ export function SiteShell({
   storeEnabled: boolean;
   /** Algum dado da página é exemplo (ver `data/samples.ts`): mostra o aviso de prévia. */
   preview?: boolean;
+  /** Loja em pausa (`shellProps()`): mostra o aviso no topo. */
+  storePause?: StorePause | null;
   children: React.ReactNode;
 }) {
   // Coluna com no mínimo a altura da tela e o <main> crescendo: em página
@@ -43,6 +57,11 @@ export function SiteShell({
       {preview && (
         <p className="bg-berry px-4 py-1.5 text-center text-xs font-medium text-paper">
           Prévia do site: os produtos, preços e eventos são exemplos para validar o layout.
+        </p>
+      )}
+      {storeEnabled && storePause && (
+        <p role="status" className="bg-moss px-4 py-2 text-center text-sm font-medium text-paper">
+          {pauseText(storePause)}
         </p>
       )}
       <Header home={home} storeEnabled={storeEnabled} />

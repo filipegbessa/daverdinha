@@ -29,7 +29,7 @@ describe('getSiteSettings', () => {
       json: async () => ({ siteEnabled: true, storeEnabled: false, maxInstallments: 3 }),
     });
 
-    await expect(load()).resolves.toEqual({ siteEnabled: true, storeEnabled: false });
+    await expect(load()).resolves.toEqual({ siteEnabled: true, storeEnabled: false, storePause: null });
     expect(fetchMock).toHaveBeenCalledWith('https://api.example/store-settings/public', {
       next: { revalidate: 60, tags: ['site-settings'] },
     });
@@ -37,18 +37,35 @@ describe('getSiteSettings', () => {
 
   it('turns both off when the API fails, answers an error or has no URL', async () => {
     fetchMock.mockRejectedValue(new Error('down'));
-    await expect(load()).resolves.toEqual({ siteEnabled: false, storeEnabled: false });
+    await expect(load()).resolves.toEqual({ siteEnabled: false, storeEnabled: false, storePause: null });
 
     fetchMock.mockResolvedValue({ ok: false, json: async () => ({}) });
-    await expect(load()).resolves.toEqual({ siteEnabled: false, storeEnabled: false });
+    await expect(load()).resolves.toEqual({ siteEnabled: false, storeEnabled: false, storePause: null });
 
     delete process.env.NEXT_PUBLIC_API_URL;
-    await expect(load()).resolves.toEqual({ siteEnabled: false, storeEnabled: false });
+    await expect(load()).resolves.toEqual({ siteEnabled: false, storeEnabled: false, storePause: null });
   });
 
   it('only accepts a real true, never a truthy-looking value', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ siteEnabled: 'true', storeEnabled: 1 }) });
 
-    await expect(load()).resolves.toEqual({ siteEnabled: false, storeEnabled: false });
+    await expect(load()).resolves.toEqual({ siteEnabled: false, storeEnabled: false, storePause: null });
+  });
+
+  it('reads the store pause, when there is one', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        siteEnabled: true,
+        storeEnabled: true,
+        storePause: { message: 'Férias!', until: '2027-01-06T03:00:00.000Z' },
+      }),
+    });
+
+    await expect(load()).resolves.toEqual({
+      siteEnabled: true,
+      storeEnabled: true,
+      storePause: { message: 'Férias!', until: '2027-01-06T03:00:00.000Z' },
+    });
   });
 });

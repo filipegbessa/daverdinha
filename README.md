@@ -14,6 +14,8 @@ Dados do negócio (nome, telefone, endereço) ficam hardcoded em `src/data/busin
 
 Três interruptores no Dashboard do admin, ao lado do bot, ligam o site, a loja e a venda de ingressos sem deploy. Ficam nas configurações da loja na API (`store_settings.site_enabled`, `store_enabled` e `tickets_enabled`), e o site lê por `GET /store-settings/public` (`src/lib/site-settings.ts`) com cache de 1 minuto. Ao mudar um interruptor, o Dashboard limpa esse cache e as páginas geradas (`refreshPublicSite`, uma server action só pra quem está logado), então a mudança aparece no próximo acesso; o minuto é só a rede de segurança. A loja liga mesmo sem a chave do Pagar.me (o layout aparece), e o Dashboard avisa que finalizar a compra ainda não funciona.
 
+O Dashboard também abre com o **resumo de vendas** (`SalesSummaryPanel`, `GET /site-orders/summary`): vendas de hoje, 7 e 30 dias, valor médio, pedidos a preparar e prontos, mais vendidos e estoque baixo. Acima do bot fica o interruptor **"WhatsApp bot"** (o módulo): desligado, some o grupo Bot do menu (as páginas dele mandam pro Dashboard), o atendimento automático desliga e não chega push de mensagem nova. O menu ouve o evento `daverdinha:bot-settings-changed` pra se atualizar na hora. Com a loja ligada, aparece também **"Loja em pausa"** (o aviso e a data de volta ficam em `/admin/loja`); com a pausa valendo, o `SiteShell` mostra o aviso no topo das páginas da loja.
+
 - **Site completo** desligado: `/` serve a landing **em breve** (`ComingSoon.tsx`), e o site completo — home, catálogo (`/produtos`), agenda (`/agenda`), entregas, FAQ — fica na prévia **`/site`**, pra cliente validar. Na prévia, lista vazia da API vira produtos e eventos **de exemplo**, com a faixa "Prévia do site", e as páginas são `noindex` e ficam fora do sitemap. Ligado: `/` é o site completo e exemplo nunca aparece (lista vazia esconde a seção).
 - **Loja do site**: ver "Loja online" abaixo.
 - **Venda de ingressos**: ver "Ingressos dos eventos" abaixo. Independente da loja.
@@ -120,6 +122,8 @@ As áreas de entrega, que desde 2026-11-17 são a única lista que decide onde s
 
 Configurações da loja online (`/store-settings`, linha única na API), num formulário só com um "Salvar":
 
+- **Loja em pausa** (férias, feriado): o interruptor, o aviso que aparece no topo do site (opcional) e o dia em que a loja reabre sozinha (opcional, à meia-noite do Rio). Com a pausa valendo, o site mostra o aviso e a API recusa pedido de produtos; o checkout mostra a mensagem e mantém o carrinho. O interruptor também fica no Dashboard.
+- **Estoque**: a partir de quantas unidades um produto de pronta entrega entra no aviso de estoque baixo do Dashboard.
 - **Retirada no ateliê**: ligada/desligada, endereço, horário (texto livre) e instruções opcionais. Endereço e horário não podem ficar vazios; pra tirar a retirada do checkout, desliga.
 - **Parcelamento no cartão**: máximo de parcelas (1 = só à vista) e valor mínimo da parcela, sem juros pro comprador. O texto de ajuda mostra ao vivo em quantas parcelas sai um pedido de R$ 100, com a mesma regra da API.
 

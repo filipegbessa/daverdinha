@@ -47,7 +47,7 @@ export type CreateCheckoutResult =
       status: number;
       message: string;
       problems?: CheckoutQuote['problems'];
-      reason?: DeliveryUnavailableReason | 'pickup_disabled';
+      reason?: DeliveryUnavailableReason | 'pickup_disabled' | 'store_paused' | 'store_closed';
     };
 
 /** Corpo de `POST /checkout/tickets`: preço e vagas são do servidor. */

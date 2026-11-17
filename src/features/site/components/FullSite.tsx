@@ -1,4 +1,5 @@
 import { Hero } from '@/features/site/components/Hero';
+import type { StorePause } from '@/lib/site-settings';
 import { About } from '@/features/site/components/About';
 import { ProductsSection } from '@/features/site/components/ProductsSection';
 import { EventsSection } from '@/features/site/components/EventsSection';
@@ -21,6 +22,8 @@ export interface FullSiteData {
   events: SiteEvent[];
   /** Interruptor "Loja" do Dashboard. */
   storeEnabled: boolean;
+  /** Loja em pausa: aviso no topo. */
+  storePause?: StorePause | null;
 }
 
 /**
@@ -33,11 +36,11 @@ export interface FullSiteData {
  * seguidas dividiam o mesmo fundo e a página parecia ter menos partes do que
  * tinha.
  */
-export function FullSite({ home, storeEnabled, slides, zones, featured, events }: FullSiteData) {
+export function FullSite({ home, storeEnabled, storePause, slides, zones, featured, events }: FullSiteData) {
   const preview = featured.some(isSample) || events.some(isSample) || slides.some(isSample);
 
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled} preview={preview}>
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause} preview={preview}>
       <Hero slides={slides} />
       <ProductsSection products={featured} />
       <EventsSection events={events} cardVariant="compact" />

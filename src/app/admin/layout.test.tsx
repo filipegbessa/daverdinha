@@ -6,7 +6,11 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 jest.mock('@clerk/nextjs', () => ({ UserButton: () => <div data-testid="user-button" /> }));
 
 const mockUsePathname = jest.fn();
-jest.mock('next/navigation', () => ({ usePathname: () => mockUsePathname() }));
+const mockReplace = jest.fn();
+jest.mock('next/navigation', () => ({
+  usePathname: () => mockUsePathname(),
+  useRouter: () => ({ replace: mockReplace }),
+}));
 
 jest.mock('@/features/admin/lib/use-push-subscription', () => ({
   usePushSubscription: () => ({ subscribe: jest.fn(), subscribing: false, error: null }),
@@ -58,6 +62,47 @@ describe('AdminLayout', () => {
     expect(linksOf('Loja')).toEqual(['Pedidos', 'Produtos', 'Categorias', 'Entregas', 'Configurações da loja']);
     expect(linksOf('Site')).toEqual(['Eventos']);
     expect(linksOf('Bot (WhatsApp)')).toEqual(['Conversas', 'Menu', 'Mensagens', 'Marcadores']);
+  });
+
+  describe('with the WhatsApp module off in the Dashboard', () => {
+    beforeEach(() => {
+      mockReplace.mockClear();
+      (useApiClient as jest.Mock).mockReturnValue({
+        apiFetch: jest.fn((path: string) =>
+          path === '/bot-settings' ? Promise.resolve({ whatsappModuleEnabled: false }) : new Promise(() => {}),
+        ),
+      });
+    });
+
+    it('hides the Bot group and does not keep reading the conversations', async () => {
+      render(
+        <AdminLayout>
+          <p>conteúdo</p>
+        </AdminLayout>,
+      );
+
+      await waitFor(() => expect(screen.queryByRole('list', { name: 'Bot (WhatsApp)' })).not.toBeInTheDocument());
+      expect(screen.queryByRole('link', { name: 'Conversas' })).not.toBeInTheDocument();
+      expect(screen.getByRole('list', { name: 'Loja' })).toBeInTheDocument();
+      // Antes de as configurações chegarem o módulo conta como ligado (uma
+      // leitura); depois, nenhuma outra.
+      const { apiFetch } = (useApiClient as jest.Mock).mock.results.at(-1)!.value;
+      const conversationReads = (apiFetch as jest.Mock).mock.calls.filter(
+        ([path]) => path === '/conversations?perPage=1',
+      );
+      expect(conversationReads.length).toBeLessThanOrEqual(1);
+    });
+
+    it('sends a bot page back to the Dashboard', async () => {
+      mockUsePathname.mockReturnValue('/admin/conversas/abc');
+      render(
+        <AdminLayout>
+          <p>conteúdo</p>
+        </AdminLayout>,
+      );
+
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/admin'));
+    });
   });
 
   it('renders the page content passed as children', () => {

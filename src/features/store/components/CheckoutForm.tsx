@@ -233,7 +233,11 @@ export function CheckoutForm() {
       return;
     }
     setSubmitting(false);
-    if (result.status === 409) {
+    if (result.reason === 'store_paused' || result.reason === 'store_closed') {
+      // A loja entrou em pausa (ou foi fechada) com o carrinho aberto: o
+      // carrinho fica, e a mensagem da cliente explica até quando.
+      setFormError(result.message);
+    } else if (result.status === 409) {
       // Algo mudou no estoque ou no catálogo: a cotação nova mostra o quê.
       setFormError('Alguns itens mudaram desde que você montou o carrinho.');
       setQuoteAttempt((n) => n + 1);

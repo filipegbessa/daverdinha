@@ -14,6 +14,7 @@ import { FormField, SwitchField } from '@/features/admin/components/FormField';
 import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import { SectionLabel } from '@/features/admin/components/SectionLabel';
 import type { StoreSettings } from '@/features/admin/types/admin';
+import { isoToReturnDate, returnDateToIso } from '@/features/admin/lib/return-date';
 
 const INSTALLMENT_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1);
 
@@ -27,8 +28,9 @@ function installmentsFor(total: number, max: number, minCents: number): number {
 }
 
 /**
- * Configurações da loja online: retirada no ateliê e parcelamento no
- * cartão. Uma tela só, com um "Salvar", porque é uma linha só na API.
+ * Configurações da loja online: pausa (férias), retirada no ateliê,
+ * parcelamento no cartão e o aviso de estoque baixo. Uma tela só, com um
+ * "Salvar", porque é uma linha só na API.
  */
 export default function LojaPage() {
   const { apiFetch } = useApiClient();
@@ -50,7 +52,7 @@ export default function LojaPage() {
   if (!form) {
     return (
       <div>
-        <PageHeader title="Loja" />
+        <PageHeader title="Configurações da loja" />
         {isLoading || !error ? <LoadingState /> : <ErrorAlert>{error}</ErrorAlert>}
       </div>
     );
@@ -77,6 +79,10 @@ export default function LojaPage() {
           pickupInstructions: form.pickupInstructions?.trim() || null,
           maxInstallments: form.maxInstallments,
           minInstallmentValue: minCents / 100,
+          lowStockThreshold: form.lowStockThreshold,
+          storePaused: form.storePaused,
+          pauseMessage: form.pauseMessage?.trim() || null,
+          pausedUntil: form.pausedUntil,
         }),
       }),
     );
@@ -88,8 +94,48 @@ export default function LojaPage() {
 
   return (
     <div>
-      <PageHeader title="Loja" />
+      <PageHeader title="Configurações da loja" />
       <form onSubmit={handleSubmit} className="mt-6 max-w-2xl space-y-8">
+        <section aria-labelledby="pause-title" className="space-y-4">
+          <SectionLabel variant="title" id="pause-title">
+            Loja em pausa
+          </SectionLabel>
+          <SwitchField
+            label="Pausar a loja (férias, feriado)"
+            checked={form.storePaused}
+            onCheckedChange={(checked) => update('storePaused', checked)}
+          />
+          <p className="text-sm text-muted-foreground">
+            Com a loja em pausa, o site mostra o aviso abaixo e não fecha pedidos de produtos. Os produtos continuam à
+            mostra e os ingressos continuam à venda.
+          </p>
+          <FormField
+            id="pauseMessage"
+            label="Aviso no site (opcional)"
+            hint="Ex.: Estamos de férias! Os pedidos voltam dia 6 de janeiro."
+          >
+            <Textarea
+              id="pauseMessage"
+              value={form.pauseMessage ?? ''}
+              onChange={(e) => update('pauseMessage', e.target.value)}
+              rows={2}
+              maxLength={300}
+            />
+          </FormField>
+          <FormField
+            id="pausedUntil"
+            label="Reabrir sozinha em (opcional)"
+            hint="A loja volta à meia-noite desse dia. Sem data, fica em pausa até você desligar."
+          >
+            <Input
+              id="pausedUntil"
+              type="date"
+              value={isoToReturnDate(form.pausedUntil)}
+              onChange={(e) => update('pausedUntil', returnDateToIso(e.target.value))}
+            />
+          </FormField>
+        </section>
+
         <section aria-labelledby="pickup-title" className="space-y-4">
           <SectionLabel variant="title" id="pickup-title">
             Retirada no ateliê
@@ -177,6 +223,27 @@ export default function LojaPage() {
                 : `pode ser pago em até ${example}x de ${formatCurrency(EXAMPLE_TOTAL / example, 'BRL')}.`}
             </span>
           </p>
+        </section>
+
+        <section aria-labelledby="stock-title" className="space-y-4">
+          <SectionLabel variant="title" id="stock-title">
+            Estoque
+          </SectionLabel>
+          <FormField
+            id="lowStockThreshold"
+            label="Avisar estoque baixo a partir de"
+            hint="Produto de pronta entrega com essa quantidade ou menos aparece no aviso do Dashboard."
+          >
+            <Input
+              id="lowStockThreshold"
+              type="number"
+              min={0}
+              max={1000}
+              value={form.lowStockThreshold}
+              onChange={(e) => update('lowStockThreshold', Math.max(0, Math.min(1000, Number(e.target.value) || 0)))}
+              className="max-w-32"
+            />
+          </FormField>
         </section>
 
         <div className="flex items-center gap-3">
