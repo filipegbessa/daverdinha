@@ -1,4 +1,5 @@
 'use client';
+import { buttonVariants } from '@/components/ui/button';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -58,7 +59,12 @@ export default function PedidosPage() {
 
   return (
     <div>
-      <PageHeader title="Pedidos" />
+      <PageHeader title="Pedidos">
+        {/* Venda combinada no WhatsApp: o pedido com o link de pagamento. */}
+        <Link href="/admin/pedidos/novo" className={buttonVariants()}>
+          Novo pedido
+        </Link>
+      </PageHeader>
       <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
         {(values, set) => (
           <>

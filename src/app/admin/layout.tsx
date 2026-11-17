@@ -95,10 +95,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [unreadCount]);
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground">
-      <PushNotificationBanner />
+    <div className="flex h-screen flex-col bg-background text-foreground print:h-auto">
+      {/* Na impressão (pedido pra entrega), só o conteúdo da página sai no papel. */}
+      <div className="print:hidden">
+        <PushNotificationBanner />
+      </div>
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <div className="flex flex-none items-center justify-between border-b border-border bg-muted p-4 md:hidden">
+        <div className="flex flex-none items-center justify-between border-b border-border bg-muted p-4 md:hidden print:hidden">
           <p className="text-lg font-semibold">Daverdinha</p>
           <Button
             type="button"
@@ -122,7 +125,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <nav
           aria-label="Navegação do admin"
-          className={`fixed inset-y-0 left-0 z-40 flex w-56 flex-none -translate-x-full flex-col border-r border-border bg-muted p-6 transition-transform duration-200 md:static md:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 z-40 flex w-56 flex-none -translate-x-full flex-col border-r border-border bg-muted p-6 transition-transform duration-200 md:static md:translate-x-0 print:hidden ${
             navOpen ? 'translate-x-0' : ''
           }`}
         >
@@ -190,7 +193,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <UserButton />
           </div>
         </nav>
-        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-8 print:overflow-visible print:p-0">{children}</main>
       </div>
     </div>
   );

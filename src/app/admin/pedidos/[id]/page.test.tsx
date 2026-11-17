@@ -28,6 +28,19 @@ describe('PedidoPage', () => {
     expect(screen.getByText('R$ 104,90')).toBeInTheDocument();
   });
 
+  it('prints the order for the delivery, without the menu and the buttons', async () => {
+    mockApi();
+    const print = jest.spyOn(window, 'print').mockImplementation(() => {});
+
+    render(<PedidoPage />);
+    const button = await screen.findByRole('button', { name: 'Imprimir' });
+    expect(button).toHaveClass('print:hidden');
+    await userEvent.click(button);
+
+    expect(print).toHaveBeenCalled();
+    print.mockRestore();
+  });
+
   it('changes the preparation status of a paid order', async () => {
     const apiFetch = mockApi();
 
