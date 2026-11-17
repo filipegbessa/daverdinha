@@ -99,7 +99,7 @@ describe('PedidoPage', () => {
     expect(screen.getByText('Oficina de terrário')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Lista de presença' })).toHaveAttribute(
       'href',
-      '/admin/agenda/e1/participantes?evento=Oficina%20de%20terr%C3%A1rio',
+      '/admin/eventos/e1/participantes?evento=Oficina%20de%20terr%C3%A1rio',
     );
     expect(screen.getByText('Ana Lima')).toBeInTheDocument();
     expect(screen.getByText('Bruno Lima')).toBeInTheDocument();

@@ -36,7 +36,7 @@ function salesLabel(event: EventAdmin, ticketsEnabled: boolean | undefined): str
  * A agenda do site: oficinas, feirinhas, aulas. Rascunho até publicar; evento
  * passado continua aqui (e a página dele no site), só sai da lista pública.
  */
-export default function AgendaPage() {
+export default function EventosPage() {
   const { apiFetch } = useApiClient();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const q = useDebouncedValue(filters.q.trim());
@@ -67,7 +67,7 @@ export default function AgendaPage() {
 
   return (
     <div>
-      <PageHeader title="Agenda">
+      <PageHeader title="Eventos">
         <Button onClick={() => setEditing('new')}>Novo evento</Button>
       </PageHeader>
       <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
@@ -115,7 +115,7 @@ export default function AgendaPage() {
                 </div>
                 {(event.ticketSales || event.sold > 0) && (
                   <Link
-                    href={`/admin/agenda/${event.id}/participantes?evento=${encodeURIComponent(event.title)}`}
+                    href={`/admin/eventos/${event.id}/participantes?evento=${encodeURIComponent(event.title)}`}
                     className={buttonVariants({ variant: 'outline' })}
                   >
                     Participantes

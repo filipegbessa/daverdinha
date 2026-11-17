@@ -74,7 +74,7 @@ function Attendees() {
 
   return (
     <div>
-      <BackLink href="/admin/agenda">Voltar para a agenda</BackLink>
+      <BackLink href="/admin/eventos">Voltar para os eventos</BackLink>
       <PageHeader title="Participantes" description={occupancy && [eventTitle, occupancy].filter(Boolean).join(' · ')}>
         {!scanning && (
           <Button onClick={() => setScanning(true)}>

@@ -11,18 +11,37 @@ import { InstallAppNavItem } from '@/features/admin/components/InstallAppNavItem
 import { useApiResource } from '@/features/admin/lib/use-api-resource';
 import type { ConversationList } from '@/features/admin/types/admin';
 
-const NAV_ITEMS = [
-  { href: '/admin', label: 'Dashboard' },
-  { href: '/admin/pedidos', label: 'Pedidos' },
-  { href: '/admin/mensagens', label: 'Mensagens' },
-  { href: '/admin/menu', label: 'Menu' },
-  { href: '/admin/entregas', label: 'Entregas' },
-  { href: '/admin/marcadores', label: 'Marcadores' },
-  { href: '/admin/produtos', label: 'Produtos' },
-  { href: '/admin/categorias', label: 'Categorias' },
-  { href: '/admin/agenda', label: 'Agenda' },
-  { href: '/admin/conversas', label: 'Conversas' },
-  { href: '/admin/loja', label: 'Loja' },
+type NavItem = { href: string; label: string };
+
+/**
+ * O menu em três contextos: a loja (vender e entregar), o site (o que aparece
+ * pro público) e o bot do WhatsApp (atendimento). O Dashboard fica solto no
+ * topo, porque liga e desliga os três.
+ */
+const NAV_GROUPS: { id: string; title?: string; items: NavItem[] }[] = [
+  { id: 'inicio', items: [{ href: '/admin', label: 'Dashboard' }] },
+  {
+    id: 'loja',
+    title: 'Loja',
+    items: [
+      { href: '/admin/pedidos', label: 'Pedidos' },
+      { href: '/admin/produtos', label: 'Produtos' },
+      { href: '/admin/categorias', label: 'Categorias' },
+      { href: '/admin/entregas', label: 'Entregas' },
+      { href: '/admin/loja', label: 'Configurações da loja' },
+    ],
+  },
+  { id: 'site', title: 'Site', items: [{ href: '/admin/eventos', label: 'Eventos' }] },
+  {
+    id: 'bot',
+    title: 'Bot (WhatsApp)',
+    items: [
+      { href: '/admin/conversas', label: 'Conversas' },
+      { href: '/admin/menu', label: 'Menu' },
+      { href: '/admin/mensagens', label: 'Mensagens' },
+      { href: '/admin/marcadores', label: 'Marcadores' },
+    ],
+  },
 ];
 
 function isActiveRoute(pathname: string, href: string) {
@@ -97,37 +116,53 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <X aria-hidden="true" />
             </Button>
           </div>
-          <ul className="flex-1 space-y-1">
-            {NAV_ITEMS.map((item) => {
-              const active = isActiveRoute(pathname, item.href);
-              const showUnreadBadge = item.href === '/admin/conversas' && unreadCount > 0;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    aria-current={active ? 'page' : undefined}
-                    onClick={() => setNavOpen(false)}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
-                      active
-                        ? 'bg-primary font-medium text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-background hover:text-foreground'
-                    }`}
+          <div className="flex-1 space-y-5 overflow-y-auto">
+            {NAV_GROUPS.map((group) => (
+              <div key={group.id}>
+                {group.title && (
+                  <p
+                    id={`nav-group-${group.id}`}
+                    className="mb-1 px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                   >
-                    <span>{item.label}</span>
-                    {showUnreadBadge && (
-                      <span
-                        aria-hidden="true"
-                        className="ml-2 inline-flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-primary-foreground"
-                      >
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-            <InstallAppNavItem />
-          </ul>
+                    {group.title}
+                  </p>
+                )}
+                <ul className="space-y-1" aria-labelledby={group.title ? `nav-group-${group.id}` : undefined}>
+                  {group.items.map((item) => {
+                    const active = isActiveRoute(pathname, item.href);
+                    const showUnreadBadge = item.href === '/admin/conversas' && unreadCount > 0;
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          aria-current={active ? 'page' : undefined}
+                          onClick={() => setNavOpen(false)}
+                          className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                            active
+                              ? 'bg-primary font-medium text-primary-foreground'
+                              : 'text-muted-foreground hover:bg-background hover:text-foreground'
+                          }`}
+                        >
+                          <span>{item.label}</span>
+                          {showUnreadBadge && (
+                            <span
+                              aria-hidden="true"
+                              className="ml-2 inline-flex h-5 min-w-5 flex-none items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-primary-foreground"
+                            >
+                              {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+            <ul>
+              <InstallAppNavItem />
+            </ul>
+          </div>
           <div className="mt-8 border-t border-border pt-4">
             <UserButton />
           </div>

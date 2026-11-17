@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AdminLayout from './layout';
 import { useApiClient } from '@/features/admin/lib/api-client';
@@ -38,8 +38,26 @@ describe('AdminLayout', () => {
     expect(screen.getByRole('link', { name: 'Marcadores' })).toHaveAttribute('href', '/admin/marcadores');
     expect(screen.getByRole('link', { name: 'Produtos' })).toHaveAttribute('href', '/admin/produtos');
     expect(screen.getByRole('link', { name: 'Categorias' })).toHaveAttribute('href', '/admin/categorias');
-    expect(screen.getByRole('link', { name: 'Agenda' })).toHaveAttribute('href', '/admin/agenda');
+    expect(screen.getByRole('link', { name: 'Eventos' })).toHaveAttribute('href', '/admin/eventos');
     expect(screen.getByRole('link', { name: 'Conversas' })).toHaveAttribute('href', '/admin/conversas');
+    expect(screen.getByRole('link', { name: 'Configurações da loja' })).toHaveAttribute('href', '/admin/loja');
+    expect(screen.queryByRole('link', { name: 'Agenda' })).not.toBeInTheDocument();
+  });
+
+  it('groups the links into Loja, Site and Bot', () => {
+    render(
+      <AdminLayout>
+        <p>conteúdo</p>
+      </AdminLayout>,
+    );
+    const linksOf = (group: string) =>
+      within(screen.getByRole('list', { name: group }))
+        .getAllByRole('link')
+        .map((link) => link.textContent);
+
+    expect(linksOf('Loja')).toEqual(['Pedidos', 'Produtos', 'Categorias', 'Entregas', 'Configurações da loja']);
+    expect(linksOf('Site')).toEqual(['Eventos']);
+    expect(linksOf('Bot (WhatsApp)')).toEqual(['Conversas', 'Menu', 'Mensagens', 'Marcadores']);
   });
 
   it('renders the page content passed as children', () => {

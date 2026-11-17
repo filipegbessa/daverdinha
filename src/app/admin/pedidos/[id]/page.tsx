@@ -145,7 +145,7 @@ export default function PedidoPage() {
                 <p className="font-medium">{order.event.title}</p>
                 <p className="text-sm text-muted-foreground">{formatDateTime(order.event.startsAt)}</p>
                 <Link
-                  href={`/admin/agenda/${order.event.id}/participantes?evento=${encodeURIComponent(order.event.title)}`}
+                  href={`/admin/eventos/${order.event.id}/participantes?evento=${encodeURIComponent(order.event.title)}`}
                   className="text-sm text-primary underline"
                 >
                   Lista de presença
