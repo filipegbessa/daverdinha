@@ -107,16 +107,14 @@ describe('ProdutosPage', () => {
     expect(Object.fromEntries(body.entries())).toEqual({ active: 'true' });
   });
 
-  it('opens the create dialog with the categories loaded', async () => {
+  it('links to the product pages to create and edit', async () => {
     mockApi();
 
     render(<ProdutosPage />);
     await screen.findByText('Vaso M');
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Novo produto' })).toBeEnabled());
-    await userEvent.click(screen.getByRole('button', { name: 'Novo produto' }));
 
-    expect(screen.getByRole('heading', { name: 'Novo produto' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Vasos' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Novo produto' })).toHaveAttribute('href', '/admin/produtos/novo');
+    expect(screen.getByRole('link', { name: 'Editar Vaso M' })).toHaveAttribute('href', '/admin/produtos/p1');
   });
 
   it('removes after confirmation, warning it cannot be undone and pointing at the active toggle', async () => {

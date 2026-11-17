@@ -96,7 +96,7 @@ A cor é livre: um color picker nativo, sem paleta fixa. O contraste do texto do
 
 ### /admin/produtos
 
-Cadastro do catálogo que aparece no site (`/produtos`, páginas de categoria e de produto, vitrine da home).
+Cadastro do catálogo que aparece no site (`/produtos`, páginas de categoria e de produto, vitrine da home). Criar e editar são páginas próprias (`/admin/produtos/novo` e `/admin/produtos/[id]`, `ProductForm`), não mais um modal: cards por assunto (Informações, Imagens, Preço, Estoque e prazo) e, na lateral, Status, Organização, uma prévia do card e o link no site. Barra fixa embaixo com "Salvar" (só com alteração) e "Descartar alterações"; fechar ou recarregar a aba com alteração pede confirmação. No topo da página do produto: "Ver no site", "Duplicar" (abre um produto novo com os mesmos dados, oculto e sem fotos, porque a API não copia fotos) e "Excluir".
 
 - Nome, descrição, preço (máscara de centavos, sempre com "R$" na frente), categoria, "Aparece no site" e "Destaque". A chave da lista liga e desliga o produto sem abrir o formulário.
 - Até 6 fotos (JPEG, PNG ou WebP, 5 MB cada), conferidas no navegador antes do envio; a primeira é a capa. Vai tudo num `multipart/form-data` só. Editar sem escolher fotos novas não manda o campo `images` e mantém as atuais; escolher novas substitui todas (é a regra da API).

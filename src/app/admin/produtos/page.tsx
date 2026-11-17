@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -14,7 +15,6 @@ import { PageHeader } from '@/features/admin/components/PageHeader';
 import { FilterBar } from '@/features/admin/components/FilterBar';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { Badge } from '@/features/admin/components/Badge';
-import { ProductDialog } from '@/features/admin/components/ProductDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { formatCurrency } from '@/lib/format';
@@ -53,7 +53,6 @@ export default function ProdutosPage() {
   const { data: categories } = useApiResource<ProductCategoryAdmin[]>('/product-categories');
 
   const mutation = useApiMutation('Erro ao atualizar produto.');
-  const [editing, setEditing] = useState<ProductAdmin | 'new' | null>(null);
   const [deleting, setDeleting] = useState<ProductAdmin | null>(null);
   // A toggle in flight and the reload after it both dim the list.
   const busy = mutation.isPending || isRefreshing;
@@ -78,9 +77,9 @@ export default function ProdutosPage() {
   return (
     <div>
       <PageHeader title="Produtos">
-        <Button onClick={() => setEditing('new')} disabled={!categories}>
+        <Link href="/admin/produtos/novo" className={buttonVariants()}>
           Novo produto
-        </Button>
+        </Link>
       </PageHeader>
       <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
         {(values, set) => (
@@ -177,9 +176,13 @@ export default function ProdutosPage() {
                 disabled={busy}
                 aria-label={`Mostrar ${product.name} no site`}
               />
-              <Button variant="outline" disabled={busy || !categories} onClick={() => setEditing(product)}>
+              <Link
+                href={`/admin/produtos/${product.id}`}
+                aria-label={`Editar ${product.name}`}
+                className={buttonVariants({ variant: 'outline' })}
+              >
                 Editar
-              </Button>
+              </Link>
               <Button variant="destructive" disabled={busy} onClick={() => setDeleting(product)}>
                 Remover
               </Button>
@@ -188,17 +191,6 @@ export default function ProdutosPage() {
         </AdminList>
       )}
       {pagination && <TablePagination {...pagination} itemLabel="produtos" />}
-      {editing && categories && (
-        <ProductDialog
-          product={editing === 'new' ? null : editing}
-          categories={categories}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            refetch();
-          }}
-        />
-      )}
       {deleting && (
         <ConfirmDialog
           title={`Remover o produto "${deleting.name}"?`}
@@ -212,7 +204,10 @@ export default function ProdutosPage() {
             mutation.clearError();
           }}
         >
-          <p>Remove o produto e as fotos pra sempre, sem desfazer. Quer só tirar do site? Desligue a chave "Ativo" ao lado.</p>
+          <p>
+            Remove o produto e as fotos pra sempre, sem desfazer. Quer só tirar do site? Desligue a chave "Ativo" ao
+            lado.
+          </p>
         </ConfirmDialog>
       )}
     </div>
