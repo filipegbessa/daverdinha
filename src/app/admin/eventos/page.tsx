@@ -14,7 +14,6 @@ import { PageHeader } from '@/features/admin/components/PageHeader';
 import { FilterBar } from '@/features/admin/components/FilterBar';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { Badge } from '@/features/admin/components/Badge';
-import { EventDialog } from '@/features/admin/components/EventDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { EventAdmin, StoreSettings } from '@/features/admin/types/admin';
@@ -52,7 +51,6 @@ export default function EventosPage() {
   // Só pra dizer "venda pausada": se falhar, a lista continua funcionando.
   const { data: storeSettings } = useApiResource<StoreSettings>('/store-settings');
   const remove = useApiMutation('Erro ao excluir o evento.');
-  const [editing, setEditing] = useState<EventAdmin | 'new' | null>(null);
   const [deleting, setDeleting] = useState<EventAdmin | null>(null);
   const now = Date.now();
 
@@ -68,7 +66,9 @@ export default function EventosPage() {
   return (
     <div>
       <PageHeader title="Eventos">
-        <Button onClick={() => setEditing('new')}>Novo evento</Button>
+        <Link href="/admin/eventos/novo" className={buttonVariants()}>
+          Novo evento
+        </Link>
       </PageHeader>
       <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
         {(values, set) => (
@@ -121,9 +121,13 @@ export default function EventosPage() {
                     Participantes
                   </Link>
                 )}
-                <Button variant="outline" disabled={remove.isPending} onClick={() => setEditing(event)}>
+                <Link
+                  href={`/admin/eventos/${event.id}`}
+                  aria-label={`Editar ${event.title}`}
+                  className={buttonVariants({ variant: 'outline' })}
+                >
                   Editar
-                </Button>
+                </Link>
                 <Button variant="destructive" disabled={remove.isPending} onClick={() => setDeleting(event)}>
                   Excluir
                 </Button>
@@ -133,16 +137,6 @@ export default function EventosPage() {
         </AdminList>
       )}
       {pagination && <TablePagination {...pagination} itemLabel="eventos" />}
-      {editing && (
-        <EventDialog
-          event={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            refetch();
-          }}
-        />
-      )}
       {deleting && (
         <ConfirmDialog
           title={`Excluir o evento "${deleting.title}"?`}

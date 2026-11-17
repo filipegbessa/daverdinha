@@ -85,17 +85,16 @@ describe('EventosPage', () => {
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/events?q=feira'));
   });
 
-  it('opens the dialog to create and to edit', async () => {
+  it('links to the event pages to create and edit', async () => {
     mockApi();
     render(<EventosPage />);
     await screen.findAllByRole('listitem');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Novo evento' }));
-    expect(screen.getByRole('dialog', { name: 'Novo evento' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
-
-    await userEvent.click(screen.getAllByRole('button', { name: 'Editar' })[0]);
-    expect(screen.getByLabelText('Título')).toHaveValue('Oficina de terrário');
+    expect(screen.getByRole('link', { name: 'Novo evento' })).toHaveAttribute('href', '/admin/eventos/novo');
+    expect(screen.getByRole('link', { name: 'Editar Oficina de terrário' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/admin\/eventos\/[^/]+$/),
+    );
   });
 
   it('shows the API refusal as is when an event with tickets cannot be deleted', async () => {
