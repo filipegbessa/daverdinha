@@ -202,11 +202,18 @@ describe('getOrderByToken', () => {
     expect(fetchMock).toHaveBeenCalledWith('https://api.test/checkout/orders/a%20b', { cache: 'no-store' });
   });
 
-  it('is null on a 404 or a failure', async () => {
+  it('is null only when the API says the order does not exist', async () => {
     fetchMock.mockResolvedValueOnce(reply(404, {}));
     await expect(getOrderByToken('x')).resolves.toBeNull();
+  });
+
+  it('is unavailable on a failure, so the page never calls an existing order missing', async () => {
     fetchMock.mockRejectedValueOnce(new Error('offline'));
-    await expect(getOrderByToken('x')).resolves.toBeNull();
+    await expect(getOrderByToken('x')).resolves.toBe('unavailable');
+    fetchMock.mockResolvedValueOnce(reply(500, {}));
+    await expect(getOrderByToken('x')).resolves.toBe('unavailable');
+    delete process.env.NEXT_PUBLIC_API_URL;
+    await expect(getOrderByToken('x')).resolves.toBe('unavailable');
   });
 });
 

@@ -129,18 +129,20 @@ export async function createTicketCheckout(input: CreateTicketCheckoutInput): Pr
 
 /**
  * O pedido pelo token do link, lido no servidor e sem cache (o status muda
- * com o pagamento). Não existe, falha ou API sem URL: `null`, e a página
- * responde 404.
+ * com o pagamento). `null` só quando a API diz que não existe (404): a página
+ * responde 404. Falha de rede, erro da API ou API sem URL é `'unavailable'`,
+ * pra página não dizer "não encontrado" de um pedido que existe.
  */
-export async function getOrderByToken(token: string): Promise<PublicSiteOrder | null> {
+export async function getOrderByToken(token: string): Promise<PublicSiteOrder | null | 'unavailable'> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) return null;
+  if (!apiUrl) return 'unavailable';
   try {
     const response = await fetch(`${apiUrl}/checkout/orders/${encodeURIComponent(token)}`, { cache: 'no-store' });
-    if (!response.ok) return null;
+    if (response.status === 404) return null;
+    if (!response.ok) return 'unavailable';
     return (await response.json()) as PublicSiteOrder;
   } catch {
-    return null;
+    return 'unavailable';
   }
 }
 
