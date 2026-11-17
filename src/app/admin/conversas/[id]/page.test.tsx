@@ -4,6 +4,8 @@ import ConversaDetailPage from './page';
 import { useApiClient } from '@/features/admin/lib/api-client';
 
 jest.mock('@/features/admin/lib/api-client');
+// O painel de compras faz a própria chamada; testado em `CustomerSummary.test.tsx`.
+jest.mock('@/features/admin/components/CustomerSummary', () => ({ CustomerSummary: () => null }));
 
 /** The paginated envelope `GET /categories` returns. */
 const categoryList = (items: unknown[]) => ({

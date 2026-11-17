@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { formatPrice } from '@/lib/format';
+import { ProductPrice } from '@/features/site/components/ProductPrice';
 import { productHref } from '@/features/site/lib/paths';
 import { AvailabilityBadge } from '@/features/site/components/AvailabilityBadge';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
@@ -29,7 +29,7 @@ export function ProductCard({ product, variant = 'full' }: { product: Product; v
         <div className="min-w-0 space-y-0.5">
           <p className="text-xs tracking-wider text-ink-soft uppercase">{product.category.name}</p>
           <h3 className="font-medium text-berry">{product.name}</h3>
-          <p className="text-sm text-ink tabular-nums">{formatPrice(product.price)}</p>
+          <ProductPrice product={product} />
           <div className="pt-1">
             <AvailabilityBadge product={product} />
           </div>
@@ -50,7 +50,7 @@ export function ProductCard({ product, variant = 'full' }: { product: Product; v
         <div className="space-y-0.5 p-4">
           <p className="text-xs tracking-wider text-ink-soft uppercase">{product.category.name}</p>
           <h3 className="font-medium text-berry">{product.name}</h3>
-          <p className="text-sm text-ink tabular-nums">{formatPrice(product.price)}</p>
+          <ProductPrice product={product} />
           <div className="pt-1.5">
             <AvailabilityBadge product={product} />
           </div>

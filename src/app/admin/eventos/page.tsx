@@ -14,7 +14,6 @@ import { PageHeader } from '@/features/admin/components/PageHeader';
 import { FilterBar } from '@/features/admin/components/FilterBar';
 import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
 import { Badge } from '@/features/admin/components/Badge';
-import { EventDialog } from '@/features/admin/components/EventDialog';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { EventAdmin, StoreSettings } from '@/features/admin/types/admin';
@@ -36,7 +35,7 @@ function salesLabel(event: EventAdmin, ticketsEnabled: boolean | undefined): str
  * A agenda do site: oficinas, feirinhas, aulas. Rascunho até publicar; evento
  * passado continua aqui (e a página dele no site), só sai da lista pública.
  */
-export default function AgendaPage() {
+export default function EventosPage() {
   const { apiFetch } = useApiClient();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const q = useDebouncedValue(filters.q.trim());
@@ -52,7 +51,6 @@ export default function AgendaPage() {
   // Só pra dizer "venda pausada": se falhar, a lista continua funcionando.
   const { data: storeSettings } = useApiResource<StoreSettings>('/store-settings');
   const remove = useApiMutation('Erro ao excluir o evento.');
-  const [editing, setEditing] = useState<EventAdmin | 'new' | null>(null);
   const [deleting, setDeleting] = useState<EventAdmin | null>(null);
   const now = Date.now();
 
@@ -67,8 +65,10 @@ export default function AgendaPage() {
 
   return (
     <div>
-      <PageHeader title="Agenda">
-        <Button onClick={() => setEditing('new')}>Novo evento</Button>
+      <PageHeader title="Eventos">
+        <Link href="/admin/eventos/novo" className={buttonVariants()}>
+          Novo evento
+        </Link>
       </PageHeader>
       <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
         {(values, set) => (
@@ -115,15 +115,19 @@ export default function AgendaPage() {
                 </div>
                 {(event.ticketSales || event.sold > 0) && (
                   <Link
-                    href={`/admin/agenda/${event.id}/participantes?evento=${encodeURIComponent(event.title)}`}
+                    href={`/admin/eventos/${event.id}/participantes?evento=${encodeURIComponent(event.title)}`}
                     className={buttonVariants({ variant: 'outline' })}
                   >
                     Participantes
                   </Link>
                 )}
-                <Button variant="outline" disabled={remove.isPending} onClick={() => setEditing(event)}>
+                <Link
+                  href={`/admin/eventos/${event.id}`}
+                  aria-label={`Editar ${event.title}`}
+                  className={buttonVariants({ variant: 'outline' })}
+                >
                   Editar
-                </Button>
+                </Link>
                 <Button variant="destructive" disabled={remove.isPending} onClick={() => setDeleting(event)}>
                   Excluir
                 </Button>
@@ -133,16 +137,6 @@ export default function AgendaPage() {
         </AdminList>
       )}
       {pagination && <TablePagination {...pagination} itemLabel="eventos" />}
-      {editing && (
-        <EventDialog
-          event={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            refetch();
-          }}
-        />
-      )}
       {deleting && (
         <ConfirmDialog
           title={`Excluir o evento "${deleting.title}"?`}

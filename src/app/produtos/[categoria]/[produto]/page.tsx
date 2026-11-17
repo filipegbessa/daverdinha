@@ -16,13 +16,15 @@ import { ProductGallery } from '@/features/site/components/ProductGallery';
 import { isSample } from '@/features/site/data/samples';
 import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
 import { formatPrice } from '@/lib/format';
+import { ProductPrice } from '@/features/site/components/ProductPrice';
 import { categoryHref, PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
 import { getActiveProductBySlug, getFeaturedProducts } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
 import { productJsonLd } from '@/features/site/lib/structured-data';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
-import { orderMessage } from '@/features/site/lib/whatsapp-messages';
+import { orderMessage, productQuestionMessage } from '@/features/site/lib/whatsapp-messages';
 import { AddToCartButton } from '@/features/store/components/AddToCartButton';
+import { ViewItemTracker } from '@/features/store/components/ViewItemTracker';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
 
 type Props = { params: Promise<{ categoria: string; produto: string }> };
@@ -57,11 +59,12 @@ export default async function ProductPage({ params }: Props) {
     getCoveredDeliveryZones(),
   ]);
   const related = bestSellers.filter((p) => p.id !== product.id).slice(0, RELATED_LIMIT);
-  const { home, storeEnabled } = await shellProps();
+  const { home, storeEnabled, storePause } = await shellProps();
 
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled} preview={isSample(product)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause} preview={isSample(product)}>
       <JsonLd data={productJsonLd(product)} />
+      <ViewItemTracker product={product} />
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs
@@ -83,16 +86,26 @@ export default async function ProductPage({ params }: Props) {
               <h1 className="mt-2 font-serif text-3xl font-semibold text-balance text-ink md:text-4xl">
                 {product.name}
               </h1>
-              <p className="mt-3 text-2xl font-semibold text-moss tabular-nums">{formatPrice(product.price)}</p>
+              <ProductPrice product={product} size="lg" className="mt-3" />
               <div className="mt-3">
                 <AvailabilityBadge product={product} detailed />
               </div>
               <p className="mt-5 leading-relaxed whitespace-pre-line text-ink-soft">{product.description}</p>
               {storeEnabled ? (
                 // Com a loja ligada, a compra é só pelo carrinho. O WhatsApp
-                // continua no cabeçalho e no rodapé pra quem quiser conversar.
-                <div className="mt-8">
+                // fica pra tirar dúvida sobre o produto (com o link dele na
+                // mensagem), além do cabeçalho e do rodapé.
+                <div className="mt-8 space-y-4">
                   <AddToCartButton product={product} />
+                  <ContactLink
+                    href={getWhatsAppUrl(productQuestionMessage(product))}
+                    channel="whatsapp"
+                    location="product-question"
+                    className="inline-flex items-center gap-2 font-semibold text-moss underline underline-offset-4"
+                  >
+                    <MessageCircle className="size-5" aria-hidden="true" />
+                    Dúvida sobre este produto? Fale no WhatsApp
+                  </ContactLink>
                 </div>
               ) : (
                 <ContactLink

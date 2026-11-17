@@ -16,7 +16,10 @@ export interface Product {
   name: string;
   slug: string;
   description: string;
+  /** O preço que vale agora (o promocional, com promoção valendo). */
   price: number;
+  /** O preço cheio, o "de" riscado; só com promoção valendo. */
+  listPrice?: number | null;
   /** A primeira é a capa. Pode vir vazia: o card cai no `ImagePlaceholder`. */
   images: string[];
   category: Pick<ProductCategory, 'id' | 'name' | 'slug'>;
@@ -27,6 +30,8 @@ export interface Product {
   availability: ProductAvailability;
   /** Prazo de confecção em dias; só vem em `made_to_order` (e pode faltar). */
   leadTimeDays: number | null;
+  /** Quando foi cadastrado (ISO); ordena o "Novidades". Falta nos exemplos. */
+  createdAt?: string;
 }
 
 export type ProductAvailability = 'in_stock' | 'made_to_order' | 'sold_out';

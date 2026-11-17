@@ -8,6 +8,10 @@ import { PageHeader } from '@/features/admin/components/PageHeader';
 import { StorageUsageNotice } from '@/features/admin/components/StorageUsageNotice';
 import type { BotSettings, MenuItem, StoreSettings } from '@/features/admin/types/admin';
 import { refreshPublicSite } from '@/features/admin/actions/refresh-public-site';
+import Link from 'next/link';
+import { SalesSummaryPanel } from '@/features/admin/components/SalesSummaryPanel';
+import { isWhatsappModuleOn, notifyBotSettingsChanged } from '@/features/admin/lib/bot-settings-events';
+import { formatReturnDate } from '@/features/admin/lib/return-date';
 
 export default function DashboardPage() {
   const { apiFetch } = useApiClient();
@@ -18,6 +22,7 @@ export default function DashboardPage() {
     error: menuItemsError,
   } = useApiResource<MenuItem[]>('/menu-items');
   const toggle = useApiMutation('Erro ao atualizar o bot.');
+  const moduleToggle = useApiMutation('Erro ao atualizar o WhatsApp bot.');
   // Site e loja vêm de outra rota: se ela falhar, o interruptor do bot continua
   // funcionando (desligar o bot numa emergência não pode depender dela).
   const {
@@ -28,7 +33,7 @@ export default function DashboardPage() {
   const storeToggle = useApiMutation('Erro ao atualizar o site.');
 
   function patchStoreSettings(
-    changes: Partial<Pick<StoreSettings, 'siteEnabled' | 'storeEnabled' | 'ticketsEnabled'>>,
+    changes: Partial<Pick<StoreSettings, 'siteEnabled' | 'storeEnabled' | 'ticketsEnabled' | 'storePaused'>>,
   ) {
     storeToggle
       .run(() => apiFetch('/store-settings', { method: 'PATCH', body: JSON.stringify(changes) }))
@@ -63,41 +68,83 @@ export default function DashboardPage() {
     );
   }
 
+  const moduleOn = isWhatsappModuleOn(settings);
+
   return (
     <div>
       <PageHeader title="Dashboard" />
-      {activeCount === null ? (
-        <ErrorAlert>{menuItemsError ?? 'Não foi possível carregar os itens de menu.'}</ErrorAlert>
-      ) : (
-        activeCount === 0 && (
-          <ErrorAlert>
-            O bot está desativado porque não há nenhum item de menu ativo. Cadastre ou ative um item em &quot;Menu&quot;
-            pra poder ligar o atendimento automático.
-          </ErrorAlert>
-        )
-      )}
-      <StorageUsageNotice mediaBytesUsed={settings.mediaBytesUsed} />
-      <div className="mt-6 flex items-center gap-3">
-        <Switch
-          // O texto ao lado muda com o estado; o nome do controle fica fixo,
-          // pra leitura de tela não virar "Bot desativado, desligado".
-          aria-label="Atendimento automático do bot"
-          checked={settings.botEnabled}
-          // Com a lista carregada e vazia, travar faz sentido. Sem a lista, não:
-          // desligar o bot numa emergência não pode depender de um endpoint que
-          // acabou de falhar — e ligar sem item ativo a API já recusa sozinha.
-          disabled={activeCount === 0 || toggle.isPending}
+      <SalesSummaryPanel />
+
+      <section aria-labelledby="whatsapp-title" className="mt-8 space-y-4">
+        <h2 id="whatsapp-title" className="text-sm font-semibold">
+          WhatsApp
+        </h2>
+        <SwitchRow
+          label="WhatsApp bot"
+          checked={moduleOn}
+          disabled={moduleToggle.isPending}
           onCheckedChange={(checked) =>
-            toggle
-              .run(() => apiFetch('/bot-settings', { method: 'PATCH', body: JSON.stringify({ botEnabled: checked }) }))
+            moduleToggle
+              .run(() =>
+                apiFetch('/bot-settings', {
+                  method: 'PATCH',
+                  body: JSON.stringify({ whatsappModuleEnabled: checked }),
+                }),
+              )
               .then((ok) => {
-                if (ok) refetch();
+                if (!ok) return;
+                refetch();
+                notifyBotSettingsChanged();
               })
           }
+          state={moduleOn ? 'WhatsApp bot ativo' : 'WhatsApp bot desativado'}
+          hint={
+            moduleOn
+              ? 'Mostra no menu as páginas do bot (Conversas, Menu, Mensagens, Marcadores) e permite ligar o atendimento automático.'
+              : 'As páginas do bot ficam escondidas, o atendimento automático fica desligado e não chegam avisos de mensagem nova. As mensagens continuam sendo guardadas.'
+          }
         />
-        <span aria-hidden="true">{settings.botEnabled ? 'Bot ativo' : 'Bot desativado'}</span>
-      </div>
-      {toggle.error && <ErrorText>{toggle.error}</ErrorText>}
+        {moduleToggle.error && <ErrorText>{moduleToggle.error}</ErrorText>}
+      </section>
+
+      {moduleOn && (
+        <div className="mt-4 border-l-2 border-border pl-4">
+          {activeCount === null ? (
+            <ErrorAlert>{menuItemsError ?? 'Não foi possível carregar os itens de menu.'}</ErrorAlert>
+          ) : (
+            activeCount === 0 && (
+              <ErrorAlert>
+                O bot está desativado porque não há nenhum item de menu ativo. Cadastre ou ative um item em
+                &quot;Menu&quot; pra poder ligar o atendimento automático.
+              </ErrorAlert>
+            )
+          )}
+          <StorageUsageNotice mediaBytesUsed={settings.mediaBytesUsed} />
+          <div className="mt-6 flex items-center gap-3">
+            <Switch
+              // O texto ao lado muda com o estado; o nome do controle fica fixo,
+              // pra leitura de tela não virar "Bot desativado, desligado".
+              aria-label="Atendimento automático do bot"
+              checked={settings.botEnabled}
+              // Com a lista carregada e vazia, travar faz sentido. Sem a lista, não:
+              // desligar o bot numa emergência não pode depender de um endpoint que
+              // acabou de falhar — e ligar sem item ativo a API já recusa sozinha.
+              disabled={activeCount === 0 || toggle.isPending}
+              onCheckedChange={(checked) =>
+                toggle
+                  .run(() =>
+                    apiFetch('/bot-settings', { method: 'PATCH', body: JSON.stringify({ botEnabled: checked }) }),
+                  )
+                  .then((ok) => {
+                    if (ok) refetch();
+                  })
+              }
+            />
+            <span aria-hidden="true">{settings.botEnabled ? 'Bot ativo' : 'Bot desativado'}</span>
+          </div>
+          {toggle.error && <ErrorText>{toggle.error}</ErrorText>}
+        </div>
+      )}
 
       <section aria-labelledby="site-switches-title" className="mt-8 space-y-4">
         <h2 id="site-switches-title" className="text-sm font-semibold">
@@ -133,6 +180,31 @@ export default function DashboardPage() {
               <p role="status" className="text-xs text-amber-700 dark:text-amber-400">
                 O pagamento ainda não está configurado (chave do Pagar.me): a loja aparece no site, mas finalizar a
                 compra não funciona.
+              </p>
+            )}
+            {storeSettings.storeEnabled && (
+              <SwitchRow
+                label="Loja em pausa"
+                checked={storeSettings.storePaused ?? false}
+                disabled={storeToggle.isPending}
+                onCheckedChange={(checked) => patchStoreSettings({ storePaused: checked })}
+                state={storeSettings.activePause ? 'Loja em pausa' : 'Loja recebendo pedidos'}
+                hint={
+                  storeSettings.activePause
+                    ? `O site mostra o aviso e não fecha pedidos de produtos${
+                        storeSettings.activePause.until
+                          ? `. Reabre sozinha em ${formatReturnDate(storeSettings.activePause.until)}`
+                          : ' até você desligar'
+                      }.`
+                    : 'Férias ou feriado: pausa os pedidos de produtos com um aviso no site. Os ingressos continuam.'
+                }
+              />
+            )}
+            {storeSettings.storeEnabled && (
+              <p className="text-xs">
+                <Link href="/admin/loja" className="underline underline-offset-2">
+                  Editar o aviso e a data de volta da pausa
+                </Link>
               </p>
             )}
             <SwitchRow

@@ -10,12 +10,26 @@ const DISABLED = siteButtonClass({
 
 /**
  * Anterior/próxima por link (sem JS), igual ao resto do site público. Some
- * sozinha quando cabe tudo numa página.
+ * sozinha quando cabe tudo numa página. `query` são os parâmetros que a
+ * página repete (busca, ordem, filtro).
  */
-export function Pagination({ page, totalPages, basePath }: { page: number; totalPages: number; basePath: string }) {
+export function Pagination({
+  page,
+  totalPages,
+  basePath,
+  query = {},
+}: {
+  page: number;
+  totalPages: number;
+  basePath: string;
+  query?: Record<string, string>;
+}) {
   if (totalPages <= 1) return null;
 
-  const hrefFor = (p: number) => (p <= 1 ? basePath : `${basePath}?page=${p}`);
+  const hrefFor = (p: number) => {
+    const params = new URLSearchParams({ ...query, ...(p > 1 && { page: String(p) }) }).toString();
+    return params ? `${basePath}?${params}` : basePath;
+  };
 
   return (
     <nav aria-label="Paginação" className="mt-10 flex items-center justify-center gap-6 text-sm text-ink">

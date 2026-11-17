@@ -17,6 +17,17 @@ const emptySettings = { botEnabled: false, welcomeMessage: '' };
  * re-reads one after a toggle, so an ordered `mockResolvedValueOnce` chain
  * would break on any change to how often the page refetches.
  */
+const emptySummary = {
+  today: { orders: 0, revenue: 0 },
+  last7Days: { orders: 0, revenue: 0 },
+  last30Days: { orders: 0, revenue: 0 },
+  averageTicket30Days: null,
+  toPrepare: 0,
+  readyToDeliver: 0,
+  topProducts: [],
+  lowStock: { threshold: 2, products: [] },
+};
+
 const storeSettingsOff = { siteEnabled: false, storeEnabled: false, ticketsEnabled: false, paymentConfigured: false };
 
 function mockApi(handlers: {
@@ -25,8 +36,10 @@ function mockApi(handlers: {
   patch?: () => unknown;
   storeSettings?: () => unknown;
   patchStore?: () => unknown;
+  summary?: () => unknown;
 }) {
   return mockAdminApi((path, options) => {
+    if (path === '/site-orders/summary') return handlers.summary?.() ?? emptySummary;
     if (path === '/store-settings') {
       if (options?.method === 'PATCH') return handlers.patchStore?.();
       return handlers.storeSettings?.() ?? storeSettingsOff;
@@ -62,6 +75,7 @@ describe('DashboardPage', () => {
           releaseMenuItems = resolve;
         });
       }
+      if (path === '/site-orders/summary') return Promise.resolve(emptySummary);
       return Promise.resolve(emptySettings);
     });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
@@ -94,6 +108,7 @@ describe('DashboardPage', () => {
   it('reports a failure to load the menu items instead of claiming there are none', async () => {
     const apiFetch = jest.fn((path: string) => {
       if (path === '/menu-items') return Promise.reject(new Error('API fora do ar'));
+      if (path === '/site-orders/summary') return Promise.resolve(emptySummary);
       return Promise.resolve(emptySettings);
     });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
@@ -280,6 +295,91 @@ describe('DashboardPage', () => {
       expect(screen.getByRole('switch', { name: 'Atendimento automático do bot' })).not.toHaveAttribute(
         'aria-disabled',
         'true',
+      );
+    });
+  });
+
+  describe('sales summary', () => {
+    it('shows the sales, what to prepare, the best sellers and the low stock', async () => {
+      mockApi({
+        menuItems: () => [{ id: '1', active: true }],
+        summary: () => ({
+          ...emptySummary,
+          today: { orders: 2, revenue: 150 },
+          averageTicket30Days: 75,
+          toPrepare: 3,
+          topProducts: [{ name: 'Vaso M', quantity: 7 }],
+          lowStock: { threshold: 2, products: [{ id: 'p1', name: 'Vaso P', stock: 0 }] },
+        }),
+      });
+
+      render(<DashboardPage />);
+
+      expect(await screen.findByText('R$ 150,00')).toBeInTheDocument();
+      expect(screen.getByText('2 pedidos')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /3 a preparar/ })).toHaveAttribute('href', '/admin/pedidos');
+      expect(screen.getByRole('list', { name: 'Mais vendidos' })).toHaveTextContent('Vaso M7 unidades');
+      expect(screen.getByRole('list', { name: 'Estoque baixo' })).toHaveTextContent('Vaso PEsgotado');
+    });
+  });
+
+  describe('WhatsApp module', () => {
+    it('turns the module off, hiding the bot switch, and tells the menu to update', async () => {
+      const listener = jest.fn();
+      window.addEventListener('daverdinha:bot-settings-changed', listener);
+      let moduleOn = true;
+      const apiFetch = mockApi({
+        menuItems: () => [{ id: '1', active: true }],
+        settings: () => ({ ...emptySettings, whatsappModuleEnabled: moduleOn }),
+        patch: () => {
+          moduleOn = false;
+          return { ...emptySettings, whatsappModuleEnabled: false };
+        },
+      });
+
+      render(<DashboardPage />);
+      await userEvent.click(await screen.findByRole('switch', { name: 'WhatsApp bot' }));
+
+      expect(apiFetch).toHaveBeenCalledWith('/bot-settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ whatsappModuleEnabled: false }),
+      });
+      await waitFor(() =>
+        expect(screen.queryByRole('switch', { name: 'Atendimento automático do bot' })).not.toBeInTheDocument(),
+      );
+      expect(listener).toHaveBeenCalled();
+      window.removeEventListener('daverdinha:bot-settings-changed', listener);
+    });
+  });
+
+  describe('store pause', () => {
+    it('pauses the store from the Dashboard and says when it reopens', async () => {
+      let paused = false;
+      const apiFetch = mockApi({
+        menuItems: () => [{ id: '1', active: true }],
+        storeSettings: () => ({
+          ...storeSettingsOff,
+          storeEnabled: true,
+          storePaused: paused,
+          activePause: paused ? { message: null, until: '2027-01-06T03:00:00.000Z' } : null,
+        }),
+        patchStore: () => {
+          paused = true;
+          return {};
+        },
+      });
+
+      render(<DashboardPage />);
+      await userEvent.click(await screen.findByRole('switch', { name: 'Loja em pausa' }));
+
+      expect(apiFetch).toHaveBeenCalledWith('/store-settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ storePaused: true }),
+      });
+      expect(await screen.findByText(/Reabre sozinha em 6 de jan/)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Editar o aviso e a data de volta da pausa' })).toHaveAttribute(
+        'href',
+        '/admin/loja',
       );
     });
   });

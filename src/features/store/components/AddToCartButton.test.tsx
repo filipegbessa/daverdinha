@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AddToCartButton } from './AddToCartButton';
 import { CartProvider } from './CartProvider';
-import { CartLink } from './CartLink';
+import { CartDropdown } from './CartDropdown';
 import { readCart } from '@/features/store/lib/cart-storage';
 import { SAMPLE_PRODUCTS } from '@/features/site/data/samples';
 import type { Product } from '@/features/site/types/catalog';
@@ -12,7 +12,7 @@ const real: Product = { ...SAMPLE_PRODUCTS[0], id: 'p1', availability: 'in_stock
 function renderButton(product: Product) {
   return render(
     <CartProvider>
-      <CartLink />
+      <CartDropdown />
       <AddToCartButton product={product} />
     </CartProvider>,
   );
@@ -58,19 +58,5 @@ describe('AddToCartButton', () => {
     renderButton({ ...real, availability: 'sold_out' });
 
     expect(screen.getByRole('button', { name: 'Esgotado' })).toBeDisabled();
-  });
-});
-
-describe('CartLink', () => {
-  beforeEach(() => localStorage.clear());
-
-  it('has no number for an empty cart', () => {
-    render(
-      <CartProvider>
-        <CartLink />
-      </CartProvider>,
-    );
-
-    expect(screen.getByRole('link', { name: 'Carrinho' })).toHaveAttribute('href', '/carrinho');
   });
 });

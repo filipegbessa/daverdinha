@@ -6,6 +6,7 @@ import type {
   CreateTicketCheckoutResult,
   PublicSiteOrder,
   TicketCheckoutFailureReason,
+  TicketQuote,
 } from '@/features/store/types/store';
 import { isPreviewCart, previewQuote } from '@/features/store/lib/preview-quote';
 import { isSample } from '@/features/site/data/samples';
@@ -18,6 +19,7 @@ import { isSample } from '@/features/site/data/samples';
 export async function quoteCart(
   items: { productId: string; quantity: number }[],
   cep?: string,
+  couponCode?: string,
 ): Promise<CheckoutQuote | null> {
   // Prévia (`/site` com produtos de exemplo): cotação montada aqui mesmo.
   if (isPreviewCart(items)) return previewQuote(items, cep);
@@ -28,7 +30,7 @@ export async function quoteCart(
     const response = await fetch(`${apiUrl}/checkout/quote`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items, ...(cep && { cep }) }),
+      body: JSON.stringify({ items, ...(cep && { cep }), ...(couponCode && { couponCode }) }),
     });
     if (!response.ok) return null;
     return (await response.json()) as CheckoutQuote;
@@ -113,7 +115,8 @@ export async function createTicketCheckout(input: CreateTicketCheckoutInput): Pr
         paymentUrl: typeof body.paymentUrl === 'string' ? body.paymentUrl : null,
       };
     }
-    const known = response.status === 409;
+    // 409: venda fechada ou vagas; 422: o cupom deixou de valer.
+    const known = response.status === 409 || response.status === 422;
     return {
       ok: false,
       status: response.status,
@@ -127,20 +130,39 @@ export async function createTicketCheckout(input: CreateTicketCheckoutInput): Pr
   }
 }
 
-/**
- * O pedido pelo token do link, lido no servidor e sem cache (o status muda
- * com o pagamento). Não existe, falha ou API sem URL: `null`, e a página
- * responde 404.
- */
-export async function getOrderByToken(token: string): Promise<PublicSiteOrder | null> {
+/** O total da compra de ingresso com o cupom. Falha ou prévia: `null`. */
+export async function quoteTickets(eventId: string, quantity: number, couponCode: string): Promise<TicketQuote | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) return null;
+  if (!apiUrl || isSample({ id: eventId })) return null;
   try {
-    const response = await fetch(`${apiUrl}/checkout/orders/${encodeURIComponent(token)}`, { cache: 'no-store' });
+    const response = await fetch(`${apiUrl}/checkout/tickets/quote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventId, quantity, couponCode }),
+    });
     if (!response.ok) return null;
-    return (await response.json()) as PublicSiteOrder;
+    return (await response.json()) as TicketQuote;
   } catch {
     return null;
+  }
+}
+
+/**
+ * O pedido pelo token do link, lido no servidor e sem cache (o status muda
+ * com o pagamento). `null` só quando a API diz que não existe (404): a página
+ * responde 404. Falha de rede, erro da API ou API sem URL é `'unavailable'`,
+ * pra página não dizer "não encontrado" de um pedido que existe.
+ */
+export async function getOrderByToken(token: string): Promise<PublicSiteOrder | null | 'unavailable'> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return 'unavailable';
+  try {
+    const response = await fetch(`${apiUrl}/checkout/orders/${encodeURIComponent(token)}`, { cache: 'no-store' });
+    if (response.status === 404) return null;
+    if (!response.ok) return 'unavailable';
+    return (await response.json()) as PublicSiteOrder;
+  } catch {
+    return 'unavailable';
   }
 }
 

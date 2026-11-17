@@ -1,6 +1,11 @@
 import type { SiteEvent } from '@/features/site/types/event';
 
 export interface BotSettings {
+  /**
+   * O módulo de WhatsApp no admin. Desligado, o menu esconde o grupo Bot, o
+   * bot fica desligado e não sai push de mensagem nova.
+   */
+  whatsappModuleEnabled: boolean;
   botEnabled: boolean;
   welcomeMessage: string;
   invalidAttemptsExceededMessage: string;
@@ -33,21 +38,20 @@ export interface DeliveryLocation {
   id: string;
   zone: string;
   regionName: string;
-  covered: boolean;
-  /** Área de entrega do site; sem área, o site não entrega no bairro. */
+  /** Área de entrega; sem área, o bairro não é atendido (nem pelo site, nem pelo bot). */
   areaId?: string | null;
 }
 
-/** Subdivisão de uma zona com valor de entrega próprio (só o site usa). */
+/** Subdivisão de uma zona com valor de entrega próprio; os bairros dela são os atendidos. */
 export interface DeliveryAreaAdmin {
   id: string;
   zone: string;
   name: string;
   fee: number;
-  locations: { id: string; regionName: string; covered: boolean }[];
+  locations: { id: string; regionName: string }[];
 }
 
-/** `GET /delivery-areas`: por zona, as áreas e os bairros atendidos sem área. */
+/** `GET /delivery-areas`: por zona, as áreas e os bairros fora de qualquer área (não atendidos). */
 export interface DeliveryZoneAreas {
   zone: string;
   areas: DeliveryAreaAdmin[];
@@ -70,6 +74,27 @@ export interface StoreSettings {
   pickupInstructions: string | null;
   maxInstallments: number;
   minInstallmentValue: number;
+  /** Pronta entrega com este estoque ou menos entra no aviso do Dashboard. */
+  lowStockThreshold: number;
+  /** O interruptor da pausa e o texto dela, como estão salvos. */
+  storePaused: boolean;
+  pauseMessage: string | null;
+  /** ISO; a loja reabre sozinha nesse momento. */
+  pausedUntil: string | null;
+  /** A pausa valendo agora (`null` com o interruptor desligado ou depois da data de volta). */
+  activePause: { message: string | null; until: string | null } | null;
+}
+
+/** `GET /site-orders/summary`: o topo do Dashboard. */
+export interface SalesSummary {
+  today: { orders: number; revenue: number };
+  last7Days: { orders: number; revenue: number };
+  last30Days: { orders: number; revenue: number };
+  averageTicket30Days: number | null;
+  toPrepare: number;
+  readyToDeliver: number;
+  topProducts: { name: string; quantity: number }[];
+  lowStock: { threshold: number; products: { id: string; name: string; stock: number }[] };
 }
 
 /**
@@ -93,7 +118,16 @@ export interface ProductAdmin {
   name: string;
   slug: string;
   description: string;
+  /** O preço que vale agora (o promocional, com promoção valendo). */
   price: number;
+  /** O preço cheio, só com promoção valendo agora. */
+  listPrice?: number | null;
+  /** O preço cheio cadastrado, com ou sem promoção. É ele que o formulário edita. */
+  regularPrice?: number;
+  /** A promoção como está salva (valendo agora ou não). Datas em ISO. */
+  promoPrice?: number | null;
+  promoStartsAt?: string | null;
+  promoEndsAt?: string | null;
   /** URLs públicas do Vercel Blob; a primeira é a capa. */
   images: string[];
   categoryId: string;
@@ -245,6 +279,9 @@ export interface SiteOrderAdmin {
     leadTimeDays: number | null;
   }[];
   subtotal: number;
+  /** Desconto do cupom (0 sem cupom), já tirado do total. */
+  discount?: number;
+  couponCode?: string | null;
   deliveryFee: number;
   total: number;
   /** Só em pedido de ingresso. */
@@ -258,4 +295,73 @@ export interface SiteOrderAdmin {
   confirmationSentAt: string | null;
   expiresAt: string;
   createdAt: string;
+}
+
+/** `GET /coupons`: "Promoções → Cupons". Datas em ISO; dinheiro em reais. */
+export interface CouponAdmin {
+  id: string;
+  code: string;
+  description: string | null;
+  type: 'percent' | 'fixed' | 'free_shipping';
+  /** Porcentagem (1–100) ou reais; `null` no frete grátis. */
+  value: number | null;
+  maxDiscount: number | null;
+  scope: 'order' | 'categories' | 'products' | 'events';
+  minSubtotal: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  maxUses: number | null;
+  active: boolean;
+  categoryIds: string[];
+  productIds: string[];
+  eventIds: string[];
+  /** Pedidos pagos com o cupom. */
+  uses: number;
+  /** Pedidos pendentes ainda no prazo, segurando um uso. */
+  reserved: number;
+  createdAt: string;
+}
+
+/** `GET /shipping-promotions`: frete grátis automático ("Promoções → Automáticas"). */
+export interface ShippingPromotionAdmin {
+  id: string;
+  name: string | null;
+  /** A partir de quanto (itens, já descontado o cupom). */
+  minSubtotal: number;
+  /** Vazio = todas as áreas de entrega. */
+  areaIds: string[];
+  startsAt: string | null;
+  endsAt: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+/** `GET /customers`: a compradora, tirada dos pedidos pagos e agrupada por e-mail. */
+export interface CustomerAdmin {
+  name: string;
+  email: string;
+  phone: string;
+  ordersCount: number;
+  totalSpent: number;
+  lastOrderAt: string;
+  /** A conversa do WhatsApp com o mesmo telefone (com ou sem o nono dígito). */
+  conversationId: string | null;
+}
+
+export interface CustomerOrderSummary {
+  id: string;
+  code: string;
+  kind: 'products' | 'tickets';
+  status: SiteOrderStatus;
+  total: number;
+  createdAt: string;
+}
+
+/** `GET /customers/by-phone?phone=`: o que a conversa e o pedido mostram da cliente. */
+export interface CustomerByPhone {
+  /** `null` quando o telefone nunca teve pedido pago. */
+  customer: Omit<CustomerAdmin, 'conversationId' | 'phone'> | null;
+  /** Os últimos pedidos, de qualquer status menos vencido. */
+  recentOrders: CustomerOrderSummary[];
+  conversationId: string | null;
 }

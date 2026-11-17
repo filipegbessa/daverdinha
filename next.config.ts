@@ -1,8 +1,16 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ hostname: '*.public.blob.vercel-storage.com' }],
+  },
+  // O admin chamava "Agenda" em /admin/agenda; virou "Eventos". O redirect
+  // permanente mantém funcionando os favoritos e o app instalado (PWA).
+  async redirects() {
+    return [
+      { source: '/admin/agenda', destination: '/admin/eventos', permanent: true },
+      { source: '/admin/agenda/:path*', destination: '/admin/eventos/:path*', permanent: true },
+    ];
   },
   // The admin (including /admin/docs, which maps the whole API) must never
   // show up in search results. A header rather than a robots.txt Disallow:

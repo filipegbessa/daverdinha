@@ -65,7 +65,9 @@ export function CepChecker() {
         {result?.status === 'covered' && !notDelivered && (
           <p className="text-moss">
             <strong>Entregamos em {result.bairro}!</strong>{' '}
-            {storeEnabled && result.fee !== null ? (
+            {storeEnabled && result.fee === 0 ? (
+              <>Entrega grátis.</>
+            ) : storeEnabled && result.fee !== null ? (
               <>
                 Frete: <span className="font-semibold tabular-nums">{formatPrice(result.fee)}</span>.
               </>

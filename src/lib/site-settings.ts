@@ -24,13 +24,30 @@ import { cache } from 'react';
 export interface SiteSettings {
   siteEnabled: boolean;
   storeEnabled: boolean;
+  /** Loja em pausa agora (férias): o site avisa e o checkout não fecha pedido. */
+  storePause: StorePause | null;
+}
+
+export interface StorePause {
+  message: string | null;
+  /** ISO; quando a loja volta sozinha. `null` = sem data. */
+  until: string | null;
+}
+
+function parsePause(value: unknown): StorePause | null {
+  if (!value || typeof value !== 'object') return null;
+  const pause = value as Record<string, unknown>;
+  return {
+    message: typeof pause.message === 'string' ? pause.message : null,
+    until: typeof pause.until === 'string' ? pause.until : null,
+  };
 }
 
 export const SITE_SETTINGS_REVALIDATE_SECONDS = 60;
 /** Tag da leitura em cache, que o Dashboard invalida ao mudar um interruptor. */
 export const SITE_SETTINGS_TAG = 'site-settings';
 
-const OFF: SiteSettings = { siteEnabled: false, storeEnabled: false };
+const OFF: SiteSettings = { siteEnabled: false, storeEnabled: false, storePause: null };
 
 export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -44,6 +61,7 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
     return {
       siteEnabled: body.siteEnabled === true,
       storeEnabled: body.storeEnabled === true,
+      storePause: parsePause(body.storePause),
     };
   } catch {
     return OFF;

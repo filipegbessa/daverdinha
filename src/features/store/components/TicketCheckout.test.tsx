@@ -1,8 +1,9 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TicketCheckout } from './TicketCheckout';
-import { createTicketCheckout } from '@/features/store/lib/store-api';
+import { createTicketCheckout, quoteTickets } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
+import { readBuyer, saveBuyer } from '@/features/store/lib/buyer-storage';
 import type { SiteEvent } from '@/features/site/types/event';
 
 jest.mock('@/features/store/lib/store-api');
@@ -32,7 +33,7 @@ const create = createTicketCheckout as jest.Mock;
 const pay = () => userEvent.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
 
 async function fillBuyer() {
-  await userEvent.type(screen.getByLabelText('Seu nome'), 'Maria Souza');
+  await userEvent.type(screen.getByLabelText('Seu nome completo'), 'Maria Souza');
   await userEvent.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
   await userEvent.type(screen.getByLabelText('WhatsApp'), '21999998888');
   await userEvent.type(screen.getByLabelText('CPF ou CNPJ'), '11144477735');
@@ -41,7 +42,72 @@ async function fillBuyer() {
 describe('TicketCheckout', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    localStorage.clear();
     window.gtag = jest.fn();
+  });
+
+  it('shows the reservation while leaving for the payment, and remembers the buyer', async () => {
+    create.mockResolvedValue({ ok: true, code: 'DV-0045', token: 'tok', paymentUrl: 'https://pagar.me/y' });
+    render(<TicketCheckout event={event} initialQuantity={1} />);
+
+    await fillBuyer();
+    await pay();
+
+    expect(await screen.findByRole('heading', { name: 'Ingressos reservados!' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'clique aqui para pagar' })).toHaveAttribute('href', 'https://pagar.me/y');
+    expect(redirectToPayment).toHaveBeenCalledWith('https://pagar.me/y');
+    expect(readBuyer()).toMatchObject({ name: 'Maria Souza', email: 'maria@exemplo.com' });
+  });
+
+  it('applies an event coupon: discount in the summary and the code sent with the purchase', async () => {
+    (quoteTickets as jest.Mock).mockResolvedValue({
+      unitPrice: 45,
+      subtotal: 45,
+      discount: 4.5,
+      total: 40.5,
+      coupon: { code: 'OFICINA10', discount: 4.5, freeShipping: false },
+    });
+    create.mockResolvedValue({ ok: true, code: 'DV-0046', token: 'tok', paymentUrl: 'https://pagar.me/z' });
+    render(<TicketCheckout event={event} initialQuantity={1} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tem um cupom?' }));
+    await userEvent.type(screen.getByLabelText('Cupom'), 'oficina10');
+    await userEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+
+    const summary = screen.getByRole('complementary', { name: 'Resumo' });
+    expect(await within(summary).findByText('Cupom OFICINA10')).toBeInTheDocument();
+    expect(within(summary).getByText('Total').parentElement).toHaveTextContent('R$ 40,50');
+    expect(quoteTickets).toHaveBeenCalledWith('e1', 1, 'OFICINA10');
+
+    await fillBuyer();
+    await pay();
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ couponCode: 'OFICINA10' }));
+  });
+
+  it('shows why an event coupon does not apply', async () => {
+    (quoteTickets as jest.Mock).mockResolvedValue({
+      unitPrice: 45,
+      subtotal: 45,
+      discount: 0,
+      total: 45,
+      coupon: { code: 'BEMVINDA10', error: 'Este cupom não vale para este evento.' },
+    });
+    render(<TicketCheckout event={event} initialQuantity={1} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tem um cupom?' }));
+    await userEvent.type(screen.getByLabelText('Cupom'), 'BEMVINDA10');
+    await userEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+
+    expect(await screen.findByText('Este cupom não vale para este evento.')).toBeInTheDocument();
+  });
+
+  it('opens with the contact of the last purchase on this device', () => {
+    saveBuyer({ name: 'Maria Souza', email: 'maria@exemplo.com', phone: '(21) 99999-8888' });
+    render(<TicketCheckout event={event} initialQuantity={1} />);
+
+    expect(screen.getByLabelText('Seu nome completo')).toHaveValue('Maria Souza');
+    expect(screen.getByLabelText('CPF ou CNPJ')).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Não é você? Limpar dados' })).toBeInTheDocument();
   });
 
   it('opens with one name field per ticket chosen on the event page, the buyer as the first one', async () => {
@@ -50,7 +116,7 @@ describe('TicketCheckout', () => {
     expect(screen.getByLabelText('Participante 1')).toHaveAttribute('readonly');
     expect(screen.getByLabelText('Participante 2')).not.toHaveAttribute('readonly');
     expect(screen.queryByLabelText('Participante 3')).not.toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText('Seu nome'), 'Maria Souza');
+    await userEvent.type(screen.getByLabelText('Seu nome completo'), 'Maria Souza');
     expect(screen.getByLabelText('Participante 1')).toHaveValue('Maria Souza');
     const summary = screen.getByRole('complementary', { name: 'Resumo' });
     expect(within(summary).getByText('2 × R$ 45,00')).toBeInTheDocument();
@@ -90,7 +156,7 @@ describe('TicketCheckout', () => {
     create.mockResolvedValue({ ok: true, code: 'DV-0043', token: 'tok', paymentUrl: 'https://pay.test/x' });
     render(<TicketCheckout event={event} initialQuantity={1} />);
 
-    await userEvent.type(screen.getByLabelText('Seu nome'), 'Maria Souza');
+    await userEvent.type(screen.getByLabelText('Seu nome completo'), 'Maria Souza');
     await userEvent.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
     await userEvent.type(screen.getByLabelText('WhatsApp'), '21999998888');
     await pay();

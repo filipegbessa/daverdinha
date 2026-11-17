@@ -12,6 +12,8 @@ import { Eyebrow } from '@/features/site/components/Eyebrow';
 import { PaymentConfirmer } from '@/features/store/components/PaymentConfirmer';
 import { TicketCards } from '@/features/store/components/TicketCards';
 import { AddToCalendar } from '@/features/store/components/AddToCalendar';
+import { OrderTimeline } from '@/features/store/components/OrderTimeline';
+import { BuyAgainButton, type BuyAgainItem } from '@/features/store/components/BuyAgainButton';
 
 const FULFILLMENT: Record<FulfillmentStatus, string> = {
   awaiting: 'Pedido recebido, logo começamos a preparar.',
@@ -32,8 +34,20 @@ const HEADLINE: Record<PublicSiteOrder['status'], { title: string; icon: typeof 
  * A página do pedido, de acordo com o status. Sem endereço completo nem
  * contato: quem tem o link vê esta página. Pedido de ingresso mostra o evento
  * e os participantes no lugar de itens, entrega e preparo.
+ *
+ * `buyAgain` são os itens do pedido que ainda estão à venda (a página busca
+ * no catálogo): com eles aparece "Comprar de novo" no pedido pago e "Colocar
+ * os mesmos itens no carrinho" no pedido vencido.
  */
-export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; reloadHref: string }) {
+export function OrderStatus({
+  order,
+  reloadHref,
+  buyAgain,
+}: {
+  order: PublicSiteOrder;
+  reloadHref: string;
+  buyAgain?: { items: BuyAgainItem[]; missing: number };
+}) {
   const tickets = order.kind === 'tickets' && order.event !== null;
   const headline = HEADLINE[order.status];
   const { icon: Icon, tone } = headline;
@@ -56,6 +70,8 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
             {title}
           </h1>
         </div>
+
+        <OrderTimeline order={order} />
 
         {order.status === 'pending_payment' && (
           <div className="space-y-4 rounded-2xl border border-sand-line bg-sand/60 p-5">
@@ -124,6 +140,10 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
           </div>
         )}
 
+        {order.status === 'paid' && !tickets && buyAgain && (
+          <BuyAgainButton items={buyAgain.items} missing={buyAgain.missing} />
+        )}
+
         {order.status === 'expired' &&
           (tickets && order.event ? (
             <p>
@@ -133,6 +153,15 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
               </Link>{' '}
               pra tentar de novo.
             </p>
+          ) : buyAgain && buyAgain.items.length > 0 ? (
+            <div className="space-y-3">
+              <p>Nenhum valor foi cobrado. Quer tentar de novo?</p>
+              <BuyAgainButton
+                items={buyAgain.items}
+                missing={buyAgain.missing}
+                label="Colocar os mesmos itens no carrinho"
+              />
+            </div>
           ) : (
             <p>
               Nenhum valor foi cobrado.{' '}
@@ -201,6 +230,12 @@ export function OrderStatus({ order, reloadHref }: { order: PublicSiteOrder; rel
               <span>Subtotal</span>
               <span className="tabular-nums">{formatPrice(order.subtotal)}</span>
             </p>
+            {(order.discount ?? 0) > 0 && (
+              <p className="flex justify-between text-moss">
+                <span>Cupom {order.couponCode}</span>
+                <span className="tabular-nums">−{formatPrice(order.discount ?? 0)}</span>
+              </p>
+            )}
             <p className="flex justify-between">
               <span>{order.deliveryMethod === 'pickup' ? 'Retirada' : 'Entrega'}</span>
               <span className="tabular-nums">

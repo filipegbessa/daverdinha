@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
+import { Printer } from 'lucide-react';
 import { BackLink } from '@/features/admin/components/BackLink';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -23,6 +24,7 @@ import { Badge } from '@/features/admin/components/Badge';
 import { BusyRegion, ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { FulfillmentStatus, SiteOrderAdmin } from '@/features/admin/types/admin';
 import { SectionLabel } from '@/features/admin/components/SectionLabel';
+import { CustomerSummary } from '@/features/admin/components/CustomerSummary';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -101,7 +103,9 @@ export default function PedidoPage() {
 
   return (
     <div>
-      <BackLink href="/admin/pedidos">Voltar para pedidos</BackLink>
+      <div className="print:hidden">
+        <BackLink href="/admin/pedidos">Voltar para pedidos</BackLink>
+      </div>
       <PageHeader
         title={`Pedido ${order.code}`}
         description={
@@ -111,7 +115,14 @@ export default function PedidoPage() {
           </>
         }
       >
-        <Badge>{ORDER_STATUS_SINGULAR[order.status]}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge>{ORDER_STATUS_SINGULAR[order.status]}</Badge>
+          {/* A comanda de separação e a etiqueta da entrega: o navegador imprime a página sem o menu. */}
+          <Button variant="outline" size="sm" className="print:hidden" onClick={() => window.print()}>
+            <Printer aria-hidden="true" />
+            Imprimir
+          </Button>
+        </div>
       </PageHeader>
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
@@ -136,6 +147,7 @@ export default function PedidoPage() {
               {order.customer.email}
             </a>
           </p>
+          <CustomerSummary phone={order.customer.phone} variant="order" currentOrderId={order.id} />
         </Section>
 
         {tickets ? (
@@ -145,7 +157,7 @@ export default function PedidoPage() {
                 <p className="font-medium">{order.event.title}</p>
                 <p className="text-sm text-muted-foreground">{formatDateTime(order.event.startsAt)}</p>
                 <Link
-                  href={`/admin/agenda/${order.event.id}/participantes?evento=${encodeURIComponent(order.event.title)}`}
+                  href={`/admin/eventos/${order.event.id}/participantes?evento=${encodeURIComponent(order.event.title)}`}
                   className="text-sm text-primary underline"
                 >
                   Lista de presença
@@ -215,6 +227,12 @@ export default function PedidoPage() {
               <span>Subtotal</span>
               <span className="tabular-nums">{formatCurrency(order.subtotal, 'BRL')}</span>
             </p>
+            {(order.discount ?? 0) > 0 && (
+              <p className="flex justify-between">
+                <span>Cupom {order.couponCode}</span>
+                <span className="tabular-nums">−{formatCurrency(order.discount ?? 0, 'BRL')}</span>
+              </p>
+            )}
             {!tickets && (
               <p className="flex justify-between">
                 <span>Entrega</span>
@@ -255,7 +273,13 @@ export default function PedidoPage() {
           {/* Só pedido que chegou a ter link de pagamento tem o que consultar. */}
           {order.payment.linkId && (
             <>
-              <Button variant="outline" size="sm" className="mt-2" onClick={refreshPayment} loading={sync.isPending}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 print:hidden"
+                onClick={refreshPayment}
+                loading={sync.isPending}
+              >
                 Atualizar pagamento
               </Button>
               {sync.error && <ErrorText>{sync.error}</ErrorText>}
@@ -270,7 +294,7 @@ export default function PedidoPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-2"
+                className="mt-2 print:hidden"
                 onClick={resendConfirmation}
                 loading={resend.isPending}
               >
@@ -285,7 +309,7 @@ export default function PedidoPage() {
             </div>
           )}
           {canCancel && (
-            <Button variant="destructive" className="mt-4" onClick={() => setConfirmingCancel(true)}>
+            <Button variant="destructive" className="mt-4 print:hidden" onClick={() => setConfirmingCancel(true)}>
               Cancelar pedido
             </Button>
           )}

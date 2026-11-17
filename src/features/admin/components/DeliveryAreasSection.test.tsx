@@ -7,10 +7,10 @@ import type { DeliveryAreaAdmin, DeliveryLocation } from '@/features/admin/types
 jest.mock('@/features/admin/lib/api-client');
 
 const locations: DeliveryLocation[] = [
-  { id: 'l1', zone: 'Zona Sul', regionName: 'Catete', covered: true, areaId: 'a1' },
-  { id: 'l2', zone: 'Zona Sul', regionName: 'Flamengo', covered: true, areaId: null },
-  { id: 'l3', zone: 'Zona Sul', regionName: 'Gávea', covered: false, areaId: 'a2' },
-  { id: 'l4', zone: 'Centro', regionName: 'Gamboa', covered: true, areaId: null },
+  { id: 'l1', zone: 'Zona Sul', regionName: 'Catete', areaId: 'a1' },
+  { id: 'l2', zone: 'Zona Sul', regionName: 'Flamengo', areaId: null },
+  { id: 'l3', zone: 'Zona Sul', regionName: 'Gávea', areaId: 'a2' },
+  { id: 'l4', zone: 'Centro', regionName: 'Gamboa', areaId: null },
 ];
 
 const areas: DeliveryAreaAdmin[] = [
@@ -19,14 +19,14 @@ const areas: DeliveryAreaAdmin[] = [
     zone: 'Zona Sul',
     name: 'Perto',
     fee: 15,
-    locations: [{ id: 'l1', regionName: 'Catete', covered: true }],
+    locations: [{ id: 'l1', regionName: 'Catete' }],
   },
   {
     id: 'a2',
     zone: 'Zona Sul',
     name: 'Longe',
     fee: 30,
-    locations: [{ id: 'l3', regionName: 'Gávea', covered: false }],
+    locations: [{ id: 'l3', regionName: 'Gávea' }],
   },
 ];
 
@@ -47,15 +47,35 @@ describe('DeliveryAreasSection', () => {
     setup();
 
     expect(screen.getByText('Perto')).toBeInTheDocument();
-    expect(screen.getByText(/R\$ 15,00 · 1 bairro$/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ver os bairros de Perto' })).toHaveTextContent(
+      'Perto · R$ 15,00 · 1 bairro',
+    );
     expect(screen.getByText('Nenhuma área nesta zona ainda.')).toBeInTheDocument();
   });
 
-  it('warns about covered bairros that have no area, since the site will not deliver there', () => {
+  it('opens the list of bairros of an area, and goes from there to editing it', async () => {
     setup();
 
-    expect(screen.getByText(/Sem entrega pelo site até entrarem numa área: Flamengo\./)).toBeInTheDocument();
-    expect(screen.getByText(/Sem entrega pelo site até entrarem numa área: Gamboa\./)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Ver os bairros de Perto' }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: 'Bairros de Perto' })).toBeInTheDocument();
+    expect(within(dialog).getByText('Zona Sul · R$ 15,00 · 1 bairro')).toBeInTheDocument();
+    expect(
+      within(within(dialog).getByRole('list'))
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Catete']);
+    expect(within(dialog).queryByRole('checkbox')).not.toBeInTheDocument();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Editar área' }));
+    expect(screen.getByRole('heading', { name: 'Editar área · Zona Sul' })).toBeInTheDocument();
+  });
+
+  it('no longer lists bairros outside the areas: they are simply not served', () => {
+    setup();
+
+    expect(screen.queryByText(/Sem entrega pelo site/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Bairro fora de todas as áreas não é atendido/)).toBeInTheDocument();
   });
 
   it('creates an area in the zone, then saves its bairros', async () => {
@@ -79,14 +99,14 @@ describe('DeliveryAreasSection', () => {
     expect(onChanged).toHaveBeenCalled();
   });
 
-  it('edits an area, showing where a bairro would move from and which are not covered', async () => {
+  it('edits an area, showing where a bairro would move from', async () => {
     const { apiFetch } = setup();
 
     await userEvent.click(screen.getAllByRole('button', { name: 'Editar' })[0]);
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByLabelText('Valor da entrega')).toHaveValue('R$ 15,00');
     expect(within(dialog).getByRole('checkbox', { name: /Catete/ })).toBeChecked();
-    expect(within(dialog).getByText('(não atendido, hoje em Longe)')).toBeInTheDocument();
+    expect(within(dialog).getByText('(hoje em Longe)')).toBeInTheDocument();
 
     await userEvent.click(within(dialog).getByRole('checkbox', { name: /Gávea/ }));
     await userEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));

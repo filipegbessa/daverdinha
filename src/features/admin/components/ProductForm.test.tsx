@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ProductDialog } from './ProductDialog';
+import { ProductForm } from './ProductForm';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import type { ProductAdmin, ProductCategoryAdmin } from '@/features/admin/types/admin';
 
@@ -37,7 +37,7 @@ const encomenda: ProductAdmin = {
 };
 
 function mockSave() {
-  const apiFetch = jest.fn().mockResolvedValue(undefined);
+  const apiFetch = jest.fn().mockResolvedValue(vaso);
   (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
   return apiFetch;
 }
@@ -48,18 +48,18 @@ function sentForm(apiFetch: jest.Mock) {
   return { body, fields: Object.fromEntries([...body.entries()].filter(([, v]) => typeof v === 'string')) };
 }
 
-describe('ProductDialog', () => {
+describe('ProductForm', () => {
   beforeAll(() => {
     URL.createObjectURL = jest.fn(() => 'blob:preview');
     URL.revokeObjectURL = jest.fn();
   });
 
   it('creates a product as multipart with text fields, flags and photos', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(undefined);
+    const apiFetch = jest.fn().mockResolvedValue({ ...vaso, id: 'new' });
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
     const onSaved = jest.fn();
 
-    render(<ProductDialog product={null} categories={categories} onClose={jest.fn()} onSaved={onSaved} />);
+    render(<ProductForm product={null} categories={categories} onSaved={onSaved} />);
 
     await userEvent.type(screen.getByLabelText('Nome'), 'Kit Suculentas');
     await userEvent.type(screen.getByLabelText('Descrição'), 'Três mudas.');
@@ -69,7 +69,7 @@ describe('ProductDialog', () => {
     await userEvent.type(screen.getByLabelText('Estoque'), '4');
     await userEvent.click(screen.getByRole('switch', { name: 'Destaque' }));
     await userEvent.upload(screen.getByLabelText('Fotos'), new File(['x'], 'kit.jpg', { type: 'image/jpeg' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Criar produto' }));
 
     expect(apiFetch).toHaveBeenCalledWith('/products', { method: 'POST', body: expect.any(FormData) });
     const { body, fields } = sentForm(apiFetch);
@@ -77,20 +77,22 @@ describe('ProductDialog', () => {
       name: 'Kit Suculentas',
       description: 'Três mudas.',
       price: '59.90',
+      promoPrice: '',
+      promoStartsAt: '',
+      promoEndsAt: '',
       categoryId: 'cat2',
       active: 'true',
       featured: 'true',
       stock: '4',
     });
     expect((body.getAll('images') as File[]).map((f) => f.name)).toEqual(['kit.jpg']);
-    expect(onSaved).toHaveBeenCalled();
+    expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ id: 'new' }));
   });
 
   it('edits without sending images when no new photo was chosen, so the current ones stay', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(undefined);
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
+    const apiFetch = mockSave();
 
-    render(<ProductDialog product={vaso} categories={categories} onClose={jest.fn()} onSaved={jest.fn()} />);
+    render(<ProductForm product={vaso} categories={categories} onSaved={jest.fn()} />);
 
     expect(screen.getByText('/produtos/vasos/vaso-m')).toBeInTheDocument();
     expect(screen.getByLabelText('Preço (R$)')).toHaveValue('R$ 89,90');
@@ -110,7 +112,7 @@ describe('ProductDialog', () => {
   it('turns a product into made-to-order: disables the quantity and sends the lead time', async () => {
     const apiFetch = mockSave();
 
-    render(<ProductDialog product={vaso} categories={categories} onClose={jest.fn()} onSaved={jest.fn()} />);
+    render(<ProductForm product={vaso} categories={categories} onSaved={jest.fn()} />);
 
     expect(screen.queryByLabelText('Prazo de confecção (dias)')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('checkbox', { name: 'Sob encomenda' }));
@@ -126,7 +128,7 @@ describe('ProductDialog', () => {
   it('opens a made-to-order product with the box checked and its lead time', () => {
     mockSave();
 
-    render(<ProductDialog product={encomenda} categories={categories} onClose={jest.fn()} onSaved={jest.fn()} />);
+    render(<ProductForm product={encomenda} categories={categories} onSaved={jest.fn()} />);
 
     expect(screen.getByRole('checkbox', { name: 'Sob encomenda' })).toBeChecked();
     expect(screen.getByLabelText('Estoque')).toBeDisabled();
@@ -136,7 +138,7 @@ describe('ProductDialog', () => {
   it('back to ready stock: asks for the quantity and keeps the saved lead time out of the request', async () => {
     const apiFetch = mockSave();
 
-    render(<ProductDialog product={encomenda} categories={categories} onClose={jest.fn()} onSaved={jest.fn()} />);
+    render(<ProductForm product={encomenda} categories={categories} onSaved={jest.fn()} />);
     await userEvent.click(screen.getByRole('checkbox', { name: 'Sob encomenda' }));
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
@@ -156,31 +158,12 @@ describe('ProductDialog', () => {
   it('does not save made-to-order without a lead time', async () => {
     const apiFetch = mockSave();
 
-    render(
-      <ProductDialog
-        product={{ ...encomenda, leadTimeDays: null }}
-        categories={categories}
-        onClose={jest.fn()}
-        onSaved={jest.fn()}
-      />,
-    );
+    render(<ProductForm product={{ ...encomenda, leadTimeDays: null }} categories={categories} onSaved={jest.fn()} />);
+    await userEvent.type(screen.getByLabelText('Nome'), ' novo');
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(apiFetch).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent('Informe o prazo de confecção, de 1 a 180 dias.');
-  });
-
-  it('asks for a category first when none exists', () => {
-    (useApiClient as jest.Mock).mockReturnValue({ apiFetch: jest.fn() });
-
-    render(<ProductDialog product={null} categories={[]} onClose={jest.fn()} onSaved={jest.fn()} />);
-
-    expect(screen.getByText(/Cadastre uma categoria primeiro/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ir para categorias' })).toHaveAttribute(
-      'href',
-      '/admin/categorias',
-    );
-    expect(screen.queryByRole('button', { name: 'Salvar' })).not.toBeInTheDocument();
   });
 
   it('shows the API error and stays open', async () => {
@@ -188,10 +171,123 @@ describe('ProductDialog', () => {
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });
     const onSaved = jest.fn();
 
-    render(<ProductDialog product={vaso} categories={categories} onClose={jest.fn()} onSaved={onSaved} />);
+    render(<ProductForm product={vaso} categories={categories} onSaved={onSaved} />);
+    await userEvent.type(screen.getByLabelText('Nome'), ' novo');
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(await screen.findByText('Categoria não encontrada.')).toBeInTheDocument();
     expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('only saves a product after a change, and can discard the changes', async () => {
+    mockSave();
+    render(<ProductForm product={vaso} categories={categories} onSaved={jest.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeDisabled();
+    await userEvent.type(screen.getByLabelText('Nome'), ' grande');
+    expect(screen.getByText('Alterações não salvas')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeEnabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Descartar alterações' }));
+    expect(screen.getByLabelText('Nome')).toHaveValue('Vaso M');
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeDisabled();
+  });
+
+  it('says the changes were saved and is clean again', async () => {
+    mockSave();
+    render(<ProductForm product={vaso} categories={categories} onSaved={jest.fn()} />);
+
+    await userEvent.type(screen.getByLabelText('Nome'), ' grande');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(await screen.findByText('Alterações salvas.')).toBeInTheDocument();
+    expect(screen.queryByText('Alterações não salvas')).not.toBeInTheDocument();
+  });
+
+  it('warns before leaving the tab with unsaved changes', async () => {
+    mockSave();
+    render(<ProductForm product={vaso} categories={categories} onSaved={jest.fn()} />);
+    await userEvent.type(screen.getByLabelText('Nome'), ' grande');
+
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('shows a preview of the store card with the name, category and price', async () => {
+    mockSave();
+    render(<ProductForm product={null} categories={categories} onSaved={jest.fn()} />);
+    await userEvent.type(screen.getByLabelText('Nome'), 'Kit');
+
+    expect(screen.getByLabelText('Prévia do card na loja')).toHaveTextContent('VasosKitR$ 0,00');
+  });
+
+  it('starts a duplicate from the given values', () => {
+    mockSave();
+    render(
+      <ProductForm
+        product={null}
+        initial={{ ...vaso, name: 'Vaso M (cópia)', active: false }}
+        categories={categories}
+        onSaved={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText('Nome')).toHaveValue('Vaso M (cópia)');
+    expect(screen.getByRole('switch', { name: 'Aparece no site' })).not.toBeChecked();
+    expect(screen.getByLabelText('Estoque')).toHaveValue(3);
+  });
+
+  describe('promo price', () => {
+    it('sends a scheduled promo, with the times in Rio as UTC', async () => {
+      const apiFetch = mockSave();
+      render(<ProductForm product={vaso} categories={categories} onSaved={jest.fn()} />);
+
+      await userEvent.type(screen.getByLabelText('Preço promocional (opcional)'), '6990');
+      expect(screen.getByText(/de R\$ 89,90 por R\$ 69,90", 22% de desconto/)).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('checkbox', { name: 'Agendar a promoção' }));
+      await userEvent.type(screen.getByLabelText('Começa em'), '2026-12-01T00:00');
+      await userEvent.type(screen.getByLabelText('Termina em'), '2026-12-08T00:00');
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      const { fields } = sentForm(apiFetch);
+      expect(fields).toMatchObject({
+        price: '89.90',
+        promoPrice: '69.90',
+        promoStartsAt: '2026-12-01T03:00:00.000Z',
+        promoEndsAt: '2026-12-08T03:00:00.000Z',
+      });
+    });
+
+    it('does not save a promo price that is not below the price', async () => {
+      const apiFetch = mockSave();
+      render(<ProductForm product={vaso} categories={categories} onSaved={jest.fn()} />);
+
+      await userEvent.type(screen.getByLabelText('Preço promocional (opcional)'), '9990');
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      expect(apiFetch).not.toHaveBeenCalled();
+      expect(screen.getByLabelText('Preço promocional (opcional)')).toHaveAccessibleDescription(
+        expect.stringContaining('O preço promocional precisa ser menor que o preço.'),
+      );
+    });
+
+    it('edits the full price of a product on sale and can take the promo out', async () => {
+      const apiFetch = mockSave();
+      render(
+        <ProductForm
+          product={{ ...vaso, price: 69.9, listPrice: 89.9, regularPrice: 89.9, promoPrice: 69.9 }}
+          categories={categories}
+          onSaved={jest.fn()}
+        />,
+      );
+
+      expect(screen.getByLabelText('Preço (R$)')).toHaveValue('R$ 89,90');
+      expect(screen.getByLabelText('Preço promocional (opcional)')).toHaveValue('R$ 69,90');
+      await userEvent.click(screen.getByRole('button', { name: 'Tirar a promoção' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      expect(sentForm(apiFetch).fields).toMatchObject({ price: '89.90', promoPrice: '' });
+    });
   });
 });

@@ -17,6 +17,7 @@ import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { useConversationMessages } from '@/features/admin/lib/use-conversation-messages';
 import { ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import { PageHeader } from '@/features/admin/components/PageHeader';
+import { CustomerSummary } from '@/features/admin/components/CustomerSummary';
 import { badgeColorStyle, badgeVariants, ColorDot } from '@/features/admin/components/Badge';
 import { cn } from '@/lib/utils';
 import { formatPhone } from '@/features/admin/lib/format-phone';
@@ -305,6 +306,8 @@ export default function ConversaDetailPage() {
           )}
         </PageHeader>
       </div>
+
+      <CustomerSummary phone={conversation.phone} variant="conversation" />
 
       {error && <ErrorText className="flex-none">{error}</ErrorText>}
 

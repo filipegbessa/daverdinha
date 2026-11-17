@@ -28,6 +28,19 @@ describe('PedidoPage', () => {
     expect(screen.getByText('R$ 104,90')).toBeInTheDocument();
   });
 
+  it('prints the order for the delivery, without the menu and the buttons', async () => {
+    mockApi();
+    const print = jest.spyOn(window, 'print').mockImplementation(() => {});
+
+    render(<PedidoPage />);
+    const button = await screen.findByRole('button', { name: 'Imprimir' });
+    expect(button).toHaveClass('print:hidden');
+    await userEvent.click(button);
+
+    expect(print).toHaveBeenCalled();
+    print.mockRestore();
+  });
+
   it('changes the preparation status of a paid order', async () => {
     const apiFetch = mockApi();
 
@@ -99,7 +112,7 @@ describe('PedidoPage', () => {
     expect(screen.getByText('Oficina de terrário')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Lista de presença' })).toHaveAttribute(
       'href',
-      '/admin/agenda/e1/participantes?evento=Oficina%20de%20terr%C3%A1rio',
+      '/admin/eventos/e1/participantes?evento=Oficina%20de%20terr%C3%A1rio',
     );
     expect(screen.getByText('Ana Lima')).toBeInTheDocument();
     expect(screen.getByText('Bruno Lima')).toBeInTheDocument();

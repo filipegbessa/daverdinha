@@ -11,6 +11,10 @@ import { useCart } from '@/features/store/components/CartProvider';
 import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField';
 import { createCheckout, quoteCart } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
+import { clearBuyer, readBuyer, saveBuyer } from '@/features/store/lib/buyer-storage';
+import { readSavedCoupon, saveCoupon } from '@/features/store/lib/coupon-storage';
+import { RedirectingToPayment } from '@/features/store/components/RedirectingToPayment';
+import { FreeShippingProgress } from '@/features/store/components/FreeShippingProgress';
 import { fetchStreetByCep } from '@/features/store/lib/address-by-cep';
 import { formatDocument, parseDocument } from '@/features/store/lib/document';
 import { RETURNS_HREF } from '@/features/site/lib/paths';
@@ -57,7 +61,11 @@ function deliveryUnavailableText(delivery: Extract<CheckoutQuote['delivery'], { 
  * O checkout numa página só: dados, entrega ou retirada, resumo. Preço e
  * frete são os da cotação, que é refeita quando o CEP fica completo; o
  * pedido é criado na API e o cliente vai pra página de pagamento. O carrinho
- * só é limpo quando o pedido foi criado.
+ * só é limpo quando o pedido foi criado, e aí a tela de "levando você pro
+ * pagamento" toma o lugar do formulário até o navegador sair do site.
+ *
+ * Os dados de contato e o endereço da última compra ficam neste navegador
+ * (`buyer-storage`) e voltam preenchidos; "Não é você?" apaga.
  */
 export function CheckoutForm() {
   const router = useRouter();
@@ -65,20 +73,38 @@ export function CheckoutForm() {
   const [values, setValues] = useState<CheckoutFormValues>(EMPTY);
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [quote, setQuote] = useState<CheckoutQuote | null>(null);
+  // Pra qual CEP é a cotação na tela: enquanto o CEP novo está sendo
+  // calculado, a resposta do anterior não pode aparecer como se fosse dele.
+  const [quotedCep, setQuotedCep] = useState<string | undefined>(undefined);
+  // Cupom: o que está no campo e o que foi aplicado (vai na cotação).
+  const [couponInput, setCouponInput] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [couponOpen, setCouponOpen] = useState(false);
   const [quoting, setQuoting] = useState(false);
   const [quoteFailed, setQuoteFailed] = useState(false);
   const [quoteAttempt, setQuoteAttempt] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
+  const [remembered, setRemembered] = useState(false);
+  const [redirecting, setRedirecting] = useState<{ code: string; token: string; paymentUrl: string } | null>(null);
 
   const cepDigits = onlyDigits(values.cep);
   const quoteCep = cepDigits.length === 8 ? cepDigits : undefined;
   const itemsKey = items.map((i) => `${i.productId}:${i.quantity}`).join(',');
 
   useEffect(() => {
-    if (ready && items.length === 0) router.replace('/carrinho');
-  }, [ready, items.length, router]);
+    // Depois do pedido criado o carrinho fica vazio de propósito: não é hora
+    // de mandar pro carrinho, e sim de esperar o navegador ir pro pagamento.
+    if (ready && items.length === 0 && !redirecting) router.replace('/carrinho');
+  }, [ready, items.length, router, redirecting]);
+
+  useEffect(() => {
+    const saved = readBuyer();
+    if (!saved) return;
+    setValues((prev) => ({ ...prev, ...saved }));
+    setRemembered(true);
+  }, []);
 
   useEffect(() => {
     if (!ready || items.length === 0) return;
@@ -88,17 +114,29 @@ export function CheckoutForm() {
     quoteCart(
       items.map(({ productId, quantity }) => ({ productId, quantity })),
       quoteCep,
+      couponCode || undefined,
     ).then((data) => {
       if (cancelled) return;
       setQuoting(false);
-      if (data) setQuote(data);
-      else setQuoteFailed(true);
+      if (data) {
+        setQuote(data);
+        setQuotedCep(quoteCep);
+      } else setQuoteFailed(true);
     });
     return () => {
       cancelled = true;
     };
     // Só produtos, quantidades e CEP mudam a cotação (`itemsKey` cobre os itens).
-  }, [ready, itemsKey, quoteCep, quoteAttempt]);
+  }, [ready, itemsKey, quoteCep, quoteAttempt, couponCode]);
+
+  // Cupom que veio num link (`?cupom=`): já chega aplicado.
+  useEffect(() => {
+    const saved = readSavedCoupon();
+    if (!saved) return;
+    setCouponInput(saved);
+    setCouponCode(saved);
+    setCouponOpen(true);
+  }, []);
 
   // Rua: sempre vem do CEP (ViaCEP), nunca digitada — evita endereço
   // divergente do que o frete calculou.
@@ -132,12 +170,21 @@ export function CheckoutForm() {
     }
   }, [quote, values.deliveryMethod]);
 
+  if (redirecting) return <RedirectingToPayment {...redirecting} />;
+
   if (!ready || items.length === 0) {
     return (
       <p role="status" className="text-ink-soft">
         Carregando seu carrinho...
       </p>
     );
+  }
+
+  function forgetBuyer() {
+    clearBuyer();
+    setRemembered(false);
+    setValues((prev) => ({ ...prev, name: '', email: '', phone: '', cep: '', street: '', number: '', complement: '' }));
+    setErrors({});
   }
 
   function set<K extends keyof CheckoutFormValues>(key: K, value: CheckoutFormValues[K]) {
@@ -147,10 +194,18 @@ export function CheckoutForm() {
 
   const isDelivery = values.deliveryMethod === 'delivery';
   const delivery = quote?.delivery;
-  const fee = isDelivery && delivery?.available ? delivery.fee : 0;
+  const coupon = quote?.coupon ?? null;
+  const validCoupon = coupon && !('error' in coupon) ? coupon : null;
+  const couponError = coupon && 'error' in coupon ? coupon.error : null;
+  const discount = validCoupon?.discount ?? 0;
+  // Frete grátis pelo cupom ou pela promoção automática (Promoções).
+  const promoFreeShipping = Boolean(quote?.freeShipping?.reached);
+  const freeShipping = Boolean(validCoupon?.freeShipping) || promoFreeShipping;
+  const fee = isDelivery && delivery?.available && !freeShipping ? delivery.fee : 0;
   const problems = quote?.problems ?? [];
   const maxLeadTime = Math.max(0, ...(quote?.items.map((i) => i.leadTimeDays ?? 0) ?? []));
-  const deliveryBlocked = isDelivery && quoteCep !== undefined && delivery !== undefined && !delivery.available;
+  const quoteIsForCep = !quoting && quoteCep !== undefined && quotedCep === quoteCep;
+  const deliveryBlocked = isDelivery && quoteIsForCep && delivery !== undefined && !delivery.available;
   const canSubmit = quote !== null && !quoting && problems.length === 0 && !submitting;
 
   async function handleSubmit(event: React.FormEvent) {
@@ -163,6 +218,16 @@ export function CheckoutForm() {
     setErrors(found);
     if (Object.keys(found).length > 0 || !quote) return;
 
+    window.gtag?.('event', 'begin_checkout', {
+      currency: 'BRL',
+      value: quote.subtotal - discount + fee,
+      items: quote.items.map((item) => ({
+        item_id: item.productId,
+        item_name: item.name,
+        price: item.unitPrice,
+        quantity: item.quantity,
+      })),
+    });
     setSubmitting(true);
     const result = await createCheckout({
       items: items.map(({ productId, quantity }) => ({ productId, quantity })),
@@ -182,15 +247,35 @@ export function CheckoutForm() {
         },
       }),
       ...(values.notes.trim() && { notes: values.notes.trim() }),
+      // Só o cupom que a cotação aceitou; um inválido não trava o pedido.
+      ...(validCoupon && { couponCode: validCoupon.code }),
     });
 
     if (result.ok) {
+      saveBuyer({
+        name: values.name.trim(),
+        email: values.email.trim(),
+        phone: values.phone,
+        // Retirada não tem endereço: guarda o da última entrega.
+        ...(isDelivery && { cep: values.cep, number: values.number.trim(), complement: values.complement.trim() }),
+      });
+      setRedirecting({ code: result.code, token: result.token, paymentUrl: result.paymentUrl });
+      saveCoupon('');
       clear();
       redirectToPayment(result.paymentUrl);
       return;
     }
     setSubmitting(false);
-    if (result.status === 409) {
+    if (result.reason === 'coupon_invalid') {
+      // O cupom deixou de valer entre a cotação e o pedido (esgotou, venceu):
+      // a cotação nova mostra o motivo no campo do cupom.
+      setFormError(result.message);
+      setQuoteAttempt((n) => n + 1);
+    } else if (result.reason === 'store_paused' || result.reason === 'store_closed') {
+      // A loja entrou em pausa (ou foi fechada) com o carrinho aberto: o
+      // carrinho fica, e a mensagem da cliente explica até quando.
+      setFormError(result.message);
+    } else if (result.status === 409) {
       // Algo mudou no estoque ou no catálogo: a cotação nova mostra o quê.
       setFormError('Alguns itens mudaram desde que você montou o carrinho.');
       setQuoteAttempt((n) => n + 1);
@@ -207,11 +292,24 @@ export function CheckoutForm() {
       <div className="space-y-8">
         <fieldset className="space-y-4">
           <legend className="font-serif text-xl font-semibold text-ink">Seus dados</legend>
-          <StoreField id="checkoutName" label="Nome" error={errors.name}>
+          {remembered && (
+            <p className="text-sm text-ink-soft">
+              Preenchemos com os dados da sua última compra neste aparelho.{' '}
+              <button
+                type="button"
+                onClick={forgetBuyer}
+                className="font-semibold text-moss underline underline-offset-4"
+              >
+                Não é você? Limpar dados
+              </button>
+            </p>
+          )}
+          <StoreField id="checkoutName" label="Nome completo" error={errors.name}>
             <input
               id="checkoutName"
               maxLength={CUSTOMER_NAME_MAX}
               autoComplete="name"
+              placeholder="Nome e sobrenome"
               value={values.name}
               onChange={(e) => set('name', e.target.value)}
               className={STORE_INPUT}
@@ -315,7 +413,7 @@ export function CheckoutForm() {
                 </StoreField>
                 <div aria-live="polite" className="self-end pb-2.5 text-sm">
                   {quoteCep && quoting && <span className="text-ink-soft">Calculando a entrega...</span>}
-                  {quoteCep && !quoting && delivery?.available && (
+                  {quoteIsForCep && delivery?.available && (
                     <span className="text-ink">
                       Entrega em {delivery.bairro}: <strong>{formatPrice(delivery.fee)}</strong>
                     </span>
@@ -421,20 +519,101 @@ export function CheckoutForm() {
                 </li>
               ))}
             </ul>
+            <div className="border-t border-sand-line pt-3">
+              {!couponOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setCouponOpen(true)}
+                  className="text-sm font-semibold text-moss underline underline-offset-4"
+                >
+                  Tem um cupom?
+                </button>
+              ) : (
+                <StoreField
+                  id="checkoutCoupon"
+                  label="Cupom"
+                  error={couponError ?? undefined}
+                  hint={
+                    validCoupon ? (validCoupon.freeShipping ? 'Frete grátis aplicado.' : 'Cupom aplicado.') : undefined
+                  }
+                >
+                  <div className="flex gap-2">
+                    <input
+                      id="checkoutCoupon"
+                      value={couponInput}
+                      maxLength={30}
+                      autoCapitalize="characters"
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter') return;
+                        e.preventDefault();
+                        setCouponCode(couponInput.trim());
+                        saveCoupon(couponInput.trim());
+                      }}
+                      className={`${STORE_INPUT} uppercase`}
+                    />
+                    {couponCode && couponCode === couponInput.trim() ? (
+                      <SiteButton
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setCouponInput('');
+                          setCouponCode('');
+                          saveCoupon('');
+                        }}
+                      >
+                        Remover
+                      </SiteButton>
+                    ) : (
+                      <SiteButton
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        disabled={!couponInput.trim()}
+                        onClick={() => {
+                          setCouponCode(couponInput.trim());
+                          saveCoupon(couponInput.trim());
+                        }}
+                      >
+                        Aplicar
+                      </SiteButton>
+                    )}
+                  </div>
+                </StoreField>
+              )}
+            </div>
+            {isDelivery && quote.freeShipping && !validCoupon?.freeShipping && (
+              <FreeShippingProgress freeShipping={quote.freeShipping} />
+            )}
             <div className="space-y-1 border-t border-sand-line pt-3">
               <p className="flex justify-between">
                 <span>Subtotal</span>
                 <span className="tabular-nums">{formatPrice(quote.subtotal)}</span>
               </p>
+              {discount > 0 && (
+                <p className="flex justify-between text-moss">
+                  <span>Cupom {validCoupon?.code}</span>
+                  <span className="tabular-nums">−{formatPrice(discount)}</span>
+                </p>
+              )}
               <p className="flex justify-between">
                 <span>{isDelivery ? 'Entrega' : 'Retirada'}</span>
                 <span className="tabular-nums">
-                  {isDelivery && !delivery?.available ? '—' : fee === 0 ? 'Grátis' : formatPrice(fee)}
+                  {isDelivery && !delivery?.available
+                    ? '—'
+                    : fee === 0
+                      ? freeShipping && isDelivery
+                        ? validCoupon?.freeShipping
+                          ? 'Grátis (cupom)'
+                          : 'Grátis (promoção)'
+                        : 'Grátis'
+                      : formatPrice(fee)}
                 </span>
               </p>
               <p className="flex justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span className="tabular-nums">{formatPrice(quote.subtotal + fee)}</span>
+                <span className="tabular-nums">{formatPrice(quote.subtotal - discount + fee)}</span>
               </p>
               {quote.installments > 1 && (
                 <p className="text-sm text-ink-soft">Pix ou cartão em até {quote.installments}x sem juros.</p>

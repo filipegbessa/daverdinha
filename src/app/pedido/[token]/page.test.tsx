@@ -3,6 +3,8 @@ import { render, screen } from '@testing-library/react';
 import OrderPage, { dynamic, metadata } from './page';
 import { getOrderByToken } from '@/features/store/lib/store-api';
 import { previewOrder } from '@/features/store/lib/preview-order';
+import { getActiveProductBySlug } from '@/features/site/lib/public-api';
+import { SAMPLE_PRODUCTS } from '@/features/site/data/samples';
 
 jest.mock('next/navigation', () => ({
   notFound: jest.fn(() => {
@@ -11,6 +13,10 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: jest.fn() }),
 }));
 jest.mock('@/features/store/lib/store-api', () => ({ getOrderByToken: jest.fn() }));
+jest.mock('@/features/site/lib/public-api', () => ({
+  ...jest.requireActual('@/features/site/lib/public-api'),
+  getActiveProductBySlug: jest.fn(),
+}));
 
 const renderPage = async (token: string, query: Record<string, string> = {}) =>
   render(await OrderPage({ params: Promise.resolve({ token }), searchParams: Promise.resolve(query) }));
@@ -37,6 +43,14 @@ describe('/pedido/[token]', () => {
 
     mockSiteSettings({ storeEnabled: false });
     await expect(renderPage('abc')).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+
+  it('says the page could not load, instead of a 404, when the API fails', async () => {
+    (getOrderByToken as jest.Mock).mockResolvedValue('unavailable');
+    await renderPage('abc');
+
+    expect(screen.getByRole('heading', { name: 'Não conseguimos abrir seu pedido agora' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Tentar de novo' })).toHaveAttribute('href', '/pedido/abc');
   });
 
   it('shows a ticket order even with the products store off', async () => {
@@ -78,6 +92,29 @@ describe('/pedido/[token]', () => {
 
     expect(getOrderByToken).toHaveBeenCalledWith('abc');
     expect(screen.getByText('Pedido DV-0042')).toBeInTheDocument();
+  });
+
+  it('offers to buy the items again, leaving out what is no longer for sale', async () => {
+    (getOrderByToken as jest.Mock).mockResolvedValue(previewOrder('paid'));
+    (getActiveProductBySlug as jest.Mock).mockImplementation(async (slug: string) =>
+      slug === SAMPLE_PRODUCTS[0].slug ? { ...SAMPLE_PRODUCTS[0], availability: 'in_stock' } : null,
+    );
+
+    await renderPage('abc');
+
+    expect(screen.getByRole('button', { name: 'Comprar de novo' })).toBeInTheDocument();
+    expect(screen.getByText('1 item deste pedido não está mais disponível e fica de fora.')).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Andamento do pedido' })).toBeInTheDocument();
+  });
+
+  it('points an expired order back to the products when nothing is for sale anymore', async () => {
+    (getOrderByToken as jest.Mock).mockResolvedValue(previewOrder('expired'));
+    (getActiveProductBySlug as jest.Mock).mockResolvedValue(null);
+
+    await renderPage('abc');
+
+    expect(screen.queryByRole('button', { name: 'Colocar os mesmos itens no carrinho' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver produtos' })).toBeInTheDocument();
   });
 
   it('shows a sample order in each state before the launch, without calling the API', async () => {

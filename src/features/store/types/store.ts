@@ -5,7 +5,7 @@
 
 export type QuoteProblemReason = 'not_found' | 'inactive' | 'insufficient_stock';
 
-export type DeliveryUnavailableReason = 'no_cep' | 'unresolved' | 'not_covered' | 'no_area';
+export type DeliveryUnavailableReason = 'no_cep' | 'unresolved' | 'not_covered';
 
 /** `POST /checkout/quote`: preço, estoque e frete do carrinho, calculados no servidor. */
 export interface CheckoutQuote {
@@ -28,7 +28,19 @@ export interface CheckoutQuote {
     | { available: true; fee: number; bairro: string; area: string }
     | { available: false; reason: DeliveryUnavailableReason; bairro?: string };
   problems: { productId: string; reason: QuoteProblemReason; available?: number }[];
+  /**
+   * O cupom mandado na cotação: o desconto (e se dá frete grátis) ou por que
+   * não vale. Sem cupom, `null` (ou ausente, na prévia).
+   */
+  coupon?: CouponQuote | null;
+  /**
+   * Frete grátis automático: a partir de quanto (pra área do CEP; sem CEP, só
+   * o que vale em todas), quanto falta e se já chegou. `null` = nenhuma promoção.
+   */
+  freeShipping?: { minSubtotal: number; remaining: number; reached: boolean } | null;
 }
+
+export type CouponQuote = { code: string; discount: number; freeShipping: boolean } | { code: string; error: string };
 
 /** Corpo de `POST /checkout`. Itens só com id e quantidade: preço e frete são do servidor. */
 export interface CreateCheckoutInput {
@@ -37,6 +49,7 @@ export interface CreateCheckoutInput {
   deliveryMethod: 'pickup' | 'delivery';
   address?: { cep: string; street: string; number: string; complement?: string };
   notes?: string;
+  couponCode?: string;
 }
 
 export type CreateCheckoutResult =
@@ -47,7 +60,7 @@ export type CreateCheckoutResult =
       status: number;
       message: string;
       problems?: CheckoutQuote['problems'];
-      reason?: DeliveryUnavailableReason | 'pickup_disabled';
+      reason?: DeliveryUnavailableReason | 'pickup_disabled' | 'store_paused' | 'store_closed' | 'coupon_invalid';
     };
 
 /** Corpo de `POST /checkout/tickets`: preço e vagas são do servidor. */
@@ -56,9 +69,20 @@ export interface CreateTicketCheckoutInput {
   attendees: { name: string }[];
   customer: { name: string; email: string; phone: string; document?: string };
   notes?: string;
+  couponCode?: string;
 }
 
-export type TicketCheckoutFailureReason = 'tickets_closed' | 'not_available' | 'sold_out' | 'too_many';
+/** `POST /checkout/tickets/quote`: o total da compra de ingresso com o cupom. */
+export interface TicketQuote {
+  unitPrice: number;
+  subtotal: number;
+  discount: number;
+  total: number;
+  coupon: CouponQuote | null;
+}
+
+export type TicketCheckoutFailureReason =
+  'tickets_closed' | 'not_available' | 'sold_out' | 'too_many' | 'coupon_invalid';
 
 export type CreateTicketCheckoutResult =
   /** `paymentUrl: null` = inscrição gratuita, já confirmada. */
@@ -105,6 +129,9 @@ export interface PublicSiteOrder {
    */
   tickets: { attendeeName: string; unitPrice: number; code: string; checkedIn: boolean }[];
   subtotal: number;
+  /** Desconto do cupom (0 sem cupom), já tirado do total. Opcional: a API antiga não mandava. */
+  discount?: number;
+  couponCode?: string | null;
   deliveryFee: number;
   total: number;
   deliveryMethod: 'pickup' | 'delivery' | null;

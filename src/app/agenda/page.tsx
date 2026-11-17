@@ -34,10 +34,15 @@ export default async function AgendaPage({ searchParams }: Props) {
     getFeaturedProducts(),
   ]);
   const { items: events, page, totalPages } = paginate(allEvents, pageParam);
-  const { home, storeEnabled } = await shellProps();
+  const { home, storeEnabled, storePause } = await shellProps();
 
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled} preview={allEvents.some(isSample) || featured.some(isSample)}>
+    <SiteShell
+      home={home}
+      storeEnabled={storeEnabled}
+      storePause={storePause}
+      preview={allEvents.some(isSample) || featured.some(isSample)}
+    >
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

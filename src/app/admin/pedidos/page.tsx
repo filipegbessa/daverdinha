@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { buttonVariants } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -42,6 +43,12 @@ function orderSummary(order: SiteOrderAdmin): string {
 export default function PedidosPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const { status, kind } = filters;
+  // "Pedidos" na lista de clientes chega com `?q=<e-mail>`. Lido depois de
+  // montar (e não no estado inicial) pra não divergir do HTML do servidor.
+  useEffect(() => {
+    const initial = new URLSearchParams(window.location.search).get('q');
+    if (initial) setFilters((f) => ({ ...f, q: initial }));
+  }, []);
   const q = useDebouncedValue(filters.q.trim());
   const {
     data,
@@ -58,14 +65,19 @@ export default function PedidosPage() {
 
   return (
     <div>
-      <PageHeader title="Pedidos" />
+      <PageHeader title="Pedidos">
+        {/* Venda combinada no WhatsApp: o pedido com o link de pagamento. */}
+        <Link href="/admin/pedidos/novo" className={buttonVariants()}>
+          Novo pedido
+        </Link>
+      </PageHeader>
       <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
         {(values, set) => (
           <>
             <Input
               value={values.q}
               onChange={(e) => set({ q: e.target.value })}
-              placeholder="Código ou nome"
+              placeholder="Código, nome ou e-mail"
               aria-label="Buscar pedidos"
               className="w-56"
             />
