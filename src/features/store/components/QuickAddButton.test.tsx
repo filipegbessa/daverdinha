@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CartProvider } from './CartProvider';
-import { CartLink } from './CartLink';
+import { CartDropdown } from './CartDropdown';
 import { StoreEnabledProvider } from './StoreEnabled';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { readCart } from '@/features/store/lib/cart-storage';
@@ -14,7 +14,7 @@ function renderCard(product: Product, storeEnabled = true) {
   return render(
     <StoreEnabledProvider value={storeEnabled}>
       <CartProvider>
-        <CartLink />
+        <CartDropdown />
         <ProductCard product={product} />
       </CartProvider>
     </StoreEnabledProvider>,
@@ -35,7 +35,7 @@ describe('ProductCard add button', () => {
     await user.click(screen.getByRole('button', { name: `Adicionar ${real.name} ao carrinho` }));
 
     expect(readCart()).toEqual([expect.objectContaining({ productId: 'p1', quantity: 1 })]);
-    expect(screen.getByRole('link', { name: 'Carrinho, 1 item' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Carrinho, 1 item' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: `Adicionar ${real.name} ao carrinho` })).toHaveTextContent('Adicionado');
     expect(window.gtag).toHaveBeenCalledWith('event', 'add_to_cart', expect.objectContaining({ value: real.price }));
 
@@ -49,7 +49,7 @@ describe('ProductCard add button', () => {
 
     const link = screen.getByRole('link', { name: new RegExp(real.name) });
     expect(link).toHaveAttribute('href', expect.stringContaining(real.slug));
-    expect(link).not.toContainElement(screen.getByRole('button'));
+    expect(link).not.toContainElement(screen.getByRole('button', { name: `Adicionar ${real.name} ao carrinho` }));
   });
 
   it('does not sell a sold-out product', () => {

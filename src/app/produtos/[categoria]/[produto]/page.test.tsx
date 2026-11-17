@@ -92,7 +92,7 @@ describe('/produtos/[categoria]/[produto]', () => {
       expect(screen.getByRole('button', { name: 'Adicionar ao carrinho' })).toBeEnabled();
       expect(screen.getByText(/Prévia: produto de exemplo/)).toBeInTheDocument();
       expect(screen.queryByRole('link', { name: 'Pedir pelo WhatsApp' })).not.toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Carrinho' })).toHaveAttribute('href', '/carrinho');
+      expect(screen.getByRole('button', { name: 'Carrinho' })).toBeInTheDocument();
     });
 
     it('offers a WhatsApp question about the product, with its link in the message', async () => {
@@ -107,7 +107,7 @@ describe('/produtos/[categoria]/[produto]', () => {
   it('has no cart without the store', async () => {
     await renderPage('vasos', 'vaso-terracota-m');
 
-    expect(screen.queryByRole('link', { name: 'Carrinho' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Carrinho' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /carrinho|lançamento/i })).not.toBeInTheDocument();
   });
 });

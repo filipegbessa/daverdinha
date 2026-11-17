@@ -6,7 +6,7 @@ import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { MobileNav } from '@/features/site/components/MobileNav';
 import { siteNav } from '@/features/site/components/site-nav';
-import { CartLink } from '@/features/store/components/CartLink';
+import { CartDropdown } from '@/features/store/components/CartDropdown';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 
 /**
@@ -50,7 +50,7 @@ export function Header({ home, storeEnabled = false }: { home: string; storeEnab
             <MessageCircle className="size-4" aria-hidden="true" />
             Falar no WhatsApp
           </ContactLink>
-          {storeEnabled && <CartLink />}
+          {storeEnabled && <CartDropdown />}
           <MobileNav links={links} />
         </div>
       </div>

@@ -24,6 +24,8 @@ interface CartContextValue {
   clear: () => void;
   /** Atualiza nome e preço com os da cotação; itens com problema ficam, o cliente decide. */
   syncFromQuote: (quote: CheckoutQuote) => void;
+  /** Muda (`Date.now()`) a cada produto adicionado: o dropdown do cabeçalho abre ao ver a mudança. */
+  lastAddedAt: number;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -36,6 +38,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [ready, setReady] = useState(false);
+  const [lastAddedAt, setLastAddedAt] = useState(0);
 
   useEffect(() => {
     setItems(readCart());
@@ -80,6 +83,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           },
         ];
       });
+      setLastAddedAt(Date.now());
       return true;
     },
     [update],
@@ -123,8 +127,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       remove,
       clear,
       syncFromQuote,
+      lastAddedAt,
     }),
-    [items, ready, add, setQuantity, remove, clear, syncFromQuote],
+    [items, ready, add, setQuantity, remove, clear, syncFromQuote, lastAddedAt],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
