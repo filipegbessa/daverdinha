@@ -14,6 +14,8 @@ export async function homeHref(): Promise<string> {
 
 export const PRODUCTS_HREF = '/produtos';
 export const AGENDA_HREF = '/agenda';
+/** Busca do catálogo (`?q=`); as sugestões do cabeçalho vêm de `/busca/sugestoes`. */
+export const SEARCH_HREF = '/busca';
 /** Pede os links dos pedidos por e-mail (sem conta). */
 export const MY_ORDERS_HREF = '/meus-pedidos';
 /** Políticas da loja: o checkout pede pra ler a de trocas. */

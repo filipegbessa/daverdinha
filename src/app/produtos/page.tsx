@@ -11,6 +11,13 @@ import { isSample } from '@/features/site/data/samples';
 import { PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { paginate } from '@/features/site/lib/pagination';
+import { CatalogControls } from '@/features/site/components/CatalogControls';
+import {
+  applyCatalogParams,
+  catalogQuery,
+  parseCatalogParams,
+  type CatalogSearchParams,
+} from '@/features/site/lib/catalog-list';
 import { pageMetadata } from '@/features/site/lib/seo';
 
 export function generateMetadata(): Promise<Metadata> {
@@ -22,16 +29,18 @@ export function generateMetadata(): Promise<Metadata> {
   });
 }
 
-type Props = { searchParams: Promise<{ page?: string }> };
+type Props = { searchParams: Promise<CatalogSearchParams> };
 
 export default async function ProductsPage({ searchParams }: Props) {
-  const [{ page: pageParam }, categories, allProducts, events] = await Promise.all([
+  const [query, categories, allProducts, events] = await Promise.all([
     searchParams,
     getActiveCategories(),
     getActiveProducts(),
     getUpcomingEvents(),
   ]);
-  const { items: products, page, totalPages } = paginate(allProducts, pageParam);
+  const params = parseCatalogParams(query);
+  const listed = applyCatalogParams(allProducts, params);
+  const { items: products, page, totalPages } = paginate(listed, params.page);
   const { home, storeEnabled, storePause } = await shellProps();
 
   return (
@@ -57,8 +66,15 @@ export default async function ProductsPage({ searchParams }: Props) {
           <div className="mt-6">
             <CategoryChips categories={categories} />
           </div>
+          {allProducts.length > 0 && (
+            <CatalogControls action={PRODUCTS_HREF} sort={params.sort} filter={params.filter} total={listed.length} />
+          )}
           {products.length === 0 ? (
-            <p className="mt-10 text-ink-soft">Nenhum produto no catálogo agora. Chama a gente no WhatsApp!</p>
+            <p className="mt-10 text-ink-soft">
+              {allProducts.length === 0
+                ? 'Nenhum produto no catálogo agora. Chama a gente no WhatsApp!'
+                : 'Nenhum produto com esse filtro agora.'}
+            </p>
           ) : (
             <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-6 lg:grid-cols-4">
               {products.map((product) => (
@@ -68,7 +84,7 @@ export default async function ProductsPage({ searchParams }: Props) {
               ))}
             </ul>
           )}
-          <Pagination page={page} totalPages={totalPages} basePath={PRODUCTS_HREF} />
+          <Pagination page={page} totalPages={totalPages} basePath={PRODUCTS_HREF} query={catalogQuery(params)} />
         </div>
       </section>
 

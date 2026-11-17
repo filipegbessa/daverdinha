@@ -11,9 +11,16 @@ import { isSample } from '@/features/site/data/samples';
 import { categoryHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { paginate } from '@/features/site/lib/pagination';
+import { CatalogControls } from '@/features/site/components/CatalogControls';
+import {
+  applyCatalogParams,
+  catalogQuery,
+  parseCatalogParams,
+  type CatalogSearchParams,
+} from '@/features/site/lib/catalog-list';
 import { pageMetadata } from '@/features/site/lib/seo';
 
-type Props = { params: Promise<{ categoria: string }>; searchParams: Promise<{ page?: string }> };
+type Props = { params: Promise<{ categoria: string }>; searchParams: Promise<CatalogSearchParams> };
 
 async function findCategory(slug: string) {
   const categories = await getActiveCategories();
@@ -40,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function CategoryPage({ params, searchParams }: Props) {
   const { categoria } = await params;
-  const [{ categories, category }, allProducts, { page: pageParam }, events] = await Promise.all([
+  const [{ categories, category }, allProducts, query, events] = await Promise.all([
     findCategory(categoria),
     getActiveProducts(categoria),
     searchParams,
@@ -48,7 +55,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   ]);
   if (!category || allProducts.length === 0) notFound();
 
-  const { items: products, page, totalPages } = paginate(allProducts, pageParam);
+  const listParams = parseCatalogParams(query);
+  const listed = applyCatalogParams(allProducts, listParams);
+  const { items: products, page, totalPages } = paginate(listed, listParams.page);
   const { home, storeEnabled, storePause } = await shellProps();
 
   return (
@@ -72,14 +81,29 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <div className="mt-6">
             <CategoryChips categories={categories} active={category.slug} />
           </div>
-          <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-6 lg:grid-cols-4">
-            {products.map((product) => (
-              <li key={product.id}>
-                <ProductCard product={product} />
-              </li>
-            ))}
-          </ul>
-          <Pagination page={page} totalPages={totalPages} basePath={categoryHref(category.slug)} />
+          <CatalogControls
+            action={categoryHref(category.slug)}
+            sort={listParams.sort}
+            filter={listParams.filter}
+            total={listed.length}
+          />
+          {products.length === 0 ? (
+            <p className="mt-10 text-ink-soft">Nenhum produto desta categoria com esse filtro agora.</p>
+          ) : (
+            <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-6 lg:grid-cols-4">
+              {products.map((product) => (
+                <li key={product.id}>
+                  <ProductCard product={product} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            basePath={categoryHref(category.slug)}
+            query={catalogQuery(listParams)}
+          />
         </div>
       </section>
 
