@@ -102,7 +102,7 @@ export function DeliveryAreaDialog({
         <ul className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-border p-2">
           {visible.map((location) => {
             const otherArea = location.areaId && location.areaId !== area?.id ? areaNames[location.areaId] : undefined;
-            const notes = [!location.covered && 'não atendido', otherArea && `hoje em ${otherArea}`].filter(Boolean);
+            const notes = otherArea ? [`hoje em ${otherArea}`] : [];
             return (
               <li key={location.id}>
                 <label className="flex items-center gap-2 py-1 text-sm">
@@ -121,8 +121,8 @@ export function DeliveryAreaDialog({
           {visible.length === 0 && <li className="py-1 text-sm text-muted-foreground">Nenhum bairro encontrado.</li>}
         </ul>
         <p className="mt-1 text-sm text-muted-foreground">
-          Marcar um bairro que está em outra área move ele pra esta. Bairro não atendido só recebe entrega depois de
-          marcado como atendido.
+          Marcar um bairro que está em outra área move ele pra esta. Os bairros marcados passam a ser atendidos, no site
+          e no bot.
         </p>
       </fieldset>
     </FormDialog>

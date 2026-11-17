@@ -1,308 +1,44 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import EntregasPage from './page';
-import { useApiClient } from '@/features/admin/lib/api-client';
+import { mockApi } from '@/features/admin/test-fixtures/mock-api';
 
 jest.mock('@/features/admin/lib/api-client');
 
 const locations = [
-  { id: 'l1', zone: 'Zona Sul', regionName: 'Ipanema', covered: true },
-  { id: 'l2', zone: 'Zona Sul', regionName: 'Copacabana', covered: false },
-  { id: 'l3', zone: 'Zona Oeste', regionName: 'Barra da Tijuca', covered: true },
+  { id: 'l1', zone: 'Zona Sul', regionName: 'Ipanema', areaId: 'a1' },
+  { id: 'l2', zone: 'Zona Sul', regionName: 'Copacabana', areaId: null },
+];
+const zoneAreas = [
+  {
+    zone: 'Zona Sul',
+    areas: [{ id: 'a1', zone: 'Zona Sul', name: 'Perto', fee: 15, locations: [{ id: 'l1', regionName: 'Ipanema' }] }],
+    unassigned: [{ id: 'l2', regionName: 'Copacabana' }],
+  },
 ];
 
-/**
- * A página também carrega as áreas de entrega (`/delivery-areas`); aqui elas
- * vêm vazias e fora do mock do teste, pra contagem e ordem das chamadas de
- * bairro continuarem as mesmas. As áreas têm testes próprios mais abaixo.
- */
-/** A lista de bairros (o bot), separada da seção de áreas, que repete os nomes das zonas. */
-function bairros() {
-  return within(screen.getByRole('region', { name: 'Bairros atendidos' }));
-}
-
-function mockClient(apiFetch: jest.Mock, areas: unknown[] = []) {
-  (useApiClient as jest.Mock).mockReturnValue({
-    apiFetch: (path: string, init?: RequestInit) =>
-      path.startsWith('/delivery-areas') && !init ? Promise.resolve(areas) : apiFetch(path, init),
-  });
-}
-
 describe('EntregasPage', () => {
-  it('shows a loading state before the locations arrive', () => {
-    const apiFetch = jest.fn().mockReturnValue(new Promise(() => {}));
-    mockClient(apiFetch);
-
+  it('shows a loading state before the data arrives', () => {
+    mockApi(() => new Promise(() => {}));
     render(<EntregasPage />);
-
-    expect(screen.getByText('Carregando...')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Locais de entrega' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
-  it('groups locations by zone', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(locations);
-    mockClient(apiFetch);
+  it('shows the delivery areas by zone, and no "Bairros atendidos" list anymore', async () => {
+    mockApi((path) => (path === '/delivery-areas' ? zoneAreas : locations));
 
     render(<EntregasPage />);
 
-    await screen.findByRole('region', { name: 'Bairros atendidos' });
-    expect(bairros().getByText('Zona Sul')).toBeInTheDocument();
-    expect(screen.getByText('Ipanema')).toBeInTheDocument();
-    expect(screen.getByText('Copacabana')).toBeInTheDocument();
-    expect(bairros().getByText('Zona Oeste')).toBeInTheDocument();
-    expect(screen.getByText('Barra da Tijuca')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Entregas' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Ver os bairros de Perto' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Bairros atendidos' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
-  it('shows an inline error when loading the locations fails', async () => {
-    const apiFetch = jest.fn().mockRejectedValue(new Error('Não foi possível carregar os locais de entrega.'));
-    mockClient(apiFetch);
+  it('shows an inline error when loading the bairros fails', async () => {
+    mockApi((path) => (path === '/delivery-areas' ? zoneAreas : Promise.reject(new Error('API fora do ar'))));
 
     render(<EntregasPage />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar os locais de entrega.');
-    expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
-  });
-
-  it('toggling a bairro calls PATCH with the flipped value', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(locations);
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Ipanema');
-
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Atendida Ipanema' }));
-
-    await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith('/delivery-locations/l1', {
-        method: 'PATCH',
-        body: JSON.stringify({ covered: false }),
-      }),
-    );
-  });
-
-  it('shows an inline error when toggling a bairro fails', async () => {
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce(locations)
-      .mockRejectedValueOnce(new Error('Erro ao atualizar local de entrega.'));
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Ipanema');
-
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Atendida Ipanema' }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao atualizar local de entrega.');
-  });
-
-  it('shows the region checkbox as checked when every bairro in it is covered', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(locations);
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Barra da Tijuca');
-
-    expect(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Oeste' })).toBeChecked();
-  });
-
-  it('shows the region checkbox as unchecked and not indeterminate when every bairro in it is not covered', async () => {
-    const apiFetch = jest.fn().mockResolvedValue([
-      { id: 'l1', zone: 'Centro', regionName: 'Lapa', covered: false },
-      { id: 'l2', zone: 'Centro', regionName: 'Saúde', covered: false },
-    ]);
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Lapa');
-
-    const checkbox = screen.getByRole('checkbox', { name: 'Marcar toda a região Centro' });
-    expect(checkbox).not.toBeChecked();
-    expect(checkbox).not.toBePartiallyChecked();
-  });
-
-  it('shows the region checkbox as indeterminate when the region has mixed coverage', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(locations);
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Ipanema');
-
-    expect(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Sul' })).toBePartiallyChecked();
-  });
-
-  it('clicking a mixed-coverage region checkbox covers every bairro that was not already covered', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(locations);
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Ipanema');
-
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Sul' }));
-
-    await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith('/delivery-locations/l2', {
-        method: 'PATCH',
-        body: JSON.stringify({ covered: true }),
-      }),
-    );
-    expect(apiFetch).not.toHaveBeenCalledWith('/delivery-locations/l1', expect.anything());
-  });
-
-  it('reloads and shows an error when part of a region batch fails', async () => {
-    // Local fixture: two bairros in the same region both need to flip, so the
-    // batch has two PATCH calls in flight -- one succeeds, one fails.
-    const zonaSul = [
-      { id: 'l1', zone: 'Zona Sul', regionName: 'Ipanema', covered: false },
-      { id: 'l2', zone: 'Zona Sul', regionName: 'Copacabana', covered: false },
-    ];
-    const apiFetch = jest
-      .fn()
-      .mockResolvedValueOnce(zonaSul) // initial load
-      .mockResolvedValueOnce(undefined) // PATCH l1 succeeds
-      .mockRejectedValueOnce(new Error('nope')) // PATCH l2 fails
-      .mockResolvedValueOnce([
-        { id: 'l1', zone: 'Zona Sul', regionName: 'Ipanema', covered: true },
-        { id: 'l2', zone: 'Zona Sul', regionName: 'Copacabana', covered: false },
-      ]); // reload reflecting the server's actual (partially-updated) state
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Ipanema');
-
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Sul' }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Erro ao atualizar a região.');
-    // the reload happened -- the list reflects the server's real (partial) state, not the stale pre-click one
-    await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Atendida Ipanema' })).toBeChecked());
-    expect(screen.getByRole('checkbox', { name: 'Atendida Copacabana' })).not.toBeChecked();
-  });
-
-  it('clicking a fully-covered region checkbox uncovers every bairro in it', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(locations);
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Barra da Tijuca');
-
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Oeste' }));
-
-    await waitFor(() =>
-      expect(apiFetch).toHaveBeenCalledWith('/delivery-locations/l3', {
-        method: 'PATCH',
-        body: JSON.stringify({ covered: false }),
-      }),
-    );
-  });
-
-  it('the "Atende" filter hides non-covered bairros without hiding their region header', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(locations);
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Ipanema');
-
-    await userEvent.click(screen.getByRole('button', { name: 'Atende' }));
-
-    expect(screen.getByText('Ipanema')).toBeInTheDocument();
-    expect(screen.queryByText('Copacabana')).not.toBeInTheDocument();
-    expect(bairros().getByText('Zona Sul')).toBeInTheDocument();
-  });
-
-  it('the "Não atende" filter can leave a region listed with an empty bairro list', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(locations);
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Barra da Tijuca');
-
-    await userEvent.click(screen.getByRole('button', { name: 'Não atende' }));
-
-    expect(bairros().getByText('Zona Oeste')).toBeInTheDocument();
-    expect(screen.queryByText('Barra da Tijuca')).not.toBeInTheDocument();
-  });
-
-  it('disables a bairro checkbox while its PATCH request is in flight', async () => {
-    let resolvePatch!: () => void;
-    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (options?.method === 'PATCH') {
-        return new Promise((resolve) => {
-          resolvePatch = () => resolve(undefined);
-        });
-      }
-      return Promise.resolve(locations);
-    });
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Ipanema');
-
-    const checkbox = screen.getByRole('checkbox', { name: 'Atendida Ipanema' });
-    await userEvent.click(checkbox);
-
-    expect(checkbox).toBeDisabled();
-    resolvePatch();
-    await waitFor(() => expect(checkbox).not.toBeDisabled());
-  });
-
-  it('keeps the new value on a bairro checkbox until the reload brings the list back', async () => {
-    let resolveReload!: () => void;
-    let loads = 0;
-    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (options?.method === 'PATCH') return Promise.resolve(undefined);
-      loads += 1;
-      if (loads === 1) return Promise.resolve(locations);
-      return new Promise((resolve) => {
-        resolveReload = () => resolve(locations.map((loc) => (loc.id === 'l1' ? { ...loc, covered: false } : loc)));
-      });
-    });
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Ipanema');
-
-    const checkbox = screen.getByRole('checkbox', { name: 'Atendida Ipanema' });
-    await userEvent.click(checkbox);
-
-    await waitFor(() => expect(loads).toBe(2));
-    expect(checkbox).not.toBeChecked();
-    expect(checkbox).toBeDisabled();
-    resolveReload();
-    await waitFor(() => expect(checkbox).not.toBeDisabled());
-    expect(checkbox).not.toBeChecked();
-  });
-
-  it('disables every bairro checkbox in a region while its batch PATCH is in flight', async () => {
-    const resolvers: Array<() => void> = [];
-    const apiFetch = jest.fn((path: string, options?: RequestInit) => {
-      if (options?.method === 'PATCH') {
-        return new Promise((resolve) => resolvers.push(() => resolve(undefined)));
-      }
-      return Promise.resolve(locations);
-    });
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Ipanema');
-
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Sul' }));
-
-    expect(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Sul' })).toBeDisabled();
-    expect(screen.getByRole('checkbox', { name: 'Atendida Copacabana' })).toBeDisabled();
-    resolvers.forEach((resolve) => resolve());
-    await waitFor(() =>
-      expect(screen.getByRole('checkbox', { name: 'Marcar toda a região Zona Sul' })).not.toBeDisabled(),
-    );
-  });
-
-  it('renders no controls to create, rename, or delete a bairro', async () => {
-    const apiFetch = jest.fn().mockResolvedValue(locations);
-    mockClient(apiFetch);
-
-    render(<EntregasPage />);
-    await screen.findByText('Ipanema');
-
-    expect(screen.queryByRole('button', { name: 'Nova região' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Excluir' })).not.toBeInTheDocument();
+    expect(await screen.findByText('API fora do ar')).toBeInTheDocument();
   });
 });

@@ -33,21 +33,20 @@ export interface DeliveryLocation {
   id: string;
   zone: string;
   regionName: string;
-  covered: boolean;
-  /** Área de entrega do site; sem área, o site não entrega no bairro. */
+  /** Área de entrega; sem área, o bairro não é atendido (nem pelo site, nem pelo bot). */
   areaId?: string | null;
 }
 
-/** Subdivisão de uma zona com valor de entrega próprio (só o site usa). */
+/** Subdivisão de uma zona com valor de entrega próprio; os bairros dela são os atendidos. */
 export interface DeliveryAreaAdmin {
   id: string;
   zone: string;
   name: string;
   fee: number;
-  locations: { id: string; regionName: string; covered: boolean }[];
+  locations: { id: string; regionName: string }[];
 }
 
-/** `GET /delivery-areas`: por zona, as áreas e os bairros atendidos sem área. */
+/** `GET /delivery-areas`: por zona, as áreas e os bairros fora de qualquer área (não atendidos). */
 export interface DeliveryZoneAreas {
   zone: string;
   areas: DeliveryAreaAdmin[];

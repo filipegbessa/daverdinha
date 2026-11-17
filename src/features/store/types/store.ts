@@ -5,7 +5,7 @@
 
 export type QuoteProblemReason = 'not_found' | 'inactive' | 'insufficient_stock';
 
-export type DeliveryUnavailableReason = 'no_cep' | 'unresolved' | 'not_covered' | 'no_area';
+export type DeliveryUnavailableReason = 'no_cep' | 'unresolved' | 'not_covered';
 
 /** `POST /checkout/quote`: preço, estoque e frete do carrinho, calculados no servidor. */
 export interface CheckoutQuote {

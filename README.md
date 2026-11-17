@@ -110,12 +110,11 @@ Categorias do catálogo (no código, `ProductCategory` / `/product-categories`).
 
 ### /admin/entregas
 
-Página para configurar quais bairros do Rio de Janeiro o bot considera atendidos.
+As áreas de entrega, que desde 2026-11-17 são a única lista que decide onde se entrega: **um bairro é atendido, no site e no bot, se está numa área**. A antiga lista "Bairros atendidos", com um checkbox por bairro, saiu.
 
-- A lista de bairros é fixa: mostra todos os bairros oficiais do Rio, agrupados por região administrativa, com dados vindos do seed do backend. O admin não pode mais criar, renomear nem excluir um bairro — só ligar/desligar a cobertura.
-- Cada bairro tem um toggle individual de atende/não atende. Cada região tem um checkbox de "marcar todos", que fica marcado se todos os bairros da região atendem, desmarcado se nenhum atende, e indeterminado se só parte atende; clicar nele liga ou desliga a região inteira de uma vez.
-- Um filtro de status ("Todas"/"Atende"/"Não atende") restringe quais bairros aparecem dentro de cada região — mas o cabeçalho da região continua visível mesmo se o filtro esconder todos os seus bairros.
-- **Áreas de entrega do site** (no topo da página, `DeliveryAreasSection`): cada região se divide em áreas com nome e valor de entrega (`/delivery-areas`). O diálogo da área tem nome, valor (máscara de centavos) e os bairros da região, com busca; marcar um bairro de outra área move ele, e bairro não atendido aparece marcado como tal. Salvar é `POST`/`PATCH` da área e depois `PUT /delivery-areas/:id/locations` com a lista inteira. Bairros atendidos sem área aparecem num aviso: o site não entrega neles. O bot não usa áreas, só a cobertura.
+- Cada região (zona) se divide em áreas com nome e valor de entrega (`/delivery-areas`); R$ 0,00 = entrega grátis (aparece como "Entrega grátis"). A lista de bairros é a oficial do Rio, fixa, vinda do seed.
+- Clicar numa área abre a lista dos bairros dela, só leitura, com busca a partir de 10 bairros e o botão "Editar área" (`DeliveryAreaLocationsDialog`).
+- O diálogo de edição tem nome, valor (máscara de centavos) e os bairros da região, com busca; marcar um bairro de outra área move ele ("hoje em Longe"). Salvar é `POST`/`PATCH` da área e depois `PUT /delivery-areas/:id/locations` com a lista inteira. Excluir uma área deixa os bairros dela sem atendimento até entrarem em outra.
 
 ### /admin/loja
 

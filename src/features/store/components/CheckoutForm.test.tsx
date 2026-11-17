@@ -301,7 +301,7 @@ describe('CheckoutForm', () => {
   it('explains when there is no delivery to the CEP and blocks the order', async () => {
     const user = userEvent.setup();
     (quoteCart as jest.Mock).mockImplementation(async (_items, cep?: string) =>
-      quote(cep ? { delivery: { available: false, reason: 'no_area', bairro: 'Gávea' } } : {}),
+      quote(cep ? { delivery: { available: false, reason: 'not_covered', bairro: 'Gávea' } } : {}),
     );
     renderCheckout();
     await screen.findByText('Total');
