@@ -1,7 +1,7 @@
 import { describeField, type FieldControl } from '@/lib/field-a11y';
 
 export const STORE_INPUT =
-  'w-full rounded-lg border border-moss-line bg-paper px-4 py-2.5 text-ink placeholder:text-ink-soft/60 focus:border-moss focus:outline-none aria-invalid:border-berry';
+  'w-full rounded-lg border border-moss-line bg-paper px-4 py-2.5 text-ink placeholder:text-ink-soft/60 focus:border-moss focus:outline-none aria-invalid:border-berry disabled:cursor-not-allowed disabled:border-sand-line disabled:bg-sand-line/60 disabled:text-ink-soft';
 
 /**
  * Rótulo + campo + dica e erro do formulário da loja. Dica e erro ficam

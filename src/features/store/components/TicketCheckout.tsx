@@ -17,6 +17,7 @@ import { QuantityStepper } from '@/features/store/components/QuantityStepper';
 import { createTicketCheckout } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
 import { maskPhone, validateCustomer, CUSTOMER_NAME_MAX, CUSTOMER_EMAIL_MAX } from '@/features/store/lib/checkout-form';
+import { formatDocument, parseDocument } from '@/features/store/lib/document';
 import {
   clampQuantity,
   isFreeEvent,
@@ -148,7 +149,7 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
         name: buyer.name.trim(),
         email: buyer.email.trim(),
         phone: onlyDigits(buyer.phone),
-        document: buyer.document.trim(),
+        document: parseDocument(buyer.document)?.value,
       },
       ...(buyer.notes.trim() && { notes: buyer.notes.trim() }),
     });
@@ -260,11 +261,12 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
               />
             </StoreField>
           </div>
-          <StoreField id="ticketBuyerDocument" label="CPF, CNPJ ou passaporte" error={errors.document}>
+          <StoreField id="ticketBuyerDocument" label="CPF ou CNPJ" error={errors.document}>
             <input
               id="ticketBuyerDocument"
               value={buyer.document}
               onChange={(e) => setBuyerField('document', e.target.value)}
+              onBlur={(e) => setBuyerField('document', formatDocument(e.target.value))}
               className={STORE_INPUT}
             />
           </StoreField>

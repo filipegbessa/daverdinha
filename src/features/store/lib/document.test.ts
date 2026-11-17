@@ -1,4 +1,4 @@
-import { parseDocument } from './document';
+import { formatDocument, parseDocument } from './document';
 
 describe('parseDocument', () => {
   it('accepts a valid CPF, with or without mask, and returns only digits', () => {
@@ -31,8 +31,31 @@ describe('parseDocument', () => {
     expect(parseDocument('AB12')).toBeNull();
   });
 
+  it('rejects a number with the wrong length for a CPF or CNPJ, instead of falling back to passport', () => {
+    expect(parseDocument('12312')).toBeNull();
+    expect(parseDocument('123456789')).toBeNull();
+  });
+
   it('rejects empty input', () => {
     expect(parseDocument('')).toBeNull();
     expect(parseDocument('   ')).toBeNull();
+  });
+});
+
+describe('formatDocument', () => {
+  it('masks 11 digits as a CPF', () => {
+    expect(formatDocument('11144477735')).toBe('111.444.777-35');
+  });
+
+  it('masks 14 digits as a CNPJ', () => {
+    expect(formatDocument('11222333000181')).toBe('11.222.333/0001-81');
+  });
+
+  it('leaves a passport (or anything else) untouched', () => {
+    expect(formatDocument('AB123456')).toBe('AB123456');
+  });
+
+  it('leaves an incomplete number untouched, so the person can keep typing', () => {
+    expect(formatDocument('111444777')).toBe('111444777');
   });
 });

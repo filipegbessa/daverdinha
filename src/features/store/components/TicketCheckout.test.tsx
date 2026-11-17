@@ -35,7 +35,7 @@ async function fillBuyer() {
   await userEvent.type(screen.getByLabelText('Seu nome'), 'Maria Souza');
   await userEvent.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
   await userEvent.type(screen.getByLabelText('WhatsApp'), '21999998888');
-  await userEvent.type(screen.getByLabelText('CPF, CNPJ ou passaporte'), '11144477735');
+  await userEvent.type(screen.getByLabelText('CPF ou CNPJ'), '11144477735');
 }
 
 describe('TicketCheckout', () => {
@@ -74,6 +74,32 @@ describe('TicketCheckout', () => {
       'event',
       'begin_checkout',
       expect.objectContaining({ value: 90, items: [expect.objectContaining({ item_id: 'e1', quantity: 2 })] }),
+    );
+  });
+
+  it('masks the CPF once the person leaves the field', async () => {
+    render(<TicketCheckout event={event} initialQuantity={1} />);
+
+    await userEvent.type(screen.getByLabelText('CPF ou CNPJ'), '11144477735');
+    await userEvent.tab();
+
+    expect(screen.getByLabelText('CPF ou CNPJ')).toHaveValue('111.444.777-35');
+  });
+
+  it('leaves the document out of the order when the field is empty', async () => {
+    create.mockResolvedValue({ ok: true, code: 'DV-0043', token: 'tok', paymentUrl: 'https://pay.test/x' });
+    render(<TicketCheckout event={event} initialQuantity={1} />);
+
+    await userEvent.type(screen.getByLabelText('Seu nome'), 'Maria Souza');
+    await userEvent.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
+    await userEvent.type(screen.getByLabelText('WhatsApp'), '21999998888');
+    await pay();
+
+    await waitFor(() => expect(create).toHaveBeenCalled());
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: { name: 'Maria Souza', email: 'maria@exemplo.com', phone: '21999998888' },
+      }),
     );
   });
 

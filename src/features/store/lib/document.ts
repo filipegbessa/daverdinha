@@ -17,8 +17,23 @@ export function parseDocument(raw: string): ParsedDocument | null {
   if (digits.length === 11) return isValidCpf(digits) ? { type: 'CPF', value: digits } : null;
   if (digits.length === 14) return isValidCnpj(digits) ? { type: 'CNPJ', value: digits } : null;
 
+  // Exige ao menos uma letra: CPF/CNPJ só têm dígito, então um número de
+  // tamanho errado (ex. "12312") não deve colar como passaporte.
   const passport = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  return /^[A-Z0-9]{5,20}$/.test(passport) ? { type: 'PASSPORT', value: passport } : null;
+  return /^(?=.*[A-Z])[A-Z0-9]{5,20}$/.test(passport) ? { type: 'PASSPORT', value: passport } : null;
+}
+
+/**
+ * Aplica a máscara de CPF ou CNPJ quando o valor já tem a quantidade certa de
+ * dígitos (11 ou 14); passaporte ou número incompleto fica como foi digitado.
+ * Pensada pro `onBlur`, não pro `onChange`: só formata depois que a pessoa
+ * termina de digitar.
+ */
+export function formatDocument(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 11) return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  if (digits.length === 14) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  return raw;
 }
 
 function isValidCpf(cpf: string): boolean {

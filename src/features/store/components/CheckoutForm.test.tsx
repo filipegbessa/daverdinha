@@ -63,7 +63,7 @@ async function fillContact(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('Nome'), 'Maria Souza');
   await user.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
   await user.type(screen.getByLabelText('WhatsApp'), '21999998888');
-  await user.type(screen.getByLabelText('CPF, CNPJ ou passaporte'), '11144477735');
+  await user.type(screen.getByLabelText('CPF ou CNPJ'), '11144477735');
 }
 
 async function fillAddress(user: ReturnType<typeof userEvent.setup>) {
@@ -109,10 +109,21 @@ describe('CheckoutForm', () => {
 
     expect(await screen.findByLabelText('Rua')).toHaveValue('Rua do Catete');
     expect(fetchStreetByCep).toHaveBeenCalledWith('22220000');
-    expect(screen.getByLabelText('Rua')).toHaveAttribute('readonly');
+    expect(screen.getByLabelText('Rua')).toBeDisabled();
+  });
 
-    await user.type(screen.getByLabelText('Rua'), 'outra coisa');
-    expect(screen.getByLabelText('Rua')).toHaveValue('Rua do Catete');
+  it('hides the address fields until the CEP is known to be deliverable', async () => {
+    const user = userEvent.setup();
+    renderCheckout();
+    await screen.findByText('Total');
+
+    expect(screen.queryByLabelText('Rua')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Número')).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('CEP'), '22220000');
+
+    expect(await screen.findByLabelText('Rua')).toBeInTheDocument();
+    expect(screen.getByLabelText('Número')).toBeInTheDocument();
   });
 
   it('shows an error when the street for the CEP cannot be found', async () => {
@@ -169,6 +180,37 @@ describe('CheckoutForm', () => {
     expect(readCart()).toEqual([]);
   });
 
+  it('masks the CPF once the person leaves the field', async () => {
+    const user = userEvent.setup();
+    renderCheckout();
+    await screen.findByText('Total');
+
+    await user.type(screen.getByLabelText('CPF ou CNPJ'), '11144477735');
+    await user.tab();
+
+    expect(screen.getByLabelText('CPF ou CNPJ')).toHaveValue('111.444.777-35');
+  });
+
+  it('leaves the document out of the order when the field is empty', async () => {
+    const user = userEvent.setup();
+    (createCheckout as jest.Mock).mockResolvedValue({ ok: true, code: 'DV-0001', token: 't', paymentUrl: 'https://pagar.me/x' });
+    renderCheckout();
+    await screen.findByText('Total');
+
+    await user.click(screen.getByRole('radio', { name: /Retirar no ateliê/ }));
+    await user.type(screen.getByLabelText('Nome'), 'Maria Souza');
+    await user.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
+    await user.type(screen.getByLabelText('WhatsApp'), '21999998888');
+    await user.click(screen.getByRole('checkbox', { name: /política de trocas/ }));
+    await user.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
+
+    expect(createCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: { name: 'Maria Souza', email: 'maria@exemplo.com', phone: '21999998888' },
+      }),
+    );
+  });
+
   it('picks up at the atelier without asking for an address', async () => {
     const user = userEvent.setup();
     (createCheckout as jest.Mock).mockResolvedValue({ ok: true, code: 'DV-0002', token: 't', paymentUrl: 'https://pay' });
@@ -205,9 +247,10 @@ describe('CheckoutForm', () => {
     await screen.findByText('Total');
 
     await fillContact(user);
-    await fillAddress(user);
+    await user.type(screen.getByLabelText('CEP'), '22220000');
     expect(await screen.findByText(/Ainda não entregamos em Gávea pelo site/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Falar no WhatsApp' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Rua')).not.toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: /política de trocas/ }));
     await user.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
 

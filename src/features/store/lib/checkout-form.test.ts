@@ -71,7 +71,12 @@ describe('validateCheckout', () => {
     expect(validateCheckout({ ...valid, document: '11.222.333/0001-81' })).toEqual({});
     expect(validateCheckout({ ...valid, document: 'AB123456' })).toEqual({});
     expect(validateCheckout({ ...valid, document: '123' })).toEqual({
-      document: 'Informe um CPF, CNPJ ou passaporte válido.',
+      document: 'Informe um CPF ou CNPJ válido.',
     });
+  });
+
+  it('leaves the document optional: the Pagar.me checkout asks for it when it is missing', () => {
+    expect(validateCheckout({ ...valid, document: '' })).toEqual({});
+    expect(validateCheckout({ ...valid, document: '   ' })).toEqual({});
   });
 });

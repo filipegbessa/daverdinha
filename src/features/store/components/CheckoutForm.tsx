@@ -12,6 +12,7 @@ import { STORE_INPUT, StoreField } from '@/features/store/components/StoreField'
 import { createCheckout, quoteCart } from '@/features/store/lib/store-api';
 import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
 import { fetchStreetByCep } from '@/features/store/lib/address-by-cep';
+import { formatDocument, parseDocument } from '@/features/store/lib/document';
 import { RETURNS_HREF } from '@/features/site/lib/paths';
 import {
   maskPhone,
@@ -169,7 +170,7 @@ export function CheckoutForm() {
         name: values.name.trim(),
         email: values.email.trim(),
         phone: onlyDigits(values.phone),
-        document: values.document.trim(),
+        document: parseDocument(values.document)?.value,
       },
       deliveryMethod: values.deliveryMethod,
       ...(isDelivery && {
@@ -246,11 +247,12 @@ export function CheckoutForm() {
               />
             </StoreField>
           </div>
-          <StoreField id="checkoutDocument" label="CPF, CNPJ ou passaporte" error={errors.document}>
+          <StoreField id="checkoutDocument" label="CPF ou CNPJ" error={errors.document}>
             <input
               id="checkoutDocument"
               value={values.document}
               onChange={(e) => set('document', e.target.value)}
+              onBlur={(e) => set('document', formatDocument(e.target.value))}
               className={STORE_INPUT}
             />
           </StoreField>
@@ -333,40 +335,44 @@ export function CheckoutForm() {
                   )}
                 </div>
               </div>
-              <StoreField
-                id="checkoutStreet"
-                label="Rua"
-                hint={addressLoading ? 'Buscando endereço...' : undefined}
-                error={errors.street}
-              >
-                <input
-                  id="checkoutStreet"
-                  autoComplete="address-line1"
-                  value={values.street}
-                  readOnly
-                  placeholder="Preenchido pelo CEP"
-                  className={STORE_INPUT}
-                />
-              </StoreField>
-              <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
-                <StoreField id="checkoutNumber" label="Número" error={errors.number}>
-                  <input
-                    id="checkoutNumber"
-                    value={values.number}
-                    onChange={(e) => set('number', e.target.value)}
-                    className={STORE_INPUT}
-                  />
-                </StoreField>
-                <StoreField id="checkoutComplement" label="Complemento (opcional)">
-                  <input
-                    id="checkoutComplement"
-                    autoComplete="address-line2"
-                    value={values.complement}
-                    onChange={(e) => set('complement', e.target.value)}
-                    className={STORE_INPUT}
-                  />
-                </StoreField>
-              </div>
+              {delivery?.available && (
+                <>
+                  <StoreField
+                    id="checkoutStreet"
+                    label="Rua"
+                    hint={addressLoading ? 'Buscando endereço...' : undefined}
+                    error={errors.street}
+                  >
+                    <input
+                      id="checkoutStreet"
+                      autoComplete="address-line1"
+                      value={values.street}
+                      disabled
+                      placeholder="Preenchido pelo CEP"
+                      className={STORE_INPUT}
+                    />
+                  </StoreField>
+                  <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
+                    <StoreField id="checkoutNumber" label="Número" error={errors.number}>
+                      <input
+                        id="checkoutNumber"
+                        value={values.number}
+                        onChange={(e) => set('number', e.target.value)}
+                        className={STORE_INPUT}
+                      />
+                    </StoreField>
+                    <StoreField id="checkoutComplement" label="Complemento (opcional)">
+                      <input
+                        id="checkoutComplement"
+                        autoComplete="address-line2"
+                        value={values.complement}
+                        onChange={(e) => set('complement', e.target.value)}
+                        className={STORE_INPUT}
+                      />
+                    </StoreField>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

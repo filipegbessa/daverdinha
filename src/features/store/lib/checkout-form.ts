@@ -58,7 +58,9 @@ export function validateCustomer(values: Pick<CheckoutFormValues, 'name' | 'emai
   else if (!EMAIL.test(email)) errors.email = 'Informe um e-mail válido.';
   const phone = onlyDigits(values.phone);
   if (phone.length < 10 || phone.length > 11) errors.phone = 'Informe um WhatsApp com DDD.';
-  if (!parseDocument(values.document)) errors.document = 'Informe um CPF, CNPJ ou passaporte válido.';
+  // Opcional: sem ele, o comprador preenche na própria página do Pagar.me.
+  const document = values.document.trim();
+  if (document && !parseDocument(document)) errors.document = 'Informe um CPF ou CNPJ válido.';
   return errors;
 }
 
