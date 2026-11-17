@@ -16,6 +16,7 @@ import { ProductGallery } from '@/features/site/components/ProductGallery';
 import { isSample } from '@/features/site/data/samples';
 import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
 import { formatPrice } from '@/lib/format';
+import { ProductPrice } from '@/features/site/components/ProductPrice';
 import { categoryHref, PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
 import { getActiveProductBySlug, getFeaturedProducts } from '@/features/site/lib/public-api';
 import { pageMetadata } from '@/features/site/lib/seo';
@@ -85,7 +86,7 @@ export default async function ProductPage({ params }: Props) {
               <h1 className="mt-2 font-serif text-3xl font-semibold text-balance text-ink md:text-4xl">
                 {product.name}
               </h1>
-              <p className="mt-3 text-2xl font-semibold text-moss tabular-nums">{formatPrice(product.price)}</p>
+              <ProductPrice product={product} size="lg" className="mt-3" />
               <div className="mt-3">
                 <AvailabilityBadge product={product} detailed />
               </div>

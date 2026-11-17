@@ -163,6 +163,11 @@ export default function ProdutosPage() {
                       Destaque
                     </Badge>
                   )}
+                  {product.listPrice != null && (
+                    <Badge size="sm" className="ml-2">
+                      Em promoção
+                    </Badge>
+                  )}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {product.category.name} · {formatCurrency(product.price, 'BRL')}

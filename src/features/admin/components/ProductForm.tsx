@@ -8,6 +8,7 @@ import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { formatCurrency } from '@/lib/format';
 import { centsFromInput } from '@/features/admin/lib/currency-input';
+import { fromDatetimeLocal, toDatetimeLocal } from '@/features/admin/lib/datetime-local';
 import { FormField, SwitchField } from '@/features/admin/components/FormField';
 import { FormCard } from '@/features/admin/components/FormCard';
 import { ProductImagesInput } from '@/features/admin/components/ProductImagesInput';
@@ -22,6 +23,12 @@ interface Values {
   name: string;
   description: string;
   priceCents: number;
+  /** `null` = sem promoção. */
+  promoCents: number | null;
+  /** Promoção com início e/ou fim; os horários são do Rio (`datetime-local`). */
+  scheduled: boolean;
+  promoStart: string;
+  promoEnd: string;
   categoryId: string;
   active: boolean;
   featured: boolean;
@@ -34,7 +41,12 @@ function valuesOf(product: Partial<ProductAdmin> | null, categories: ProductCate
   return {
     name: product?.name ?? '',
     description: product?.description ?? '',
-    priceCents: Math.round((product?.price ?? 0) * 100),
+    // O preço cheio: com promoção valendo, `price` já é o promocional.
+    priceCents: Math.round((product?.regularPrice ?? product?.price ?? 0) * 100),
+    promoCents: product?.promoPrice == null ? null : Math.round(product.promoPrice * 100),
+    scheduled: Boolean(product?.promoStartsAt || product?.promoEndsAt),
+    promoStart: product?.promoStartsAt ? toDatetimeLocal(product.promoStartsAt) : '',
+    promoEnd: product?.promoEndsAt ? toDatetimeLocal(product.promoEndsAt) : '',
     categoryId: product?.categoryId ?? categories[0]?.id ?? '',
     active: product?.active ?? true,
     featured: product?.featured ?? false,
@@ -80,7 +92,12 @@ export function ProductForm({
   const [baseline, setBaseline] = useState(() => valuesOf(product ?? initial ?? null, categories));
   const [values, setValues] = useState(baseline);
   const [files, setFiles] = useState<File[]>([]);
-  const [fieldErrors, setFieldErrors] = useState<{ stock?: string; leadTimeDays?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{
+    stock?: string;
+    leadTimeDays?: string;
+    promo?: string;
+    promoEnd?: string;
+  }>({});
   const [savedNotice, setSavedNotice] = useState<string | null>(notice ?? null);
 
   const dirty = useMemo(
@@ -108,8 +125,14 @@ export function ProductForm({
     setValues((prev) => ({ ...prev, [key]: value }));
   }
 
-  function validateStock() {
+  function validate() {
     const errors: typeof fieldErrors = {};
+    if (values.promoCents !== null && values.promoCents >= values.priceCents) {
+      errors.promo = 'O preço promocional precisa ser menor que o preço.';
+    }
+    if (values.scheduled && values.promoStart && values.promoEnd && values.promoEnd <= values.promoStart) {
+      errors.promoEnd = 'O fim precisa ser depois do início.';
+    }
     if (values.madeToOrder) {
       const days = Number(values.leadTimeDays);
       if (values.leadTimeDays === '' || !Number.isInteger(days) || days < 1 || days > MAX_LEAD_TIME_DAYS) {
@@ -127,11 +150,15 @@ export function ProductForm({
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!validateStock()) return;
+    if (!validate()) return;
     const form = new FormData();
     form.append('name', values.name.trim());
     form.append('description', values.description.trim());
     form.append('price', (values.priceCents / 100).toFixed(2));
+    // Vazio limpa: sem promoção, ou promoção sem data.
+    form.append('promoPrice', values.promoCents === null ? '' : (values.promoCents / 100).toFixed(2));
+    form.append('promoStartsAt', (values.scheduled && fromDatetimeLocal(values.promoStart)) || '');
+    form.append('promoEndsAt', (values.scheduled && fromDatetimeLocal(values.promoEnd)) || '');
     form.append('categoryId', values.categoryId);
     form.append('active', String(values.active));
     form.append('featured', String(values.featured));
@@ -206,16 +233,101 @@ export function ProductForm({
           </FormCard>
 
           <FormCard title="Preço">
-            <FormField id="productPrice" label="Preço (R$)">
-              <Input
-                id="productPrice"
-                ref={priceInputRef}
-                inputMode="numeric"
-                value={formatCurrency(values.priceCents / 100, 'BRL')}
-                onChange={(e) => set('priceCents', centsFromInput(e.target.value))}
-                className="max-w-48"
-              />
-            </FormField>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField id="productPrice" label="Preço (R$)">
+                <Input
+                  id="productPrice"
+                  ref={priceInputRef}
+                  inputMode="numeric"
+                  value={formatCurrency(values.priceCents / 100, 'BRL')}
+                  onChange={(e) => set('priceCents', centsFromInput(e.target.value))}
+                />
+              </FormField>
+              <FormField
+                id="productPromoPrice"
+                label="Preço promocional (opcional)"
+                hint={
+                  values.promoCents !== null && values.promoCents < values.priceCents && values.priceCents > 0
+                    ? `O site mostra "de ${formatCurrency(values.priceCents / 100, 'BRL')} por ${formatCurrency(
+                        values.promoCents / 100,
+                        'BRL',
+                      )}", ${Math.round((1 - values.promoCents / values.priceCents) * 100)}% de desconto.`
+                    : 'Vazio = sem promoção.'
+                }
+                error={fieldErrors.promo}
+              >
+                <Input
+                  id="productPromoPrice"
+                  inputMode="numeric"
+                  placeholder="Sem promoção"
+                  value={values.promoCents === null ? '' : formatCurrency(values.promoCents / 100, 'BRL')}
+                  onChange={(e) => {
+                    const cents = centsFromInput(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, promo: undefined }));
+                    set('promoCents', cents > 0 ? cents : null);
+                  }}
+                />
+              </FormField>
+            </div>
+            {values.promoCents !== null && (
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={values.scheduled}
+                    onChange={(e) => set('scheduled', e.target.checked)}
+                    className="h-4 w-4 accent-primary"
+                  />
+                  Agendar a promoção
+                </label>
+                {values.scheduled && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField id="productPromoStart" label="Começa em" hint="Vazio = já vale. Horário do Rio.">
+                      <Input
+                        id="productPromoStart"
+                        type="datetime-local"
+                        value={values.promoStart}
+                        onChange={(e) => set('promoStart', e.target.value)}
+                      />
+                    </FormField>
+                    <FormField
+                      id="productPromoEnd"
+                      label="Termina em"
+                      hint="Vazio = até você tirar."
+                      error={fieldErrors.promoEnd}
+                    >
+                      <Input
+                        id="productPromoEnd"
+                        type="datetime-local"
+                        value={values.promoEnd}
+                        onChange={(e) => {
+                          setFieldErrors((prev) => ({ ...prev, promoEnd: undefined }));
+                          set('promoEnd', e.target.value);
+                        }}
+                      />
+                    </FormField>
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFieldErrors((prev) => ({ ...prev, promo: undefined, promoEnd: undefined }));
+                    setValues((prev) => ({
+                      ...prev,
+                      promoCents: null,
+                      scheduled: false,
+                      promoStart: '',
+                      promoEnd: '',
+                    }));
+                    setSavedNotice(null);
+                  }}
+                >
+                  Tirar a promoção
+                </Button>
+              </div>
+            )}
           </FormCard>
 
           <FormCard title="Estoque e prazo">
@@ -315,7 +427,14 @@ export function ProductForm({
               <div className="space-y-0.5 p-3">
                 <p className="text-xs text-muted-foreground">{category?.name ?? 'Sem categoria'}</p>
                 <p className="font-medium">{values.name.trim() || 'Nome do produto'}</p>
-                <p className="text-sm tabular-nums">{formatCurrency(values.priceCents / 100, 'BRL')}</p>
+                {values.promoCents !== null && values.promoCents < values.priceCents ? (
+                  <p className="text-sm tabular-nums">
+                    <s className="text-muted-foreground">{formatCurrency(values.priceCents / 100, 'BRL')}</s>{' '}
+                    {formatCurrency(values.promoCents / 100, 'BRL')}
+                  </p>
+                ) : (
+                  <p className="text-sm tabular-nums">{formatCurrency(values.priceCents / 100, 'BRL')}</p>
+                )}
               </div>
             </div>
           </FormCard>

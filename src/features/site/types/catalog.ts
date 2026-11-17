@@ -16,7 +16,10 @@ export interface Product {
   name: string;
   slug: string;
   description: string;
+  /** O preço que vale agora (o promocional, com promoção valendo). */
   price: number;
+  /** O preço cheio, o "de" riscado; só com promoção valendo. */
+  listPrice?: number | null;
   /** A primeira é a capa. Pode vir vazia: o card cai no `ImagePlaceholder`. */
   images: string[];
   category: Pick<ProductCategory, 'id' | 'name' | 'slug'>;

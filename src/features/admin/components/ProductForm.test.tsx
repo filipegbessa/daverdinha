@@ -77,6 +77,9 @@ describe('ProductForm', () => {
       name: 'Kit Suculentas',
       description: 'Três mudas.',
       price: '59.90',
+      promoPrice: '',
+      promoStartsAt: '',
+      promoEndsAt: '',
       categoryId: 'cat2',
       active: 'true',
       featured: 'true',
@@ -233,5 +236,58 @@ describe('ProductForm', () => {
     expect(screen.getByLabelText('Nome')).toHaveValue('Vaso M (cópia)');
     expect(screen.getByRole('switch', { name: 'Aparece no site' })).not.toBeChecked();
     expect(screen.getByLabelText('Estoque')).toHaveValue(3);
+  });
+
+  describe('promo price', () => {
+    it('sends a scheduled promo, with the times in Rio as UTC', async () => {
+      const apiFetch = mockSave();
+      render(<ProductForm product={vaso} categories={categories} onSaved={jest.fn()} />);
+
+      await userEvent.type(screen.getByLabelText('Preço promocional (opcional)'), '6990');
+      expect(screen.getByText(/de R\$ 89,90 por R\$ 69,90", 22% de desconto/)).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('checkbox', { name: 'Agendar a promoção' }));
+      await userEvent.type(screen.getByLabelText('Começa em'), '2026-12-01T00:00');
+      await userEvent.type(screen.getByLabelText('Termina em'), '2026-12-08T00:00');
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      const { fields } = sentForm(apiFetch);
+      expect(fields).toMatchObject({
+        price: '89.90',
+        promoPrice: '69.90',
+        promoStartsAt: '2026-12-01T03:00:00.000Z',
+        promoEndsAt: '2026-12-08T03:00:00.000Z',
+      });
+    });
+
+    it('does not save a promo price that is not below the price', async () => {
+      const apiFetch = mockSave();
+      render(<ProductForm product={vaso} categories={categories} onSaved={jest.fn()} />);
+
+      await userEvent.type(screen.getByLabelText('Preço promocional (opcional)'), '9990');
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      expect(apiFetch).not.toHaveBeenCalled();
+      expect(screen.getByLabelText('Preço promocional (opcional)')).toHaveAccessibleDescription(
+        expect.stringContaining('O preço promocional precisa ser menor que o preço.'),
+      );
+    });
+
+    it('edits the full price of a product on sale and can take the promo out', async () => {
+      const apiFetch = mockSave();
+      render(
+        <ProductForm
+          product={{ ...vaso, price: 69.9, listPrice: 89.9, regularPrice: 89.9, promoPrice: 69.9 }}
+          categories={categories}
+          onSaved={jest.fn()}
+        />,
+      );
+
+      expect(screen.getByLabelText('Preço (R$)')).toHaveValue('R$ 89,90');
+      expect(screen.getByLabelText('Preço promocional (opcional)')).toHaveValue('R$ 69,90');
+      await userEvent.click(screen.getByRole('button', { name: 'Tirar a promoção' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      expect(sentForm(apiFetch).fields).toMatchObject({ price: '89.90', promoPrice: '' });
+    });
   });
 });

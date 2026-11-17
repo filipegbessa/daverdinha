@@ -118,7 +118,16 @@ export interface ProductAdmin {
   name: string;
   slug: string;
   description: string;
+  /** O preço que vale agora (o promocional, com promoção valendo). */
   price: number;
+  /** O preço cheio, só com promoção valendo agora. */
+  listPrice?: number | null;
+  /** O preço cheio cadastrado, com ou sem promoção. É ele que o formulário edita. */
+  regularPrice?: number;
+  /** A promoção como está salva (valendo agora ou não). Datas em ISO. */
+  promoPrice?: number | null;
+  promoStartsAt?: string | null;
+  promoEndsAt?: string | null;
   /** URLs públicas do Vercel Blob; a primeira é a capa. */
   images: string[];
   categoryId: string;

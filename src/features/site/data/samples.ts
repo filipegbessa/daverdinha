@@ -74,7 +74,9 @@ export const SAMPLE_PRODUCTS: Product[] = [
     name: 'Vaso Pintado Folhagem',
     slug: 'vaso-pintado-folhagem',
     description: 'Cerâmica de 14 cm pintada à mão no ateliê. Cada peça sai um pouco diferente da outra.',
-    price: 119,
+    // Em promoção, como no seed da API, pra a prévia mostrar o "de/por".
+    price: 99,
+    listPrice: 119,
     images: [],
     category: category('vasos'),
     availability: 'in_stock',
