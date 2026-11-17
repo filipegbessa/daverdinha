@@ -321,3 +321,17 @@ export interface CouponAdmin {
   reserved: number;
   createdAt: string;
 }
+
+/** `GET /shipping-promotions`: frete grátis automático ("Promoções → Automáticas"). */
+export interface ShippingPromotionAdmin {
+  id: string;
+  name: string | null;
+  /** A partir de quanto (itens, já descontado o cupom). */
+  minSubtotal: number;
+  /** Vazio = todas as áreas de entrega. */
+  areaIds: string[];
+  startsAt: string | null;
+  endsAt: string | null;
+  active: boolean;
+  createdAt: string;
+}

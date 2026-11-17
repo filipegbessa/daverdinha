@@ -85,11 +85,56 @@ describe('/admin/promocoes', () => {
     });
   });
 
-  it('explains the automatic promotions tab', async () => {
-    mockApi(() => paginated([]));
+  it('creates an automatic free shipping for some delivery areas', async () => {
+    const apiFetch = mockApi((path, init) => {
+      if (init?.method === 'POST') return {};
+      if (path === '/shipping-promotions') return [];
+      if (path === '/delivery-areas')
+        return [
+          {
+            zone: 'Zona Sul',
+            areas: [{ id: 'a1', zone: 'Zona Sul', name: 'Perto', fee: 15, locations: [] }],
+            unassigned: [],
+          },
+        ];
+      return paginated([]);
+    });
     render(<PromocoesPage />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Automáticas' }));
-    expect(screen.getByText(/frete grátis acima de um valor/)).toBeInTheDocument();
+    expect(await screen.findByText('Nenhuma promoção automática ainda.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Novo frete grátis' }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByLabelText('Frete grátis a partir de'), '20000');
+    await userEvent.click(await within(dialog).findByRole('checkbox', { name: /Perto/ }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
+
+    const body = JSON.parse(String(apiFetch.mock.calls.find(([, i]) => i?.method === 'POST')?.[1]?.body));
+    expect(body).toMatchObject({ minSubtotal: 200, areaIds: ['a1'], active: true });
+  });
+
+  it('lists the automatic promotions with their areas', async () => {
+    mockApi((path) => {
+      if (path === '/shipping-promotions')
+        return [
+          {
+            id: 'sp1',
+            name: null,
+            minSubtotal: 250,
+            areaIds: [],
+            startsAt: null,
+            endsAt: null,
+            active: true,
+            createdAt: '',
+          },
+        ];
+      if (path === '/delivery-areas') return [];
+      return paginated([]);
+    });
+    render(<PromocoesPage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Automáticas' }));
+    expect(await screen.findByText(/Frete grátis acima de R\$ 250,00/)).toBeInTheDocument();
+    expect(screen.getByText('Todas as áreas de entrega')).toBeInTheDocument();
   });
 });

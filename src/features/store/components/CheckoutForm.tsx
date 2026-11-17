@@ -14,6 +14,7 @@ import { redirectToPayment } from '@/features/store/lib/redirect-to-payment';
 import { clearBuyer, readBuyer, saveBuyer } from '@/features/store/lib/buyer-storage';
 import { readSavedCoupon, saveCoupon } from '@/features/store/lib/coupon-storage';
 import { RedirectingToPayment } from '@/features/store/components/RedirectingToPayment';
+import { FreeShippingProgress } from '@/features/store/components/FreeShippingProgress';
 import { fetchStreetByCep } from '@/features/store/lib/address-by-cep';
 import { RETURNS_HREF } from '@/features/site/lib/paths';
 import {
@@ -196,7 +197,9 @@ export function CheckoutForm() {
   const validCoupon = coupon && !('error' in coupon) ? coupon : null;
   const couponError = coupon && 'error' in coupon ? coupon.error : null;
   const discount = validCoupon?.discount ?? 0;
-  const freeShipping = Boolean(validCoupon?.freeShipping);
+  // Frete grátis pelo cupom ou pela promoção automática (Promoções).
+  const promoFreeShipping = Boolean(quote?.freeShipping?.reached);
+  const freeShipping = Boolean(validCoupon?.freeShipping) || promoFreeShipping;
   const fee = isDelivery && delivery?.available && !freeShipping ? delivery.fee : 0;
   const problems = quote?.problems ?? [];
   const maxLeadTime = Math.max(0, ...(quote?.items.map((i) => i.leadTimeDays ?? 0) ?? []));
@@ -574,6 +577,9 @@ export function CheckoutForm() {
                 </StoreField>
               )}
             </div>
+            {isDelivery && quote.freeShipping && !validCoupon?.freeShipping && (
+              <FreeShippingProgress freeShipping={quote.freeShipping} />
+            )}
             <div className="space-y-1 border-t border-sand-line pt-3">
               <p className="flex justify-between">
                 <span>Subtotal</span>
@@ -592,7 +598,9 @@ export function CheckoutForm() {
                     ? '—'
                     : fee === 0
                       ? freeShipping && isDelivery
-                        ? 'Grátis (cupom)'
+                        ? validCoupon?.freeShipping
+                          ? 'Grátis (cupom)'
+                          : 'Grátis (promoção)'
                         : 'Grátis'
                       : formatPrice(fee)}
                 </span>

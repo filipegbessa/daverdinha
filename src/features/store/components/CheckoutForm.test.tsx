@@ -350,6 +350,24 @@ describe('CheckoutForm', () => {
       expect(screen.queryByText(/^Cupom VELHO$/)).not.toBeInTheDocument();
     });
 
+    it('shows how much is missing for the automatic free shipping, and gives it when reached', async () => {
+      const user = userEvent.setup();
+      let reached = false;
+      (quoteCart as jest.Mock).mockImplementation(async (_items, cep?: string) => ({
+        ...(cep ? covered : quote()),
+        freeShipping: { minSubtotal: 100, remaining: reached ? 0 : 10.1, reached },
+      }));
+      renderCheckout();
+      await screen.findByText('Total');
+
+      expect(screen.getByText(/Faltam/)).toHaveTextContent('Faltam R$ 10,10 para frete grátis');
+      reached = true;
+      await fillAddress(user);
+      expect(await screen.findByText('Grátis (promoção)')).toBeInTheDocument();
+      expect(screen.getByText('Você ganhou frete grátis!')).toBeInTheDocument();
+      expect(screen.getByText('Total').parentElement).toHaveTextContent('R$ 89,90');
+    });
+
     it('shows free shipping from a coupon', async () => {
       const user = userEvent.setup();
       (quoteCart as jest.Mock).mockImplementation(async (_items, cep?: string, couponCode?: string) => ({

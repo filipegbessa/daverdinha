@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/format';
 import { PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useCart } from '@/features/store/components/CartProvider';
+import { FreeShippingProgress } from '@/features/store/components/FreeShippingProgress';
 import { MAX_ITEM_QUANTITY, type CartItem } from '@/features/store/lib/cart-storage';
 import { quoteCart } from '@/features/store/lib/store-api';
 import type { CheckoutQuote } from '@/features/store/types/store';
@@ -164,6 +165,7 @@ export function CartView() {
             <span className="font-semibold tabular-nums">{current ? formatPrice(current.subtotal) : '—'}</span>
           </p>
           <p className="text-sm text-ink-soft">Frete calculado no próximo passo.</p>
+          {current?.freeShipping && <FreeShippingProgress freeShipping={current.freeShipping} />}
           {current && current.installments > 1 && (
             <p className="text-sm text-ink-soft">Pix ou cartão em até {current.installments}x sem juros.</p>
           )}

@@ -33,6 +33,11 @@ export interface CheckoutQuote {
    * não vale. Sem cupom, `null` (ou ausente, na prévia).
    */
   coupon?: CouponQuote | null;
+  /**
+   * Frete grátis automático: a partir de quanto (pra área do CEP; sem CEP, só
+   * o que vale em todas), quanto falta e se já chegou. `null` = nenhuma promoção.
+   */
+  freeShipping?: { minSubtotal: number; remaining: number; reached: boolean } | null;
 }
 
 export type CouponQuote = { code: string; discount: number; freeShipping: boolean } | { code: string; error: string };

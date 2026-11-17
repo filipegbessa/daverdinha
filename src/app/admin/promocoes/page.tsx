@@ -15,6 +15,7 @@ import { TablePagination } from '@/features/admin/components/TablePagination';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { ToggleButton } from '@/features/admin/components/ToggleButton';
 import { CouponDialog } from '@/features/admin/components/CouponDialog';
+import { ShippingPromotionsTab } from '@/features/admin/components/ShippingPromotionsTab';
 import { COUPON_STATUS_LABELS, couponBenefit, couponScope, couponStatus } from '@/features/admin/lib/coupon-text';
 import type { CouponAdmin } from '@/features/admin/types/admin';
 
@@ -31,8 +32,8 @@ function usesText(coupon: CouponAdmin): string {
 
 /**
  * Promoções da loja: cupons (com código, que a cliente divulga) e, na outra
- * aba, as promoções automáticas (sem código; o frete grátis acima de um valor
- * entra no pacote 4.1). Um cupom já usado não some ao excluir: é desativado.
+ * aba, as promoções automáticas (sem código: frete grátis acima de um valor).
+ * Um cupom já usado não some ao excluir: é desativado.
  */
 export default function PromocoesPage() {
   const { apiFetch } = useApiClient();
@@ -71,11 +72,7 @@ export default function PromocoesPage() {
       </div>
 
       {tab === 'automatic' ? (
-        <p className="mt-6 max-w-xl text-sm text-muted-foreground">
-          Promoções sem código, que valem pra todo mundo que cumpre a regra. A primeira será o frete grátis acima de um
-          valor, escolhendo as áreas de entrega. Enquanto isso, uma área de entrega com valor R$ 0,00 já é entrega
-          grátis, e um cupom de frete grátis com pedido mínimo faz o mesmo papel.
-        </p>
+        <ShippingPromotionsTab />
       ) : (
         <>
           <FilterBar values={filters} defaults={DEFAULT_FILTERS} onChange={setFilters}>
