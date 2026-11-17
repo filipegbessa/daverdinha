@@ -61,6 +61,7 @@ describe('AdminLayout', () => {
 
     expect(linksOf('Loja')).toEqual([
       'Pedidos',
+      'Clientes',
       'Produtos',
       'Categorias',
       'Entregas',

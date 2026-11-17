@@ -127,6 +127,12 @@ As áreas de entrega, que desde 2026-11-17 são a única lista que decide onde s
 - Clicar numa área abre a lista dos bairros dela, só leitura, com busca a partir de 10 bairros e o botão "Editar área" (`DeliveryAreaLocationsDialog`).
 - O diálogo de edição tem nome, valor (máscara de centavos) e os bairros da região, com busca; marcar um bairro de outra área move ele ("hoje em Longe"). Salvar é `POST`/`PATCH` da área e depois `PUT /delivery-areas/:id/locations` com a lista inteira. Excluir uma área deixa os bairros dela sem atendimento até entrarem em outra.
 
+### /admin/clientes
+
+Quem já comprou no site (`GET /customers`): pedidos pagos agrupados por e-mail, com nº de pedidos, total gasto e última compra. Busca por nome, e-mail ou telefone e ordena por compra recente, por quem gastou mais ou por nº de pedidos. "Pedidos" abre `/admin/pedidos?q=<e-mail>` (a lista de pedidos lê o `?q=` ao abrir), e "Conversa" aparece quando há conversa do WhatsApp com o mesmo telefone.
+
+O `CustomerSummary` (`GET /customers/by-phone`) liga as duas pontas: na **conversa**, uma faixa "Cliente da loja" com o resumo e os últimos pedidos; no **pedido**, o resumo e o botão "Abrir conversa". Sem pedido nem conversa, ou com erro, não aparece nada: é um extra da tela.
+
 ### /admin/promocoes
 
 "Promoções" no grupo Loja. Aba **Cupons**: lista paginada com busca por código, situação (ativo, agendado, expirado, esgotado, desativado), benefício, onde vale e usos ("3 de 50 usos (+1 em pedido pendente)"). O formulário (`CouponDialog`) segue a ordem de quem cadastra: código (com "Gerar"), descrição interna, benefício (porcentagem com teto opcional, valor fixo ou frete grátis), onde vale (todo o pedido, categorias, produtos com busca, ou ingressos de eventos), pedido mínimo, limite de usos, validade e ativo, com a frase da prévia embaixo ("VASOS15: 15% de desconto, nos produtos da categoria Vasos, acima de R$ 100,00."). Excluir um cupom já usado só o desativa. Aba **Automáticas** (`ShippingPromotionsTab`): frete grátis acima de um valor, sem código, com as áreas de entrega onde vale (nenhuma = todas), validade e ativo. O carrinho e o checkout mostram "Faltam R$ X para frete grátis" com a barrinha de progresso (`FreeShippingProgress`) e, ao chegar, "Você ganhou frete grátis!"; o resumo do checkout mostra "Grátis (promoção)".

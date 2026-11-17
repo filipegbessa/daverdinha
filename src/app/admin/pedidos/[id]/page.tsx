@@ -24,6 +24,7 @@ import { Badge } from '@/features/admin/components/Badge';
 import { BusyRegion, ErrorAlert, ErrorText, LoadingState } from '@/features/admin/components/StatusMessage';
 import type { FulfillmentStatus, SiteOrderAdmin } from '@/features/admin/types/admin';
 import { SectionLabel } from '@/features/admin/components/SectionLabel';
+import { CustomerSummary } from '@/features/admin/components/CustomerSummary';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -146,6 +147,7 @@ export default function PedidoPage() {
               {order.customer.email}
             </a>
           </p>
+          <CustomerSummary phone={order.customer.phone} variant="order" currentOrderId={order.id} />
         </Section>
 
         {tickets ? (

@@ -335,3 +335,33 @@ export interface ShippingPromotionAdmin {
   active: boolean;
   createdAt: string;
 }
+
+/** `GET /customers`: a compradora, tirada dos pedidos pagos e agrupada por e-mail. */
+export interface CustomerAdmin {
+  name: string;
+  email: string;
+  phone: string;
+  ordersCount: number;
+  totalSpent: number;
+  lastOrderAt: string;
+  /** A conversa do WhatsApp com o mesmo telefone (com ou sem o nono dígito). */
+  conversationId: string | null;
+}
+
+export interface CustomerOrderSummary {
+  id: string;
+  code: string;
+  kind: 'products' | 'tickets';
+  status: SiteOrderStatus;
+  total: number;
+  createdAt: string;
+}
+
+/** `GET /customers/by-phone?phone=`: o que a conversa e o pedido mostram da cliente. */
+export interface CustomerByPhone {
+  /** `null` quando o telefone nunca teve pedido pago. */
+  customer: Omit<CustomerAdmin, 'conversationId' | 'phone'> | null;
+  /** Os últimos pedidos, de qualquer status menos vencido. */
+  recentOrders: CustomerOrderSummary[];
+  conversationId: string | null;
+}
