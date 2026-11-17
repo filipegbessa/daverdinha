@@ -35,7 +35,7 @@ describe('ProductCard add button', () => {
     await user.click(screen.getByRole('button', { name: `Adicionar ${real.name} ao carrinho` }));
 
     expect(readCart()).toEqual([expect.objectContaining({ productId: 'p1', quantity: 1 })]);
-    expect(screen.getByRole('button', { name: 'Carrinho, 1 item' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Carrinho, 1 item' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: `Adicionar ${real.name} ao carrinho` })).toHaveTextContent('Adicionado');
     expect(window.gtag).toHaveBeenCalledWith('event', 'add_to_cart', expect.objectContaining({ value: real.price }));
 

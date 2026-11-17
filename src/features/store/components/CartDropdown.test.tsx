@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CartDropdown } from './CartDropdown';
 import { CartProvider, useCart } from './CartProvider';
@@ -36,14 +36,16 @@ function renderDropdown(items: CartItem[] = []) {
 
 const originalMatchMedia = window.matchMedia;
 
-/** Só a consulta de tela grande do dropdown muda; as outras seguem o padrão do jest.setup. */
-function mockDesktop(desktop: boolean) {
+/** Computador com mouse (`true`) ou celular (`false`). */
+function mockHoverScreen(hover: boolean) {
   window.matchMedia = ((query: string) => {
     const base = originalMatchMedia(query);
-    if (query !== '(min-width: 640px)') return base;
-    return { ...base, matches: desktop, media: query };
+    if (query !== '(hover: hover) and (min-width: 640px)') return base;
+    return { ...base, matches: hover, media: query };
   }) as typeof window.matchMedia;
 }
+
+const panel = () => screen.queryByRole('region', { name: 'Resumo do carrinho' });
 
 describe('CartDropdown', () => {
   afterAll(() => {
@@ -53,71 +55,78 @@ describe('CartDropdown', () => {
   beforeEach(() => {
     localStorage.clear();
     window.history.pushState({}, '', '/produtos');
-    mockDesktop(false);
+    mockHoverScreen(true);
   });
 
-  it('opens a dropdown with the items, the subtotal and the two ways forward', async () => {
+  it('is a link to the cart page, with the count', async () => {
     renderDropdown([vaso]);
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Carrinho, 2 itens' }));
-    const panel = await screen.findByRole('dialog');
-
-    expect(within(panel).getByText('Vaso M')).toHaveAttribute('href', '/produtos/vasos/vaso-m');
-    expect(within(panel).getByText('Subtotal').parentElement).toHaveTextContent('R$ 179,80');
-    expect(within(panel).getByRole('link', { name: 'Finalizar compra' })).toHaveAttribute('href', '/checkout');
-    expect(within(panel).getByRole('link', { name: 'Ver carrinho' })).toHaveAttribute('href', '/carrinho');
+    expect(await screen.findByRole('link', { name: 'Carrinho, 2 itens' })).toHaveAttribute('href', '/carrinho');
   });
 
-  it('changes the quantity and removes items right there', async () => {
+  it('shows a compact summary on hover: items, quantity × price, subtotal and checkout', async () => {
     renderDropdown([vaso]);
-    await userEvent.click(await screen.findByRole('button', { name: 'Carrinho, 2 itens' }));
-    const panel = await screen.findByRole('dialog');
 
-    await userEvent.click(within(panel).getByRole('button', { name: 'Aumentar' }));
-    expect(readCart()[0].quantity).toBe(3);
+    await userEvent.hover(await screen.findByRole('link', { name: 'Carrinho, 2 itens' }));
+    const summary = within(panel()!);
 
-    await userEvent.click(within(panel).getByRole('button', { name: 'Remover Vaso M' }));
+    expect(summary.getByRole('link', { name: 'Vaso M' })).toHaveAttribute('href', '/produtos/vasos/vaso-m');
+    expect(summary.getByText('2 × R$ 89,90')).toBeInTheDocument();
+    expect(summary.getByText('Subtotal').parentElement).toHaveTextContent('R$ 179,80');
+    expect(summary.getByRole('link', { name: 'Finalizar compra' })).toHaveAttribute('href', '/checkout');
+    expect(summary.getByRole('link', { name: 'Ver carrinho' })).toHaveAttribute('href', '/carrinho');
+
+    await userEvent.click(summary.getByRole('button', { name: 'Remover Vaso M' }));
     expect(readCart()).toEqual([]);
-    expect(within(panel).getByText('Seu carrinho está vazio.')).toBeInTheDocument();
   });
 
-  it('opens by itself when a product is added on a large screen', async () => {
-    mockDesktop(true);
-    renderDropdown();
-
-    await userEvent.click(screen.getByRole('button', { name: 'adicionar' }));
-
-    expect(await screen.findByRole('dialog')).toHaveTextContent(SAMPLE_PRODUCTS[0].name);
-  });
-
-  it('stays closed when adding on a phone, and on the cart page', async () => {
-    renderDropdown();
-    await userEvent.click(screen.getByRole('button', { name: 'adicionar' }));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-
-    mockDesktop(true);
-    window.history.pushState({}, '', '/carrinho');
-    await userEvent.click(screen.getByRole('button', { name: 'adicionar' }));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  });
-
-  it('closes with Esc and with a click outside, giving the focus back to the icon', async () => {
+  it('closes when the mouse leaves, and with Esc', async () => {
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     renderDropdown([vaso]);
-    const trigger = await screen.findByRole('button', { name: 'Carrinho, 2 itens' });
+    const trigger = await screen.findByRole('link', { name: 'Carrinho, 2 itens' });
 
-    await userEvent.click(trigger);
-    expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    await userEvent.keyboard('{Escape}');
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(trigger).toHaveFocus();
+    await user.hover(trigger);
+    expect(panel()).toBeInTheDocument();
+    await user.unhover(trigger);
+    act(() => jest.advanceTimersByTime(200));
+    expect(panel()).not.toBeInTheDocument();
 
-    await userEvent.click(trigger);
-    await userEvent.click(document.body);
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.hover(trigger);
+    await user.keyboard('{Escape}');
+    expect(panel()).not.toBeInTheDocument();
+    jest.useRealTimers();
   });
 
-  it('has no number for an empty cart', () => {
+  it('opens by itself for a few seconds when a product is added', async () => {
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     renderDropdown();
-    expect(screen.getByRole('button', { name: 'Carrinho' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'adicionar' }));
+    expect(panel()).toHaveTextContent(SAMPLE_PRODUCTS[0].name);
+
+    act(() => jest.advanceTimersByTime(4000));
+    expect(panel()).not.toBeInTheDocument();
+    jest.useRealTimers();
+  });
+
+  it('has no panel on a phone, neither on hover nor after adding', async () => {
+    mockHoverScreen(false);
+    renderDropdown([vaso]);
+
+    await userEvent.hover(await screen.findByRole('link', { name: 'Carrinho, 2 itens' }));
+    await userEvent.click(screen.getByRole('button', { name: 'adicionar' }));
+
+    expect(panel()).not.toBeInTheDocument();
+  });
+
+  it('does not open on the cart page', async () => {
+    window.history.pushState({}, '', '/carrinho');
+    renderDropdown([vaso]);
+
+    await userEvent.hover(await screen.findByRole('link', { name: 'Carrinho, 2 itens' }));
+    await userEvent.click(screen.getByRole('button', { name: 'adicionar' }));
+
+    expect(panel()).not.toBeInTheDocument();
   });
 });
