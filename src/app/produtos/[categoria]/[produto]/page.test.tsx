@@ -94,6 +94,14 @@ describe('/produtos/[categoria]/[produto]', () => {
       expect(screen.queryByRole('link', { name: 'Pedir pelo WhatsApp' })).not.toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'Carrinho' })).toHaveAttribute('href', '/carrinho');
     });
+
+    it('offers a WhatsApp question about the product, with its link in the message', async () => {
+      await renderPage('vasos', 'vaso-terracota-m');
+
+      const link = screen.getByRole('link', { name: /Dúvida sobre este produto\? Fale no WhatsApp/ });
+      const text = decodeURIComponent(new URL(link.getAttribute('href')!).searchParams.get('text')!);
+      expect(text).toMatch(/^Oi! Tenho uma dúvida sobre o \*.+\* — .*\/produtos\/vasos\/vaso-terracota-m$/);
+    });
   });
 
   it('has no cart without the store', async () => {

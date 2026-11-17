@@ -21,7 +21,7 @@ import { getActiveProductBySlug, getFeaturedProducts } from '@/features/site/lib
 import { pageMetadata } from '@/features/site/lib/seo';
 import { productJsonLd } from '@/features/site/lib/structured-data';
 import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
-import { orderMessage } from '@/features/site/lib/whatsapp-messages';
+import { orderMessage, productQuestionMessage } from '@/features/site/lib/whatsapp-messages';
 import { AddToCartButton } from '@/features/store/components/AddToCartButton';
 import { ViewItemTracker } from '@/features/store/components/ViewItemTracker';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
@@ -92,9 +92,19 @@ export default async function ProductPage({ params }: Props) {
               <p className="mt-5 leading-relaxed whitespace-pre-line text-ink-soft">{product.description}</p>
               {storeEnabled ? (
                 // Com a loja ligada, a compra é só pelo carrinho. O WhatsApp
-                // continua no cabeçalho e no rodapé pra quem quiser conversar.
-                <div className="mt-8">
+                // fica pra tirar dúvida sobre o produto (com o link dele na
+                // mensagem), além do cabeçalho e do rodapé.
+                <div className="mt-8 space-y-4">
                   <AddToCartButton product={product} />
+                  <ContactLink
+                    href={getWhatsAppUrl(productQuestionMessage(product))}
+                    channel="whatsapp"
+                    location="product-question"
+                    className="inline-flex items-center gap-2 font-semibold text-moss underline underline-offset-4"
+                  >
+                    <MessageCircle className="size-5" aria-hidden="true" />
+                    Dúvida sobre este produto? Fale no WhatsApp
+                  </ContactLink>
                 </div>
               ) : (
                 <ContactLink

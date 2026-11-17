@@ -40,6 +40,11 @@ export function orderMessage(product: Product): string {
   return `Oi! Quero o *${product.name}* (${formatPrice(product.price)}) — ${absoluteUrl(productHref(product))}`;
 }
 
+/** "Dúvida sobre este produto?" na página do produto, com a loja ligada. */
+export function productQuestionMessage(product: Product): string {
+  return `Oi! Tenho uma dúvida sobre o *${product.name}* — ${absoluteUrl(productHref(product))}`;
+}
+
 export function signupMessage(event: SiteEvent): string {
   return `Oi! Quero me inscrever em *${event.title}* (${formatEventShort(event.startsAt)}) 🌱`;
 }
