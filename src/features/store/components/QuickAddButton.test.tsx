@@ -5,7 +5,7 @@ import { CartDropdown } from './CartDropdown';
 import { StoreEnabledProvider } from './StoreEnabled';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { readCart } from '@/features/store/lib/cart-storage';
-import { SAMPLE_PRODUCTS } from '@/features/site/data/samples';
+import { SAMPLE_PRODUCTS } from '@/features/site/test-fixtures/catalog';
 import type { Product } from '@/features/site/types/catalog';
 
 const real: Product = { ...SAMPLE_PRODUCTS[0], id: 'p1', availability: 'in_stock' };

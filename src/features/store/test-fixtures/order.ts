@@ -1,15 +1,14 @@
 import { businessInfo } from '@/data/business';
-import { SAMPLE_PRODUCTS } from '@/features/site/data/samples';
+import { SAMPLE_PRODUCTS } from '@/features/site/test-fixtures/catalog';
 import type { PublicSiteOrder, SiteOrderStatus } from '@/features/store/types/store';
 
-/** O token da página de exemplo: `/pedido/exemplo?status=paid`. */
-export const PREVIEW_ORDER_TOKEN = 'exemplo';
 
 const STATUSES: SiteOrderStatus[] = ['pending_payment', 'paid', 'expired', 'cancelled', 'refunded'];
 
 /**
- * Um pedido de exemplo pra cliente validar a página do pedido na prévia, em
- * cada estado. Só existe antes do lançamento (quem decide é a página).
+ * Um pedido de mentira em cada estado, pros testes da página do pedido. Já
+ * foi o pedido de exemplo da prévia (`/pedido/exemplo`), que saiu em
+ * 2026-11-18.
  */
 export function previewOrder(status?: string, delivery = true): PublicSiteOrder {
   const [vaso, , , , arranjo] = SAMPLE_PRODUCTS;

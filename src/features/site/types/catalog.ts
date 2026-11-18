@@ -30,7 +30,7 @@ export interface Product {
   availability: ProductAvailability;
   /** Prazo de confecção em dias; só vem em `made_to_order` (e pode faltar). */
   leadTimeDays: number | null;
-  /** Quando foi cadastrado (ISO); ordena o "Novidades". Falta nos exemplos. */
+  /** Quando foi cadastrado (ISO); ordena o "Novidades". Falta em API antiga. */
   createdAt?: string;
 }
 

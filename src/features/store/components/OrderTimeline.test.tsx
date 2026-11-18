@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import { OrderTimeline, orderSteps } from './OrderTimeline';
-import { previewOrder } from '@/features/store/lib/preview-order';
+import { previewOrder } from '@/features/store/test-fixtures/order';
 import type { FulfillmentStatus, PublicSiteOrder } from '@/features/store/types/store';
 
 const paid = (fulfillmentStatus: FulfillmentStatus, delivery = true): PublicSiteOrder => ({

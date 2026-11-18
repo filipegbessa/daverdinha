@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { BuyAgainButton } from './BuyAgainButton';
 import { CartProvider } from './CartProvider';
 import { readCart } from '@/features/store/lib/cart-storage';
-import { SAMPLE_PRODUCTS } from '@/features/site/data/samples';
+import { SAMPLE_PRODUCTS } from '@/features/site/test-fixtures/catalog';
 import type { Product } from '@/features/site/types/catalog';
 
 const push = jest.fn();

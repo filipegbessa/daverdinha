@@ -1,11 +1,4 @@
-import {
-  createCheckout,
-  createTicketCheckout,
-  getOrderByToken,
-  PREVIEW_CHECKOUT,
-  quoteCart,
-  requestOrderLinks,
-} from './store-api';
+import { createCheckout, createTicketCheckout, getOrderByToken, quoteCart, requestOrderLinks } from './store-api';
 
 /** Resposta mínima de `fetch`: o jsdom dos testes não tem `Response`. */
 function reply(status: number, body: unknown) {
@@ -102,6 +95,15 @@ describe('createCheckout', () => {
     });
   });
 
+  it('shows the message of the purchase limit (429)', async () => {
+    fetchMock.mockResolvedValueOnce(reply(429, { message: 'Muitas tentativas de compra seguidas.' }));
+    await expect(createCheckout(input)).resolves.toEqual({
+      ok: false,
+      status: 429,
+      message: 'Muitas tentativas de compra seguidas.',
+    });
+  });
+
   it('turns other errors and network failures into a retry message', async () => {
     fetchMock.mockResolvedValueOnce(reply(503, { message: 'gateway' }));
     await expect(createCheckout(input)).resolves.toEqual(
@@ -169,15 +171,6 @@ describe('createTicketCheckout', () => {
     });
     fetchMock.mockRejectedValue(new Error('offline'));
     expect(await createTicketCheckout(input)).toMatchObject({ ok: false, status: 0 });
-  });
-
-  it('never reaches the API for a preview event', async () => {
-    expect(await createTicketCheckout({ ...input, eventId: 'sample-e1' })).toEqual({
-      ok: false,
-      status: 0,
-      message: PREVIEW_CHECKOUT,
-    });
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

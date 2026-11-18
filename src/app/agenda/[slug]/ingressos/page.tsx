@@ -4,7 +4,6 @@ import { notFound, redirect } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { SiteShell, shellProps } from '@/features/site/components/SiteShell';
 import { TicketCheckout } from '@/features/store/components/TicketCheckout';
-import { isSample } from '@/features/site/data/samples';
 import { eventHref } from '@/features/site/lib/paths';
 import { getEventBySlug } from '@/features/site/lib/public-api';
 import { isFreeEvent } from '@/features/store/lib/tickets';
@@ -35,7 +34,7 @@ export default async function TicketCheckoutPage({ params, searchParams }: Props
   const free = isFreeEvent(event);
 
   return (
-    <SiteShell {...shell} preview={isSample(event)}>
+    <SiteShell {...shell}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Link

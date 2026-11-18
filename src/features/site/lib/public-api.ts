@@ -1,18 +1,15 @@
 import { getSiteMode } from '@/lib/site-mode';
-import {
-  SAMPLE_CATEGORIES,
-  SAMPLE_FEATURED_PRODUCTS,
-  SAMPLE_HERO_SLIDES,
-  SAMPLE_PRODUCTS,
-  sampleEvents,
-} from '@/features/site/data/samples';
+import { SAMPLE_HERO_SLIDES } from '@/features/site/data/samples';
 import { DEFAULT_HERO_SLIDE } from '@/features/site/data/hero';
 import type { Product, ProductCategory } from '@/features/site/types/catalog';
 import type { SiteEvent } from '@/features/site/types/event';
 import type { HeroSlide } from '@/features/site/types/hero-slide';
 
 /**
- * Leitura das rotas públicas da API pro site. Mesmo contrato de
+ * Leitura das rotas públicas da API pro site. Lista vazia é vazia, antes e
+ * depois do lançamento: os produtos e eventos de exemplo saíram em
+ * 2026-11-18 (só os destaques do topo ainda têm exemplo, ver `getHeroSlides`).
+ * Mesmo contrato de
  * `getCoveredDeliveryZones`: nunca lança. Falha, 404 ou API sem URL viram
  * `null`, e quem chama decide o que "nada" quer dizer.
  */
@@ -29,27 +26,15 @@ async function fetchPublic<T>(path: string): Promise<T | null> {
   }
 }
 
-/**
- * Antes do lançamento, uma lista vazia vira exemplo, pra cliente conseguir
- * avaliar o layout. Depois do lançamento, vazio é vazio: a seção some, como
- * as outras do site.
- */
-async function withPreviewFallback<T>(items: T[] | null, samples: () => T[]): Promise<T[]> {
-  if (items && items.length > 0) return items;
-  return (await getSiteMode()) === 'full' ? [] : samples();
-}
-
 export async function getActiveCategories(): Promise<ProductCategory[]> {
   const categories = await fetchPublic<ProductCategory[]>('/product-categories/active');
-  return withPreviewFallback(categories, () => SAMPLE_CATEGORIES);
+  return categories ?? [];
 }
 
 export async function getActiveProducts(categorySlug?: string): Promise<Product[]> {
   const query = categorySlug ? `?category=${encodeURIComponent(categorySlug)}` : '';
   const products = await fetchPublic<Product[]>(`/products/active${query}`);
-  return withPreviewFallback(products, () =>
-    categorySlug ? SAMPLE_PRODUCTS.filter((p) => p.category.slug === categorySlug) : SAMPLE_PRODUCTS,
-  );
+  return products ?? [];
 }
 
 /**
@@ -60,9 +45,7 @@ export async function getActiveProducts(categorySlug?: string): Promise<Product[
 export async function getFeaturedProducts(categorySlug?: string): Promise<Product[]> {
   const query = categorySlug ? `&category=${encodeURIComponent(categorySlug)}` : '';
   const products = await fetchPublic<Product[]>(`/products/active?featured=true${query}`);
-  return withPreviewFallback(products, () =>
-    categorySlug ? SAMPLE_FEATURED_PRODUCTS.filter((p) => p.category.slug === categorySlug) : SAMPLE_FEATURED_PRODUCTS,
-  );
+  return products ?? [];
 }
 
 /**
@@ -76,20 +59,14 @@ export async function getHeroSlides(): Promise<HeroSlide[]> {
 }
 
 export async function getActiveProductBySlug(slug: string): Promise<Product | null> {
-  const product = await fetchPublic<Product>(`/products/active/${encodeURIComponent(slug)}`);
-  if (product) return product;
-  if ((await getSiteMode()) === 'full') return null;
-  return SAMPLE_PRODUCTS.find((p) => p.slug === slug) ?? null;
+  return fetchPublic<Product>(`/products/active/${encodeURIComponent(slug)}`);
 }
 
 export async function getUpcomingEvents(): Promise<SiteEvent[]> {
   const events = await fetchPublic<SiteEvent[]>('/events/upcoming');
-  return withPreviewFallback(events, () => sampleEvents());
+  return events ?? [];
 }
 
 export async function getEventBySlug(slug: string): Promise<SiteEvent | null> {
-  const event = await fetchPublic<SiteEvent>(`/events/${encodeURIComponent(slug)}`);
-  if (event) return event;
-  if ((await getSiteMode()) === 'full') return null;
-  return sampleEvents().find((e) => e.slug === slug) ?? null;
+  return fetchPublic<SiteEvent>(`/events/${encodeURIComponent(slug)}`);
 }

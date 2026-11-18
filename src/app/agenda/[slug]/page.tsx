@@ -12,7 +12,6 @@ import { eventDetails, eventPlace } from '@/features/site/components/EventCard';
 import { TicketPurchaseBox } from '@/features/store/components/TicketPurchaseBox';
 import { EventsSection } from '@/features/site/components/EventsSection';
 import { Location } from '@/features/site/components/Location';
-import { isSample } from '@/features/site/data/samples';
 import { eventEndTime, formatEventShort, formatEventWhen } from '@/lib/format';
 import { AGENDA_HREF, eventHref } from '@/features/site/lib/paths';
 import { getEventBySlug, getUpcomingEvents } from '@/features/site/lib/public-api';
@@ -61,7 +60,7 @@ export default async function EventPage({ params }: Props) {
   const priceText = eventDetails(event);
 
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause} preview={isSample(event)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause}>
       <JsonLd data={eventJsonLd(event)} />
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { ProductsSection } from './ProductsSection';
-import { SAMPLE_FEATURED_PRODUCTS } from '@/features/site/data/samples';
+import { SAMPLE_FEATURED_PRODUCTS } from '@/features/site/test-fixtures/catalog';
 
 describe('ProductsSection (home showcase)', () => {
   it('renders nothing without featured products', () => {
@@ -23,7 +23,9 @@ describe('ProductsSection (home showcase)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Vasos' }));
 
     const showcase = screen.getByRole('region', { name: 'Produtos em destaque' });
-    const names = within(showcase).getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    const names = within(showcase)
+      .getAllByRole('heading', { level: 3 })
+      .map((h) => h.textContent);
     expect(names).toEqual(['Vaso Terracota M', 'Vaso Pintado Folhagem']);
     expect(screen.getByRole('button', { name: 'Vasos' })).toHaveAttribute('aria-pressed', 'true');
   });

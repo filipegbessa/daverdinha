@@ -1,7 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react';
 import { OrderStatus } from './OrderStatus';
 import { PurchaseTracker } from './PurchaseTracker';
-import { previewOrder } from '@/features/store/lib/preview-order';
+import { previewOrder } from '@/features/store/test-fixtures/order';
 import type { PublicSiteOrder } from '@/features/store/types/store';
 
 const refresh = jest.fn();

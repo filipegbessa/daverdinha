@@ -3,6 +3,13 @@ import { render, screen } from '@testing-library/react';
 import Page, { generateMetadata } from './page';
 import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
 
+// Sem os exemplos da prévia (saíram em 2026-11-18), a página só mostra o que
+// a API devolve: aqui, o catálogo de teste.
+jest.mock('@/features/site/lib/public-api', () => {
+  const actual = jest.requireActual('@/features/site/lib/public-api');
+  return { ...actual, ...jest.requireActual('@/features/site/test-fixtures/catalog').fixturePublicApi(actual) };
+});
+
 jest.mock('@/features/site/lib/delivery-zones', () => ({
   getCoveredDeliveryZones: jest.fn(),
 }));
@@ -15,6 +22,7 @@ describe('/site preview — always renders the full institutional site', () => {
   beforeEach(() => {
     // /site precisa mostrar o site completo mesmo com `/` em "em breve".
     mockSiteSettings({ siteEnabled: false });
+    delete process.env.NEXT_PUBLIC_API_URL;
     mockZones.mockClear();
     mockZones.mockResolvedValue([{ zone: 'Centro', bairros: ['Gamboa'] }]);
   });
@@ -32,9 +40,9 @@ describe('/site preview — always renders the full institutional site', () => {
     expect(screen.getByText('Perguntas frequentes')).toBeInTheDocument();
   });
 
-  // Sem API de catálogo e agenda ainda, a cliente valida o layout com
-  // exemplos — e a página avisa que são exemplos.
-  it('shows labelled sample products and events while the API has none', async () => {
+  // A prévia mostra o catálogo e a agenda cadastrados (aqui, os de teste).
+  // Só os destaques do topo ainda são exemplo, e a página avisa.
+  it('shows the registered products and events, warning that the top slides are samples', async () => {
     await renderPage();
 
     expect(screen.getByText(/Prévia do site/)).toBeInTheDocument();

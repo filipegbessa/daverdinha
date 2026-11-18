@@ -1,4 +1,3 @@
-import { eventEndTime } from '@/lib/format';
 import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import {
   getActiveCategories,
@@ -92,25 +91,21 @@ describe('public API reads', () => {
       await expect(getActiveProducts()).resolves.toEqual([product]);
     });
 
-    it('falls back to sample data so the client can validate the layout', async () => {
+    it('shows only what is registered: no sample products or events anymore', async () => {
       (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
 
-      const products = await getActiveProducts('mudas');
-      expect(products.length).toBeGreaterThan(0);
-      expect(products.every(isSample)).toBe(true);
-      expect(products.every((p) => p.category.slug === 'mudas')).toBe(true);
-
-      const events = await getUpcomingEvents();
-      expect(events.length).toBeGreaterThan(0);
-      expect(events.every((e) => eventEndTime(e) > Date.now())).toBe(true);
+      await expect(getActiveProducts('mudas')).resolves.toEqual([]);
+      await expect(getUpcomingEvents()).resolves.toEqual([]);
+      await expect(getActiveProductBySlug('vaso-terracota-m')).resolves.toBeNull();
+      await expect(getEventBySlug('oficina-de-terrario')).resolves.toBeNull();
     });
 
-    it('resolves sample products and events by slug', async () => {
+    it('still shows the sample hero slides until they can be registered in the admin', async () => {
       (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
 
-      await expect(getActiveProductBySlug('vaso-terracota-m')).resolves.toMatchObject({ name: 'Vaso Terracota M' });
-      await expect(getEventBySlug('oficina-de-terrario')).resolves.toMatchObject({ title: 'Oficina de terrário' });
-      await expect(getActiveProductBySlug('nao-existe')).resolves.toBeNull();
+      const slides = await getHeroSlides();
+      expect(slides.length).toBeGreaterThan(1);
+      expect(slides.slice(1).every(isSample)).toBe(true);
     });
   });
 });

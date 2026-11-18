@@ -9,7 +9,6 @@ import { Eyebrow } from '@/features/site/components/Eyebrow';
 import { Location } from '@/features/site/components/Location';
 import { Pagination } from '@/features/site/components/Pagination';
 import { ProductsSection } from '@/features/site/components/ProductsSection';
-import { isSample } from '@/features/site/data/samples';
 import { AGENDA_HREF } from '@/features/site/lib/paths';
 import { getFeaturedProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { paginate } from '@/features/site/lib/pagination';
@@ -37,12 +36,7 @@ export default async function AgendaPage({ searchParams }: Props) {
   const { home, storeEnabled, storePause } = await shellProps();
 
   return (
-    <SiteShell
-      home={home}
-      storeEnabled={storeEnabled}
-      storePause={storePause}
-      preview={allEvents.some(isSample) || featured.some(isSample)}
-    >
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

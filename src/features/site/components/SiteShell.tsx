@@ -56,7 +56,7 @@ export function SiteShell({
     <div className="flex min-h-dvh flex-col">
       {preview && (
         <p className="bg-berry px-4 py-1.5 text-center text-xs font-medium text-paper">
-          Prévia do site: os produtos, preços e eventos são exemplos para validar o layout.
+          Prévia do site: os destaques do topo da home são exemplos, até serem cadastrados no admin.
         </p>
       )}
       {storeEnabled && storePause && (

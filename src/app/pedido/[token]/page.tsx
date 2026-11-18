@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getSiteMode } from '@/lib/site-mode';
 import { SiteShell, shellProps } from '@/features/site/components/SiteShell';
 import { OrderStatus } from '@/features/store/components/OrderStatus';
 import { OrderNotFound } from '@/features/store/components/OrderNotFound';
@@ -9,7 +8,6 @@ import { getOrderByToken } from '@/features/store/lib/store-api';
 import { getActiveProductBySlug } from '@/features/site/lib/public-api';
 import type { BuyAgainItem } from '@/features/store/components/BuyAgainButton';
 import type { PublicSiteOrder } from '@/features/store/types/store';
-import { PREVIEW_ORDER_TOKEN, previewOrder } from '@/features/store/lib/preview-order';
 
 /** Por pedido e muda com o pagamento: sem cache. */
 export const dynamic = 'force-dynamic';
@@ -43,18 +41,13 @@ async function buyAgainItems(
 
 type Props = {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ status?: string; entrega?: string }>;
 };
 
-export default async function OrderPage({ params, searchParams }: Props) {
+export default async function OrderPage({ params }: Props) {
   const shell = await shellProps();
   const { token } = await params;
 
-  // Antes do lançamento, `/pedido/exemplo?status=paid` mostra um pedido de
-  // exemplo em cada estado, pra cliente validar a página.
-  const preview = shell.storeEnabled && token === PREVIEW_ORDER_TOKEN && (await getSiteMode()) !== 'full';
-  const query = await searchParams;
-  const order = preview ? previewOrder(query.status, query.entrega !== 'retirada') : await getOrderByToken(token);
+  const order = await getOrderByToken(token);
   const reloadHref = `/pedido/${encodeURIComponent(token)}`;
 
   // A API não respondeu: o pedido pode existir, então nada de 404.
@@ -73,11 +66,11 @@ export default async function OrderPage({ params, searchParams }: Props) {
   // `not-found.tsx`, com o caminho pra pedir os links de novo.
   if (!order || (order.kind === 'products' && !shell.storeEnabled)) notFound();
 
-  const buyAgain = preview ? undefined : await buyAgainItems(order, shell.storeEnabled);
+  const buyAgain = await buyAgainItems(order, shell.storeEnabled);
 
   return (
-    <SiteShell {...shell} preview={preview}>
-      {!preview && <PurchaseTracker order={order} />}
+    <SiteShell {...shell}>
+      <PurchaseTracker order={order} />
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <OrderStatus order={order} reloadHref={reloadHref} buyAgain={buyAgain} />

@@ -6,8 +6,8 @@ import { getSiteSettings } from '@/lib/site-settings';
  * `lib/site-settings.ts`).
  *
  * Também decide o que é prévia: fora de `full`, `/produtos` e `/agenda` são
- * noindex e ficam fora do sitemap, e lista vazia da API vira exemplo. Em
- * `full`, exemplo nunca aparece.
+ * noindex e ficam fora do sitemap, e os destaques do topo da home sem
+ * cadastro mostram os slides de exemplo. Em `full`, exemplo nunca aparece.
  */
 export type SiteMode = 'soon' | 'full';
 

@@ -1,7 +1,7 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import { CartProvider, useCart } from './CartProvider';
 import { CART_STORAGE_KEY, readCart } from '@/features/store/lib/cart-storage';
-import { SAMPLE_PRODUCTS } from '@/features/site/data/samples';
+import { SAMPLE_PRODUCTS } from '@/features/site/test-fixtures/catalog';
 import type { Product } from '@/features/site/types/catalog';
 import type { CheckoutQuote } from '@/features/store/types/store';
 
@@ -18,7 +18,9 @@ describe('CartProvider', () => {
   it('is ready only after reading what was saved', () => {
     localStorage.setItem(
       CART_STORAGE_KEY,
-      JSON.stringify([{ productId: 'p1', slug: 's', categorySlug: 'c', name: 'Vaso', price: 10, imageUrl: null, quantity: 2 }]),
+      JSON.stringify([
+        { productId: 'p1', slug: 's', categorySlug: 'c', name: 'Vaso', price: 10, imageUrl: null, quantity: 2 },
+      ]),
     );
 
     const { result } = renderCart();
@@ -80,7 +82,9 @@ describe('CartProvider', () => {
     const { result } = renderCart();
     localStorage.setItem(
       CART_STORAGE_KEY,
-      JSON.stringify([{ productId: 'p9', slug: 's', categorySlug: 'c', name: 'X', price: 1, imageUrl: null, quantity: 4 }]),
+      JSON.stringify([
+        { productId: 'p9', slug: 's', categorySlug: 'c', name: 'X', price: 1, imageUrl: null, quantity: 4 },
+      ]),
     );
 
     act(() => {

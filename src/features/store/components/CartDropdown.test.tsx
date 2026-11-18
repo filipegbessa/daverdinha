@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { CartDropdown } from './CartDropdown';
 import { CartProvider, useCart } from './CartProvider';
 import { CART_STORAGE_KEY, readCart, type CartItem } from '@/features/store/lib/cart-storage';
-import { SAMPLE_PRODUCTS } from '@/features/site/data/samples';
+import { SAMPLE_PRODUCTS } from '@/features/site/test-fixtures/catalog';
 
 const vaso: CartItem = {
   productId: 'p1',

@@ -7,7 +7,6 @@ import { Eyebrow } from '@/features/site/components/Eyebrow';
 import { Location } from '@/features/site/components/Location';
 import { Pagination } from '@/features/site/components/Pagination';
 import { ProductCard } from '@/features/site/components/ProductCard';
-import { isSample } from '@/features/site/data/samples';
 import { PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
 import { paginate } from '@/features/site/lib/pagination';
@@ -44,12 +43,7 @@ export default async function ProductsPage({ searchParams }: Props) {
   const { home, storeEnabled, storePause } = await shellProps();
 
   return (
-    <SiteShell
-      home={home}
-      storeEnabled={storeEnabled}
-      storePause={storePause}
-      preview={allProducts.some(isSample) || events.some(isSample)}
-    >
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

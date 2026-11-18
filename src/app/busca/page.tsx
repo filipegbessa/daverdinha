@@ -6,7 +6,6 @@ import { CatalogControls } from '@/features/site/components/CatalogControls';
 import { CategoryChips } from '@/features/site/components/CategoryChips';
 import { Pagination } from '@/features/site/components/Pagination';
 import { ProductCard } from '@/features/site/components/ProductCard';
-import { isSample } from '@/features/site/data/samples';
 import { SEARCH_HREF } from '@/features/site/lib/paths';
 import { getActiveCategories, getActiveProducts } from '@/features/site/lib/public-api';
 import { paginate } from '@/features/site/lib/pagination';
@@ -43,7 +42,7 @@ export default async function SearchPage({ searchParams }: Props) {
   const { home, storeEnabled, storePause } = await shellProps();
 
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause} preview={allProducts.some(isSample)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-6xl">
           <Breadcrumbs

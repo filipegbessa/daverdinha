@@ -2,9 +2,9 @@ import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import { render, screen } from '@testing-library/react';
 import OrderPage, { dynamic, metadata } from './page';
 import { getOrderByToken } from '@/features/store/lib/store-api';
-import { previewOrder } from '@/features/store/lib/preview-order';
+import { previewOrder } from '@/features/store/test-fixtures/order';
 import { getActiveProductBySlug } from '@/features/site/lib/public-api';
-import { SAMPLE_PRODUCTS } from '@/features/site/data/samples';
+import { SAMPLE_PRODUCTS } from '@/features/site/test-fixtures/catalog';
 
 jest.mock('next/navigation', () => ({
   notFound: jest.fn(() => {
@@ -18,8 +18,7 @@ jest.mock('@/features/site/lib/public-api', () => ({
   getActiveProductBySlug: jest.fn(),
 }));
 
-const renderPage = async (token: string, query: Record<string, string> = {}) =>
-  render(await OrderPage({ params: Promise.resolve({ token }), searchParams: Promise.resolve(query) }));
+const renderPage = async (token: string) => render(await OrderPage({ params: Promise.resolve({ token }) }));
 
 describe('/pedido/[token]', () => {
   beforeEach(() => {
@@ -117,16 +116,7 @@ describe('/pedido/[token]', () => {
     expect(screen.getByRole('link', { name: 'Ver produtos' })).toBeInTheDocument();
   });
 
-  it('shows a sample order in each state before the launch, without calling the API', async () => {
-    await renderPage('exemplo', { status: 'expired' });
-
-    expect(screen.getByRole('heading', { name: 'O prazo de pagamento acabou' })).toBeInTheDocument();
-    expect(screen.getByText(/Prévia do site/)).toBeInTheDocument();
-    expect(getOrderByToken).not.toHaveBeenCalled();
-  });
-
-  it('has no sample order after the launch', async () => {
-    mockSiteSettings({ siteEnabled: true });
+  it('has no sample order: "exemplo" is just an unknown token', async () => {
     (getOrderByToken as jest.Mock).mockResolvedValue(null);
 
     await expect(renderPage('exemplo')).rejects.toThrow('NEXT_NOT_FOUND');

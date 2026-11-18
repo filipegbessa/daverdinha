@@ -3,6 +3,13 @@ import { render, screen } from '@testing-library/react';
 import { notFound, permanentRedirect } from 'next/navigation';
 import Page from './page';
 
+// Sem os exemplos da prévia (saíram em 2026-11-18), a página só mostra o que
+// a API devolve: aqui, o catálogo de teste.
+jest.mock('@/features/site/lib/public-api', () => {
+  const actual = jest.requireActual('@/features/site/lib/public-api');
+  return { ...actual, ...jest.requireActual('@/features/site/test-fixtures/catalog').fixturePublicApi(actual) };
+});
+
 jest.mock('next/navigation', () => ({
   notFound: jest.fn(() => {
     throw new Error('NEXT_NOT_FOUND');
@@ -88,9 +95,8 @@ describe('/produtos/[categoria]/[produto]', () => {
     it('sells through the cart only, without the WhatsApp order button', async () => {
       await renderPage('vasos', 'vaso-terracota-m');
 
-      // Exemplo da prévia: entra no carrinho pra validar a loja, com o aviso.
       expect(screen.getByRole('button', { name: 'Adicionar ao carrinho' })).toBeEnabled();
-      expect(screen.getByText(/Prévia: produto de exemplo/)).toBeInTheDocument();
+      expect(screen.queryByText(/Prévia/)).not.toBeInTheDocument();
       expect(screen.queryByRole('link', { name: 'Pedir pelo WhatsApp' })).not.toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'Carrinho' })).toHaveAttribute('href', '/carrinho');
     });

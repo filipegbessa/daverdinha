@@ -2,6 +2,13 @@ import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import { render, screen } from '@testing-library/react';
 import Page from './page';
 
+// Sem os exemplos da prévia (saíram em 2026-11-18), a página só mostra o que
+// a API devolve: aqui, o catálogo de teste.
+jest.mock('@/features/site/lib/public-api', () => {
+  const actual = jest.requireActual('@/features/site/lib/public-api');
+  return { ...actual, ...jest.requireActual('@/features/site/test-fixtures/catalog').fixturePublicApi(actual) };
+});
+
 const renderPage = async (page?: string, params: Record<string, string> = {}) =>
   render(await Page({ searchParams: Promise.resolve({ page, ...params }) }));
 

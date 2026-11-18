@@ -1,5 +1,5 @@
 import { breadcrumbJsonLd, eventJsonLd, productJsonLd, serializeJsonLd } from './structured-data';
-import { SAMPLE_PRODUCTS, sampleEvents } from '@/features/site/data/samples';
+import { SAMPLE_PRODUCTS, sampleEvents } from '@/features/site/test-fixtures/catalog';
 
 describe('structured data', () => {
   const originalSiteUrl = process.env.SITE_URL;

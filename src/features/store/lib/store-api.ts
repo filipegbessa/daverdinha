@@ -8,8 +8,6 @@ import type {
   TicketCheckoutFailureReason,
   TicketQuote,
 } from '@/features/store/types/store';
-import { isPreviewCart, previewQuote } from '@/features/store/lib/preview-quote';
-import { isSample } from '@/features/site/data/samples';
 
 /**
  * As chamadas da loja à API, como `public-api.ts` é pro catálogo. Rodam no
@@ -21,8 +19,6 @@ export async function quoteCart(
   cep?: string,
   couponCode?: string,
 ): Promise<CheckoutQuote | null> {
-  // Prévia (`/site` com produtos de exemplo): cotação montada aqui mesmo.
-  if (isPreviewCart(items)) return previewQuote(items, cep);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl || items.length === 0) return null;
 
@@ -41,21 +37,17 @@ export async function quoteCart(
 
 type CheckoutFailure = Extract<CreateCheckoutResult, { ok: false }>;
 
-/** O que aparece ao finalizar uma compra de exemplo na prévia. */
-export const PREVIEW_CHECKOUT =
-  'Prévia: o pagamento ainda não está ligado. Na loja de verdade, aqui você iria pra página de pagamento.';
-
 const PAYMENT_UNAVAILABLE = 'Não foi possível iniciar o pagamento. Tente de novo em instantes.';
+
+/** Falhas cuja mensagem da API vai pra tela (o resto vira "tente de novo"); 429 = muitas compras do mesmo IP. */
+const KNOWN_FAILURES = new Set([409, 422, 429]);
 
 /**
  * Cria o pedido e devolve pra onde mandar o cliente pagar. Nunca lança: a
  * tela decide pelo `status` (409 volta pro carrinho, 422 avisa na entrega,
- * o resto é "tente de novo").
+ * 429 mostra a mensagem da API, o resto é "tente de novo").
  */
 export async function createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
-  if (isPreviewCart(input.items)) {
-    return { ok: false, status: 0, message: PREVIEW_CHECKOUT };
-  }
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) return { ok: false, status: 0, message: PAYMENT_UNAVAILABLE };
 
@@ -74,7 +66,7 @@ export async function createCheckout(input: CreateCheckoutInput): Promise<Create
         paymentUrl: String(body.paymentUrl),
       };
     }
-    const known = response.status === 409 || response.status === 422;
+    const known = KNOWN_FAILURES.has(response.status);
     return {
       ok: false,
       status: response.status,
@@ -90,13 +82,9 @@ export async function createCheckout(input: CreateCheckoutInput): Promise<Create
 /**
  * Compra de ingresso (ou inscrição gratuita) direto da página do evento, sem
  * carrinho. Nunca lança: 409 traz o `reason` e os números pra tela ajustar o
- * formulário; o resto é "tente de novo". Evento de exemplo da prévia não
- * chega à API.
+ * formulário; o resto é "tente de novo".
  */
 export async function createTicketCheckout(input: CreateTicketCheckoutInput): Promise<CreateTicketCheckoutResult> {
-  if (isSample({ id: input.eventId })) {
-    return { ok: false, status: 0, message: PREVIEW_CHECKOUT };
-  }
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) return { ok: false, status: 0, message: PAYMENT_UNAVAILABLE };
 
@@ -115,8 +103,8 @@ export async function createTicketCheckout(input: CreateTicketCheckoutInput): Pr
         paymentUrl: typeof body.paymentUrl === 'string' ? body.paymentUrl : null,
       };
     }
-    // 409: venda fechada ou vagas; 422: o cupom deixou de valer.
-    const known = response.status === 409 || response.status === 422;
+    // 409: venda fechada ou vagas; 422: o cupom deixou de valer; 429: muitas tentativas.
+    const known = KNOWN_FAILURES.has(response.status);
     return {
       ok: false,
       status: response.status,
@@ -130,10 +118,10 @@ export async function createTicketCheckout(input: CreateTicketCheckoutInput): Pr
   }
 }
 
-/** O total da compra de ingresso com o cupom. Falha ou prévia: `null`. */
+/** O total da compra de ingresso com o cupom. Falha: `null`. */
 export async function quoteTickets(eventId: string, quantity: number, couponCode: string): Promise<TicketQuote | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl || isSample({ id: eventId })) return null;
+  if (!apiUrl) return null;
   try {
     const response = await fetch(`${apiUrl}/checkout/tickets/quote`, {
       method: 'POST',

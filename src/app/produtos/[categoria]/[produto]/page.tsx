@@ -13,7 +13,6 @@ import { JsonLd } from '@/features/site/components/JsonLd';
 import { Location } from '@/features/site/components/Location';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { ProductGallery } from '@/features/site/components/ProductGallery';
-import { isSample } from '@/features/site/data/samples';
 import { getCoveredDeliveryZones } from '@/features/site/lib/delivery-zones';
 import { formatPrice } from '@/lib/format';
 import { ProductPrice } from '@/features/site/components/ProductPrice';
@@ -62,7 +61,7 @@ export default async function ProductPage({ params }: Props) {
   const { home, storeEnabled, storePause } = await shellProps();
 
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause} preview={isSample(product)}>
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause}>
       <JsonLd data={productJsonLd(product)} />
       <ViewItemTracker product={product} />
       <section className="px-6 py-10 md:py-14">

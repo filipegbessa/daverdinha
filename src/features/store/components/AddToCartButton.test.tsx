@@ -4,7 +4,7 @@ import { AddToCartButton } from './AddToCartButton';
 import { CartProvider } from './CartProvider';
 import { CartDropdown } from './CartDropdown';
 import { readCart } from '@/features/store/lib/cart-storage';
-import { SAMPLE_PRODUCTS } from '@/features/site/data/samples';
+import { SAMPLE_PRODUCTS } from '@/features/site/test-fixtures/catalog';
 import type { Product } from '@/features/site/types/catalog';
 
 const real: Product = { ...SAMPLE_PRODUCTS[0], id: 'p1', availability: 'in_stock' };
@@ -43,15 +43,6 @@ describe('AddToCartButton', () => {
     act(() => jest.advanceTimersByTime(4000));
     expect(screen.queryByRole('link', { name: 'Ver carrinho' })).not.toBeInTheDocument();
     jest.useRealTimers();
-  });
-
-  it('lets preview samples into the cart, saying the purchase will not go through', async () => {
-    const user = userEvent.setup();
-    renderButton(SAMPLE_PRODUCTS[0]);
-
-    expect(screen.getByText(/Prévia: produto de exemplo/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Adicionar ao carrinho' }));
-    expect(readCart()).toEqual([expect.objectContaining({ productId: SAMPLE_PRODUCTS[0].id })]);
   });
 
   it('does not sell a sold-out product', () => {

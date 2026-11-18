@@ -32,8 +32,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Antes do lançamento o catálogo e a agenda são prévia (noindex, com dados
-  // de exemplo) — não entram no sitemap.
+  // Antes do lançamento o catálogo e a agenda são prévia (noindex): não
+  // entram no sitemap.
   if ((await getSiteMode()) !== 'full') return base;
 
   const [categories, products, events] = await Promise.all([
