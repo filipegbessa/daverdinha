@@ -13,19 +13,19 @@ import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resourc
 import { TablePagination } from '@/features/admin/components/TablePagination';
 import { PageHeader } from '@/features/admin/components/PageHeader';
 import { FilterBar } from '@/features/admin/components/FilterBar';
-import { AdminList, AdminListItem } from '@/features/admin/components/AdminList';
+import { AdminList } from '@/features/admin/components/AdminList';
 import { Badge } from '@/features/admin/components/Badge';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { ErrorAlert, LoadingState } from '@/features/admin/components/StatusMessage';
 import { formatCurrency } from '@/lib/format';
 import type { ProductAdmin, ProductCategoryAdmin } from '@/features/admin/types/admin';
 
-/** Como o produto está pro site, em poucas palavras, na linha da lista. */
+/** Como o produto está pra venda, em poucas palavras, no card da lista. */
 function stockLabel(product: ProductAdmin): string {
   if (product.stock === null) {
     return product.leadTimeDays ? `Sob encomenda · ${product.leadTimeDays} dias` : 'Sob encomenda · sem prazo';
   }
-  return product.stock === 0 ? 'Esgotado' : `Estoque: ${product.stock}`;
+  return product.stock === 0 ? 'Esgotado' : `${product.stock} em estoque`;
 }
 
 const DEFAULT_FILTERS = { q: '', categoryId: '', active: '', featured: '' };
@@ -141,57 +141,77 @@ export default function ProdutosPage() {
           }
         >
           {products.map((product) => (
-            <AdminListItem key={product.id}>
-              {product.images[0] ? (
-                // eslint-disable-next-line @next/next/no-img-element -- miniatura de 48px no admin, não precisa do otimizador
-                <img
-                  src={product.images[0]}
-                  alt=""
-                  className="size-12 flex-none rounded-lg border border-border object-cover"
-                />
-              ) : (
-                <span
-                  aria-hidden="true"
-                  className="size-12 flex-none rounded-lg border border-dashed border-border bg-muted"
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">
-                  {product.name}
-                  {product.featured && (
-                    <Badge size="sm" className="ml-2">
-                      Destaque
-                    </Badge>
-                  )}
-                  {product.listPrice != null && (
-                    <Badge size="sm" className="ml-2">
-                      Em promoção
-                    </Badge>
-                  )}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {product.category.name} · {formatCurrency(product.price, 'BRL')}
-                  {product.images.length === 0 && ' · sem foto'}
-                  {` · ${stockLabel(product)}`}
-                </p>
-              </div>
-              <Switch
-                checked={product.active}
-                onCheckedChange={() => toggleActive(product)}
-                disabled={busy}
-                aria-label={`Mostrar ${product.name} no site`}
-              />
+            // No celular, um card: foto, dados e, embaixo, as ações. Do `sm`
+            // pra cima, a mesma coisa vira uma linha só, como as outras listas.
+            <li key={product.id} className="rounded-lg border border-border p-3 sm:flex sm:items-center sm:gap-3">
               <Link
                 href={`/admin/produtos/${product.id}`}
-                aria-label={`Editar ${product.name}`}
-                className={buttonVariants({ variant: 'outline' })}
+                tabIndex={-1}
+                className="flex min-w-0 flex-1 items-start gap-3 sm:items-center"
               >
-                Editar
+                {product.images[0] ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- miniatura no admin, não precisa do otimizador
+                  <img
+                    src={product.images[0]}
+                    alt=""
+                    className="size-16 flex-none rounded-lg border border-border object-cover sm:size-12"
+                  />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="size-16 flex-none rounded-lg border border-dashed border-border bg-muted sm:size-12"
+                  />
+                )}
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className="font-medium">{product.name}</p>
+                  <p className="text-sm text-muted-foreground">{product.category.name}</p>
+                  <p className="text-sm">
+                    <span className="font-medium tabular-nums">{formatCurrency(product.price, 'BRL')}</span>
+                    {product.listPrice != null && (
+                      <s className="ml-1.5 text-muted-foreground tabular-nums">
+                        {formatCurrency(product.listPrice, 'BRL')}
+                      </s>
+                    )}
+                    <span className="text-muted-foreground"> · {stockLabel(product)}</span>
+                  </p>
+                  {(product.featured || product.listPrice != null || product.images.length === 0) && (
+                    <p className="flex flex-wrap gap-1.5 pt-1">
+                      {product.featured && <Badge size="sm">Destaque</Badge>}
+                      {product.listPrice != null && <Badge size="sm">Em promoção</Badge>}
+                      {product.images.length === 0 && <Badge size="sm">Sem foto</Badge>}
+                    </p>
+                  )}
+                </div>
               </Link>
-              <Button variant="destructive" disabled={busy} onClick={() => setDeleting(product)}>
-                Remover
-              </Button>
-            </AdminListItem>
+              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3 sm:mt-0 sm:flex-nowrap sm:border-0 sm:pt-0">
+                <label className="mr-auto flex items-center gap-2 text-sm text-muted-foreground sm:mr-1">
+                  <Switch
+                    checked={product.active}
+                    onCheckedChange={() => toggleActive(product)}
+                    disabled={busy}
+                    aria-label={`Mostrar ${product.name} no site`}
+                  />
+                  <span aria-hidden="true">{product.active ? 'No site' : 'Oculto'}</span>
+                </label>
+                <Link
+                  href={`/admin/produtos/${product.id}`}
+                  aria-label={`Editar ${product.name}`}
+                  className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                >
+                  Editar
+                </Link>
+                <Link
+                  href={`/admin/produtos/novo?duplicar=${encodeURIComponent(product.id)}`}
+                  aria-label={`Duplicar ${product.name}`}
+                  className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                >
+                  Duplicar
+                </Link>
+                <Button variant="destructive" size="sm" disabled={busy} onClick={() => setDeleting(product)}>
+                  Remover
+                </Button>
+              </div>
+            </li>
           ))}
         </AdminList>
       )}
@@ -210,8 +230,8 @@ export default function ProdutosPage() {
           }}
         >
           <p>
-            Remove o produto e as fotos pra sempre, sem desfazer. Quer só tirar do site? Desligue a chave "Ativo" ao
-            lado.
+            Remove o produto e as fotos pra sempre, sem desfazer. Quer só tirar do site? Desligue a chave "No site" no
+            card.
           </p>
         </ConfirmDialog>
       )}

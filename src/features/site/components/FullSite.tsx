@@ -12,6 +12,7 @@ import type { DeliveryZone } from '@/features/site/lib/delivery-zones';
 import type { Product } from '@/features/site/types/catalog';
 import type { SiteEvent } from '@/features/site/types/event';
 import type { HeroSlide } from '@/features/site/types/hero-slide';
+import type { FaqItem } from '@/data/faq';
 
 export interface FullSiteData {
   home: string;
@@ -24,6 +25,8 @@ export interface FullSiteData {
   storeEnabled: boolean;
   /** Loja em pausa: aviso no topo. */
   storePause?: StorePause | null;
+  /** Perguntas frequentes com os dados do admin; sem elas, as respostas padrão. */
+  faq?: FaqItem[];
 }
 
 /**
@@ -36,8 +39,9 @@ export interface FullSiteData {
  * seguidas dividiam o mesmo fundo e a página parecia ter menos partes do que
  * tinha.
  */
-export function FullSite({ home, storeEnabled, storePause, slides, zones, featured, events }: FullSiteData) {
-  const preview = featured.some(isSample) || events.some(isSample) || slides.some(isSample);
+export function FullSite({ home, storeEnabled, storePause, slides, zones, featured, events, faq }: FullSiteData) {
+  // Só os destaques do topo ainda têm exemplo (até o cadastro no admin).
+  const preview = slides.some(isSample);
 
   return (
     <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause} preview={preview}>
@@ -47,7 +51,7 @@ export function FullSite({ home, storeEnabled, storePause, slides, zones, featur
       <About />
       <DeliveryZones zones={zones} />
       <Location />
-      <Faq />
+      <Faq items={faq} />
     </SiteShell>
   );
 }

@@ -11,7 +11,7 @@ export interface NavLink {
  */
 export function siteNav(home: string): NavLink[] {
   return [
-    { href: PRODUCTS_HREF, label: 'Produtos' },
+    { href: PRODUCTS_HREF, label: 'Loja' },
     { href: AGENDA_HREF, label: 'Eventos' },
     { href: `${home}#entregas`, label: 'Entregas' },
     { href: `${home}#sobre`, label: 'Sobre' },

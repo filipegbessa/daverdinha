@@ -22,7 +22,7 @@ import { pageMetadata } from '@/features/site/lib/seo';
 
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
-    title: 'Produtos · Daverdinha, ateliê de plantas no Rio de Janeiro',
+    title: 'Loja · Daverdinha, ateliê de plantas no Rio de Janeiro',
     description:
       'Vasos, mudas, arranjos e kits do ateliê da Daverdinha no Santo Cristo, com entrega em bairros do Rio.',
     path: PRODUCTS_HREF,
@@ -55,11 +55,11 @@ export default async function ProductsPage({ searchParams }: Props) {
           <Breadcrumbs
             crumbs={[
               { name: 'Início', path: home },
-              { name: 'Produtos', path: PRODUCTS_HREF },
+              { name: 'Loja', path: PRODUCTS_HREF },
             ]}
           />
           <Eyebrow>Catálogo</Eyebrow>
-          <h1 className="mt-6 font-serif text-3xl font-semibold text-ink md:text-4xl">Produtos</h1>
+          <h1 className="mt-6 font-serif text-3xl font-semibold text-ink md:text-4xl">Loja</h1>
           <p className="mt-3 max-w-2xl text-ink-soft">
             Tudo feito ou escolhido no ateliê. Pra pedir, abra o produto e fale com a gente pelo WhatsApp.
           </p>

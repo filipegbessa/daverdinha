@@ -72,7 +72,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <Breadcrumbs
             crumbs={[
               { name: 'Início', path: home },
-              { name: 'Produtos', path: PRODUCTS_HREF },
+              { name: 'Loja', path: PRODUCTS_HREF },
               { name: category.name, path: categoryHref(category.slug) },
             ]}
           />

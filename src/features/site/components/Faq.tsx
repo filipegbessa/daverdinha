@@ -1,19 +1,37 @@
+import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
-import { FAQ_ITEMS } from '@/data/faq';
+import { faqItems, type FaqItem } from '@/data/faq';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
+import { JsonLd } from '@/features/site/components/JsonLd';
 
-export function Faq() {
-  if (FAQ_ITEMS.length === 0) return null;
+/**
+ * Perguntas frequentes da home. As respostas vêm prontas de quem busca os
+ * dados do admin (`getFaqItems`); sem elas, valem as respostas padrão. O
+ * JSON-LD `FAQPage` deixa o Google mostrar as perguntas na busca.
+ */
+export function Faq({ items = faqItems() }: { items?: FaqItem[] }) {
+  if (items.length === 0) return null;
 
   return (
     <section id="duvidas" className="scroll-mt-24 px-6 py-16 md:py-24">
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: items.map((item) => ({
+            '@type': 'Question',
+            name: item.question,
+            acceptedAnswer: { '@type': 'Answer', text: item.answer },
+          })),
+        }}
+      />
       <div className="mx-auto max-w-2xl">
         <div className="text-center">
           <Eyebrow>Dúvidas</Eyebrow>
           <h2 className="mt-3 font-serif text-2xl font-semibold text-ink md:text-3xl">Perguntas frequentes</h2>
         </div>
         <div className="mt-10 space-y-3">
-          {FAQ_ITEMS.map((item) => (
+          {items.map((item) => (
             <details
               key={item.question}
               className="group rounded-2xl border border-sand-line bg-paper p-5 shadow-card open:shadow-soft"
@@ -26,6 +44,14 @@ export function Faq() {
                 />
               </summary>
               <p className="mt-3 text-sm text-ink-soft">{item.answer}</p>
+              {item.link && (
+                <Link
+                  href={item.link.href}
+                  className="mt-2 inline-block text-sm font-medium text-moss underline underline-offset-4"
+                >
+                  {item.link.label}
+                </Link>
+              )}
             </details>
           ))}
         </div>

@@ -79,8 +79,9 @@ describe('ProdutosPage', () => {
 
     expect(await screen.findByText('Vaso M')).toBeInTheDocument();
     expect(screen.getByText('Destaque')).toBeInTheDocument();
-    expect(screen.getByText(/Vasos · R\$ 89,90/)).toBeInTheDocument();
-    expect(screen.getByText(/R\$ 49,00 · sem foto/)).toBeInTheDocument();
+    expect(screen.getAllByText('Vasos').length).toBeGreaterThan(0);
+    expect(screen.getByText('R$ 89,90')).toBeInTheDocument();
+    expect(screen.getByText('Sem foto')).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Mostrar Vaso P no site' })).not.toBeChecked();
   });
 
@@ -89,9 +90,9 @@ describe('ProdutosPage', () => {
 
     render(<ProdutosPage />);
 
-    expect(await screen.findByText(/R\$ 89,90 · Estoque: 4/)).toBeInTheDocument();
-    expect(screen.getByText(/sem foto · Sob encomenda · 7 dias/)).toBeInTheDocument();
-    expect(screen.getByText(/R\$ 129,00 · Esgotado/)).toBeInTheDocument();
+    expect(await screen.findByText(/4 em estoque/)).toBeInTheDocument();
+    expect(screen.getByText(/Sob encomenda · 7 dias/)).toBeInTheDocument();
+    expect(screen.getByText(/Esgotado/)).toBeInTheDocument();
   });
 
   it('toggles "active" with a multipart PATCH carrying only that field', async () => {
@@ -115,6 +116,10 @@ describe('ProdutosPage', () => {
 
     expect(screen.getByRole('link', { name: 'Novo produto' })).toHaveAttribute('href', '/admin/produtos/novo');
     expect(screen.getByRole('link', { name: 'Editar Vaso M' })).toHaveAttribute('href', '/admin/produtos/p1');
+    expect(screen.getByRole('link', { name: 'Duplicar Vaso M' })).toHaveAttribute(
+      'href',
+      '/admin/produtos/novo?duplicar=p1',
+    );
   });
 
   it('removes after confirmation, warning it cannot be undone and pointing at the active toggle', async () => {
@@ -124,7 +129,7 @@ describe('ProdutosPage', () => {
     const [removeFirst] = await screen.findAllByRole('button', { name: 'Remover' });
     await userEvent.click(removeFirst);
     expect(screen.getByText(/sem desfazer/)).toBeInTheDocument();
-    expect(screen.getByText(/Desligue a chave "Ativo"/)).toBeInTheDocument();
+    expect(screen.getByText(/Desligue a chave "No site"/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Remover produto' }));
 
     expect(apiFetch).toHaveBeenCalledWith('/products/p1', { method: 'DELETE' });

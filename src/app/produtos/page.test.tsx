@@ -14,7 +14,7 @@ describe('/produtos', () => {
   it('lists the products', async () => {
     await renderPage();
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Produtos');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Loja');
     expect(screen.getByRole('link', { name: /Vaso Terracota M/ })).toBeInTheDocument();
   });
 

@@ -15,6 +15,20 @@ const product: Product = {
 };
 
 describe('ProductCard', () => {
+  it('shows the discount once, as a badge over the photo, when on sale', () => {
+    render(<ProductCard product={{ ...product, price: 74.9, listPrice: 89.9 }} />);
+
+    expect(screen.getByText('-17%')).toBeInTheDocument();
+    expect(screen.getAllByText(/-17%/)).toHaveLength(1);
+    expect(screen.getByText('-17%').closest('span')).toHaveClass('absolute');
+  });
+
+  it('has no badge without a sale', () => {
+    render(<ProductCard product={product} />);
+
+    expect(screen.queryByText(/%/)).not.toBeInTheDocument();
+  });
+
   it('links to the product and shows name, price and availability (full, default)', () => {
     render(<ProductCard product={product} />);
     const link = screen.getByRole('link', { name: /Vaso Terracota M/ });

@@ -11,7 +11,7 @@ describe('Header', () => {
   it('navigates to the catalog, the events page and the home sections', () => {
     render(<Header home="/site" />);
     const nav = screen.getByRole('navigation', { name: 'Principal' });
-    expect(within(nav).getByRole('link', { name: 'Produtos' })).toHaveAttribute('href', '/produtos');
+    expect(within(nav).getByRole('link', { name: 'Loja' })).toHaveAttribute('href', '/produtos');
     expect(within(nav).getByRole('link', { name: 'Eventos' })).toHaveAttribute('href', '/agenda');
     expect(within(nav).getByRole('link', { name: 'Entregas' })).toHaveAttribute('href', '/site#entregas');
   });

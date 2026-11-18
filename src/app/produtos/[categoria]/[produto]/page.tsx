@@ -70,7 +70,7 @@ export default async function ProductPage({ params }: Props) {
           <Breadcrumbs
             crumbs={[
               { name: 'Início', path: home },
-              { name: 'Produtos', path: PRODUCTS_HREF },
+              { name: 'Loja', path: PRODUCTS_HREF },
               { name: product.category.name, path: categoryHref(product.category.slug) },
               { name: product.name, path: productHref(product) },
             ]}
