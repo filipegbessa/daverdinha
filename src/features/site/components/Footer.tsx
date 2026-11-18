@@ -5,6 +5,8 @@ import { ContactLink } from '@/features/site/components/ContactLink';
 import { siteNav } from '@/features/site/components/site-nav';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
 import { DELIVERY_INFO_HREF, MY_ORDERS_HREF, RETURNS_HREF } from '@/features/site/lib/paths';
+import { CookiePreferencesButton } from '@/components/cookie-banner';
+import { shouldEnableAnalytics } from '@/lib/analytics';
 
 /**
  * Nome, endereço e telefone em todas as páginas, escritos igual ao perfil da
@@ -83,6 +85,9 @@ export function Footer({ home }: { home: string }) {
           <Link href={DELIVERY_INFO_HREF} className="block underline underline-offset-4 hover:text-paper">
             Entrega e retirada
           </Link>
+          {shouldEnableAnalytics() && (
+            <CookiePreferencesButton className="block cursor-pointer underline underline-offset-4 hover:text-paper" />
+          )}
           <p>{legal.razaoSocial}</p>
           <p>CNPJ {legal.cnpj}</p>
           <p>© {new Date().getFullYear()} Daverdinha</p>

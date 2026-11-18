@@ -30,7 +30,9 @@ export default async function PoliticaDePrivacidadePage() {
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <strong>Navegação no site:</strong> usamos o Google Analytics pra entender, de forma agregada, quais páginas
-            são mais visitadas e de onde vêm os acessos. Esses dados não identificam você pessoalmente.
+            são mais visitadas e de onde vêm os acessos. Esses dados não identificam você pessoalmente. Os cookies do
+            Analytics só são usados se você aceitar no aviso de cookies, e você pode mudar a escolha a qualquer hora em
+            &ldquo;Preferências de cookies&rdquo;, no rodapé do site.
           </li>
           <li>
             <strong>Conversas pelo WhatsApp:</strong> quando você entra em contato, guardamos seu número de telefone,

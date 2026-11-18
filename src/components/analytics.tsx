@@ -3,6 +3,8 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
+import { CookieBanner } from '@/components/cookie-banner';
+import { useConsent } from '@/lib/consent';
 
 declare global {
   interface Window {
@@ -33,24 +35,27 @@ function isInternalPath(pathname: string): boolean {
  * Fix: disable that automatic tracking (`send_page_view: false`) and fire
  * every page_view ourselves, re-checking `isInternalPath` on every
  * navigation — not just on first mount.
+ *
+ * Nothing loads until the visitor accepts the cookie notice (LGPD). The
+ * first page_view comes from the init script itself: when it runs, the
+ * effect below has already fired with no `gtag` to call.
  */
 export function Analytics({ gaId }: { gaId: string }) {
   const pathname = usePathname();
+  const consent = useConsent();
+  const internal = isInternalPath(pathname);
 
   useEffect(() => {
     if (isInternalPath(pathname)) return;
     window.gtag?.('event', 'page_view', { page_path: pathname });
   }, [pathname]);
 
-  if (isInternalPath(pathname)) return null;
+  // LGPD: o script do GA só entra depois de "Aceitar" no aviso de cookies.
+  if (internal || consent !== 'granted') return <CookieBanner hidden={internal} />;
 
   return (
     <>
-      <Script
-        id="_next-ga"
-        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-        strategy="afterInteractive"
-      />
+      <Script id="_next-ga" src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
       <Script id="_next-ga-init" strategy="afterInteractive">
         {`
           window.dataLayer = window.dataLayer || [];
@@ -58,6 +63,7 @@ export function Analytics({ gaId }: { gaId: string }) {
           window.gtag = gtag;
           gtag('js', new Date());
           gtag('config', '${gaId}', { send_page_view: false });
+          gtag('event', 'page_view', { page_path: window.location.pathname });
         `}
       </Script>
     </>

@@ -1,5 +1,7 @@
-import { render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Analytics } from './analytics';
+import { CONSENT_STORAGE_KEY, writeConsent } from '@/lib/consent';
 
 const mockUsePathname = jest.fn();
 jest.mock('next/navigation', () => ({ usePathname: () => mockUsePathname() }));
@@ -32,6 +34,12 @@ jest.mock('next/script', () => ({
 describe('Analytics', () => {
   beforeEach(() => {
     (window as unknown as { gtag?: jest.Mock }).gtag = jest.fn();
+    // Estes testes são do GA com o consentimento dado; os do aviso estão no fim.
+    localStorage.setItem(CONSENT_STORAGE_KEY, 'granted');
+  });
+
+  afterEach(() => {
+    act(() => writeConsent(null));
   });
 
   it('loads the GA script on a public page, with automatic page_view tracking turned off', () => {
@@ -39,10 +47,7 @@ describe('Analytics', () => {
 
     const { getByTestId } = render(<Analytics gaId="G-GYGTB5HZKF" />);
 
-    expect(getByTestId('_next-ga')).toHaveAttribute(
-      'src',
-      'https://www.googletagmanager.com/gtag/js?id=G-GYGTB5HZKF',
-    );
+    expect(getByTestId('_next-ga')).toHaveAttribute('src', 'https://www.googletagmanager.com/gtag/js?id=G-GYGTB5HZKF');
     // send_page_view: false is what stops gtag.js's own history-based
     // auto-tracking from firing page_view on every client-side navigation —
     // without it, a visit to /admin still gets counted even though this
@@ -75,7 +80,7 @@ describe('Analytics', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('does not load the GA script on /login sub-routes (Clerk\'s catch-all, e.g. sso-callback)', () => {
+  it("does not load the GA script on /login sub-routes (Clerk's catch-all, e.g. sso-callback)", () => {
     mockUsePathname.mockReturnValue('/login/sso-callback');
 
     const { container } = render(<Analytics gaId="G-GYGTB5HZKF" />);
@@ -122,5 +127,48 @@ describe('Analytics', () => {
     rerender(<Analytics gaId="G-GYGTB5HZKF" />);
 
     expect(window.gtag).toHaveBeenCalledWith('event', 'page_view', { page_path: '/' });
+  });
+
+  describe('cookie notice (LGPD)', () => {
+    beforeEach(() => {
+      localStorage.removeItem(CONSENT_STORAGE_KEY);
+      mockUsePathname.mockReturnValue('/');
+    });
+
+    it('asks before loading anything', () => {
+      render(<Analytics gaId="G-GYGTB5HZKF" />);
+
+      expect(screen.getByRole('region', { name: 'Aviso de cookies' })).toBeInTheDocument();
+      expect(screen.queryByTestId('_next-ga')).not.toBeInTheDocument();
+    });
+
+    it('loads GA after "Aceitar" and remembers the choice', async () => {
+      render(<Analytics gaId="G-GYGTB5HZKF" />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Aceitar' }));
+
+      expect(screen.getByTestId('_next-ga')).toBeInTheDocument();
+      expect(screen.getByTestId('_next-ga-init').innerHTML).toContain("gtag('event', 'page_view'");
+      expect(screen.queryByRole('region', { name: 'Aviso de cookies' })).not.toBeInTheDocument();
+      expect(localStorage.getItem(CONSENT_STORAGE_KEY)).toBe('granted');
+    });
+
+    it('loads nothing after "Recusar"', async () => {
+      render(<Analytics gaId="G-GYGTB5HZKF" />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Recusar' }));
+
+      expect(screen.queryByTestId('_next-ga')).not.toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: 'Aviso de cookies' })).not.toBeInTheDocument();
+      expect(localStorage.getItem(CONSENT_STORAGE_KEY)).toBe('denied');
+    });
+
+    it('does not show the notice in the admin', () => {
+      mockUsePathname.mockReturnValue('/admin');
+
+      const { container } = render(<Analytics gaId="G-GYGTB5HZKF" />);
+
+      expect(container).toBeEmptyDOMElement();
+    });
   });
 });
