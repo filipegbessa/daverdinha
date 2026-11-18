@@ -1,6 +1,6 @@
 # Questionário: cancelamento de ingressos (oficinas, aulas e eventos)
 
-> **Para depois:** a venda de ingressos pelo site fica fora da primeira versão da loja (decisão de 2026-11-09). Este questionário só precisa ser respondido quando ela entrar.
+> **Precisa de resposta:** a venda de ingressos pelo site já existe (interruptor "Venda de ingressos" no Dashboard). Hoje a política diz só "fale com a gente pelo WhatsApp ou por e-mail" para cancelar.
 
 Este questionário serve para montar o texto de **Cancelamento de ingressos** que vai aparecer no site. Basta responder do jeito que a Daverdinha trabalha hoje. Quando houver opções, marque uma ou escreva a sua. Com as respostas, escrevemos o texto final para você revisar antes de publicar.
 

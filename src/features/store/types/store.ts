@@ -1,6 +1,6 @@
 /**
- * Contratos da loja, iguais aos da API (ver "Contratos" em
- * `daverdinha-api/docs/plans/2026-11-05-loja-online-v1.md`).
+ * Contratos da loja, iguais aos da API (ver "Loja online" no
+ * `daverdinha-api/README.md`).
  */
 
 export type QuoteProblemReason = 'not_found' | 'inactive' | 'insufficient_stock';

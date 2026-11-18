@@ -4,7 +4,7 @@ Este questionário serve para montar os textos de **Trocas e devoluções**, as 
 
 O que a lei já obriga vale de qualquer jeito, mesmo que a resposta seja diferente. Os principais pontos estão nos quadros "Pela lei". Antes de publicar, vale uma conferida com o contador ou um advogado.
 
-> As perguntas sobre ingressos de oficinas, aulas e eventos ficam para depois, quando a venda de ingressos pelo site entrar (`docs/questionario-ingressos.md`).
+> As perguntas sobre ingressos de oficinas, aulas e eventos estão em outro questionário (`docs/questionario-ingressos.md`), que também precisa de resposta: a venda de ingressos pelo site já existe.
 
 ---
 
