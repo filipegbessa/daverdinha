@@ -1,7 +1,33 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Hero } from './Hero';
 import { DEFAULT_HERO_SLIDE } from '@/features/site/data/hero';
-import { SAMPLE_HERO_SLIDES } from '@/features/site/data/samples';
+import type { HeroSlide } from '@/features/site/types/hero-slide';
+
+const SLIDES: HeroSlide[] = [
+  DEFAULT_HERO_SLIDE,
+  {
+    id: 's2',
+    eyebrow: 'Oficina no ateliê',
+    title: 'Monte seu terrário com a gente',
+    description: null,
+    imageUrl: null,
+    linkLabel: 'Ver agenda',
+    linkUrl: '/agenda',
+    whatsappLabel: 'Quero participar',
+    whatsappMessage: 'Oi! Queria saber da oficina.',
+  },
+  {
+    id: 's3',
+    eyebrow: null,
+    title: 'Kits prontos pra presentear',
+    description: null,
+    imageUrl: null,
+    linkLabel: null,
+    linkUrl: null,
+    whatsappLabel: null,
+    whatsappMessage: null,
+  },
+];
 
 describe('Hero', () => {
   afterEach(() => jest.useRealTimers());
@@ -31,7 +57,7 @@ describe('Hero', () => {
 
   describe('with more than one slide', () => {
     it('becomes a slideshow, keeping a single H1 on the first slide', () => {
-      render(<Hero slides={SAMPLE_HERO_SLIDES} />);
+      render(<Hero slides={SLIDES} />);
 
       expect(screen.getAllByRole('heading', { level: 1, hidden: true })).toHaveLength(1);
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(DEFAULT_HERO_SLIDE.title);
@@ -39,18 +65,31 @@ describe('Hero', () => {
     });
 
     it('moves to the next slide on click, hiding the others from assistive tech', () => {
-      render(<Hero slides={SAMPLE_HERO_SLIDES} />);
+      render(<Hero slides={SLIDES} />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Próximo slide' }));
 
       expect(screen.getByRole('heading', { name: 'Monte seu terrário com a gente' })).toBeInTheDocument();
       expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'Ver agenda' })).toHaveAttribute('href', '/agenda');
+      expect(screen.getByRole('link', { name: 'Quero participar' })).toHaveAttribute(
+        'href',
+        expect.stringContaining('?text=Oi%21%20Queria%20saber%20da%20oficina.'),
+      );
+    });
+
+    it('shows only the buttons a slide has', () => {
+      render(<Hero slides={SLIDES} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Slide anterior' }));
+
+      expect(screen.getByRole('heading', { name: 'Kits prontos pra presentear' })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Ver|WhatsApp/ })).not.toBeInTheDocument();
     });
 
     it('rotates on its own and stops when paused', () => {
       jest.useFakeTimers();
-      render(<Hero slides={SAMPLE_HERO_SLIDES} />);
+      render(<Hero slides={SLIDES} />);
 
       act(() => jest.advanceTimersByTime(7000));
       expect(screen.getByRole('heading', { name: 'Monte seu terrário com a gente' })).toBeInTheDocument();

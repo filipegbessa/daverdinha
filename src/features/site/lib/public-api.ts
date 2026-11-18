@@ -1,15 +1,12 @@
-import { getSiteMode } from '@/lib/site-mode';
-import { SAMPLE_HERO_SLIDES } from '@/features/site/data/samples';
 import { DEFAULT_HERO_SLIDE } from '@/features/site/data/hero';
 import type { Product, ProductCategory } from '@/features/site/types/catalog';
 import type { SiteEvent } from '@/features/site/types/event';
 import type { HeroSlide } from '@/features/site/types/hero-slide';
+import type { AboutContent } from '@/features/site/types/about';
 
 /**
  * Leitura das rotas públicas da API pro site. Lista vazia é vazia, antes e
- * depois do lançamento: os produtos e eventos de exemplo saíram em
- * 2026-11-18 (só os destaques do topo ainda têm exemplo, ver `getHeroSlides`).
- * Mesmo contrato de
+ * depois do lançamento: o site não tem mais dados de exemplo. Mesmo contrato de
  * `getCoveredDeliveryZones`: nunca lança. Falha, 404 ou API sem URL viram
  * `null`, e quem chama decide o que "nada" quer dizer.
  */
@@ -49,13 +46,18 @@ export async function getFeaturedProducts(categorySlug?: string): Promise<Produc
 }
 
 /**
- * Nunca vazio: sem slide cadastrado (ou com a rota ainda inexistente na API),
- * a home mostra o slide padrão, e com um slide só não há slideshow.
+ * Nunca vazio: sem slide no ar (ou com a API fora), a home mostra o slide
+ * padrão, e com um slide só não há slideshow.
  */
 export async function getHeroSlides(): Promise<HeroSlide[]> {
   const slides = await fetchPublic<HeroSlide[]>('/hero-slides/active');
-  if (slides && slides.length > 0) return slides;
-  return (await getSiteMode()) === 'full' ? [DEFAULT_HERO_SLIDE] : SAMPLE_HERO_SLIDES;
+  return slides && slides.length > 0 ? slides : [DEFAULT_HERO_SLIDE];
+}
+
+/** O "Sobre" salvo no admin; `null` (nunca salvo ou API fora) = o texto do código. */
+export async function getAbout(): Promise<AboutContent | null> {
+  const about = await fetchPublic<AboutContent>('/site-content/about');
+  return about?.configured ? about : null;
 }
 
 export async function getActiveProductBySlug(slug: string): Promise<Product | null> {

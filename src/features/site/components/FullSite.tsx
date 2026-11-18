@@ -7,11 +7,11 @@ import { DeliveryZones } from '@/features/site/components/DeliveryZones';
 import { Location } from '@/features/site/components/Location';
 import { Faq } from '@/features/site/components/Faq';
 import { SiteShell } from '@/features/site/components/SiteShell';
-import { isSample } from '@/features/site/data/samples';
 import type { DeliveryZone } from '@/features/site/lib/delivery-zones';
 import type { Product } from '@/features/site/types/catalog';
 import type { SiteEvent } from '@/features/site/types/event';
 import type { HeroSlide } from '@/features/site/types/hero-slide';
+import type { AboutContent } from '@/features/site/types/about';
 import type { FaqItem } from '@/data/faq';
 
 export interface FullSiteData {
@@ -27,6 +27,8 @@ export interface FullSiteData {
   storePause?: StorePause | null;
   /** Perguntas frequentes com os dados do admin; sem elas, as respostas padrão. */
   faq?: FaqItem[];
+  /** O "Sobre" do admin; sem ele, o texto do código. */
+  about?: AboutContent | null;
 }
 
 /**
@@ -39,16 +41,23 @@ export interface FullSiteData {
  * seguidas dividiam o mesmo fundo e a página parecia ter menos partes do que
  * tinha.
  */
-export function FullSite({ home, storeEnabled, storePause, slides, zones, featured, events, faq }: FullSiteData) {
-  // Só os destaques do topo ainda têm exemplo (até o cadastro no admin).
-  const preview = slides.some(isSample);
-
+export function FullSite({
+  home,
+  storeEnabled,
+  storePause,
+  slides,
+  zones,
+  featured,
+  events,
+  faq,
+  about,
+}: FullSiteData) {
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause} preview={preview}>
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause}>
       <Hero slides={slides} />
       <ProductsSection products={featured} />
       <EventsSection events={events} cardVariant="compact" />
-      <About />
+      <About content={about} />
       <DeliveryZones zones={zones} />
       <Location />
       <Faq items={faq} />

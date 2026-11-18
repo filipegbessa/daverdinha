@@ -1,5 +1,6 @@
 import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
 import {
+  getAbout,
   getActiveCategories,
   getActiveProductBySlug,
   getActiveProducts,
@@ -9,7 +10,6 @@ import {
   getUpcomingEvents,
 } from './public-api';
 import { DEFAULT_HERO_SLIDE } from '@/features/site/data/hero';
-import { isSample } from '@/features/site/data/samples';
 
 const product = {
   id: 'p1',
@@ -72,11 +72,44 @@ describe('public API reads', () => {
       });
     });
 
-    // A rota de slides ainda não existe na API: a home não pode ficar sem topo.
+    // Sem slide no ar ou com a API fora, a home não pode ficar sem topo.
     it('falls back to the single default hero slide, so there is no slideshow', async () => {
       (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
 
       await expect(getHeroSlides()).resolves.toEqual([DEFAULT_HERO_SLIDE]);
+
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [] });
+      await expect(getHeroSlides()).resolves.toEqual([DEFAULT_HERO_SLIDE]);
+    });
+
+    it('shows the hero slides that are live in the admin', async () => {
+      const slide = { ...DEFAULT_HERO_SLIDE, id: 's1', title: 'Kits pra presentear' };
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [slide] });
+
+      await expect(getHeroSlides()).resolves.toEqual([slide]);
+      expect(global.fetch).toHaveBeenCalledWith('https://api.test/hero-slides/active', { next: { revalidate: 60 } });
+    });
+
+    it('uses the "Sobre" from the admin only once it was saved', async () => {
+      const saved = {
+        configured: true,
+        title: 'T',
+        text: 'X',
+        imageUrl: null,
+        instagramLabel: null,
+        updatedAt: '2026-11-18T12:00:00.000Z',
+      };
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => saved });
+      await expect(getAbout()).resolves.toEqual(saved);
+
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => ({ ...saved, configured: false, title: null, text: null }),
+      });
+      await expect(getAbout()).resolves.toBeNull();
+
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
+      await expect(getAbout()).resolves.toBeNull();
     });
   });
 
@@ -98,14 +131,6 @@ describe('public API reads', () => {
       await expect(getUpcomingEvents()).resolves.toEqual([]);
       await expect(getActiveProductBySlug('vaso-terracota-m')).resolves.toBeNull();
       await expect(getEventBySlug('oficina-de-terrario')).resolves.toBeNull();
-    });
-
-    it('still shows the sample hero slides until they can be registered in the admin', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
-
-      const slides = await getHeroSlides();
-      expect(slides.length).toBeGreaterThan(1);
-      expect(slides.slice(1).every(isSample)).toBe(true);
     });
   });
 });

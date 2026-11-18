@@ -37,8 +37,8 @@ describe('AdminLayout', () => {
     expect(screen.getByRole('link', { name: 'Mensagens' })).toHaveAttribute('href', '/admin/mensagens');
     expect(screen.getByRole('link', { name: 'Menu' })).toHaveAttribute('href', '/admin/menu');
     expect(screen.getByRole('link', { name: 'Entregas' })).toHaveAttribute('href', '/admin/entregas');
-    // Destaques nunca foi construído e foi substituído pela agenda de eventos.
-    expect(screen.queryByRole('link', { name: 'Destaques' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Destaques' })).toHaveAttribute('href', '/admin/destaques');
+    expect(screen.getByRole('link', { name: 'Sobre' })).toHaveAttribute('href', '/admin/sobre');
     expect(screen.getByRole('link', { name: 'Marcadores' })).toHaveAttribute('href', '/admin/marcadores');
     expect(screen.getByRole('link', { name: 'Produtos' })).toHaveAttribute('href', '/admin/produtos');
     expect(screen.getByRole('link', { name: 'Categorias' })).toHaveAttribute('href', '/admin/categorias');
@@ -68,7 +68,7 @@ describe('AdminLayout', () => {
       'Promoções',
       'Configurações da loja',
     ]);
-    expect(linksOf('Site')).toEqual(['Eventos']);
+    expect(linksOf('Site')).toEqual(['Destaques', 'Sobre', 'Eventos']);
     expect(linksOf('Bot (WhatsApp)')).toEqual(['Conversas', 'Menu', 'Mensagens', 'Marcadores']);
   });
 

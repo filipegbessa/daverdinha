@@ -1,4 +1,5 @@
 import type { SiteEvent } from '@/features/site/types/event';
+import type { HeroSlide } from '@/features/site/types/hero-slide';
 
 export interface BotSettings {
   /**
@@ -365,3 +366,20 @@ export interface CustomerByPhone {
   recentOrders: CustomerOrderSummary[];
   conversationId: string | null;
 }
+
+/**
+ * Um destaque do topo da home no admin (`GET /hero-slides`). `live` = ativo e
+ * dentro da validade: está na home agora.
+ */
+export interface HeroSlideAdmin extends HeroSlide {
+  order: number;
+  active: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+  live: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** O "Sobre" da home (`GET /site-content/about`, salvo com `PUT`). */
+export type { AboutContent } from '@/features/site/types/about';

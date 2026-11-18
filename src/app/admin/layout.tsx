@@ -34,7 +34,15 @@ const NAV_GROUPS: { id: string; title?: string; items: NavItem[] }[] = [
       { href: '/admin/loja', label: 'Configurações da loja' },
     ],
   },
-  { id: 'site', title: 'Site', items: [{ href: '/admin/eventos', label: 'Eventos' }] },
+  {
+    id: 'site',
+    title: 'Site',
+    items: [
+      { href: '/admin/destaques', label: 'Destaques' },
+      { href: '/admin/sobre', label: 'Sobre' },
+      { href: '/admin/eventos', label: 'Eventos' },
+    ],
+  },
   {
     id: 'bot',
     title: 'Bot (WhatsApp)',

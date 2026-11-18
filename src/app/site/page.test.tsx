@@ -40,12 +40,12 @@ describe('/site preview — always renders the full institutional site', () => {
     expect(screen.getByText('Perguntas frequentes')).toBeInTheDocument();
   });
 
-  // A prévia mostra o catálogo e a agenda cadastrados (aqui, os de teste).
-  // Só os destaques do topo ainda são exemplo, e a página avisa.
-  it('shows the registered products and events, warning that the top slides are samples', async () => {
+  // A prévia mostra o catálogo e a agenda cadastrados (aqui, os de teste),
+  // sem nenhum dado de exemplo nem aviso de exemplo.
+  it('shows the registered products and events, with no sample warning', async () => {
     await renderPage();
 
-    expect(screen.getByText(/Prévia do site/)).toBeInTheDocument();
+    expect(screen.queryByText(/Prévia do site/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Vaso Terracota M/ })).toHaveAttribute(
       'href',
       '/produtos/vasos/vaso-terracota-m',

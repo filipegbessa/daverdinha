@@ -36,15 +36,12 @@ function pauseText(pause: StorePause): string {
 export function SiteShell({
   home,
   storeEnabled,
-  preview = false,
   storePause = null,
   children,
 }: {
   home: string;
   /** Interruptor "Loja" do Dashboard (`shellProps()` ou `isStoreEnabled()`). */
   storeEnabled: boolean;
-  /** Algum dado da página é exemplo (ver `data/samples.ts`): mostra o aviso de prévia. */
-  preview?: boolean;
   /** Loja em pausa (`shellProps()`): mostra o aviso no topo. */
   storePause?: StorePause | null;
   children: React.ReactNode;
@@ -54,11 +51,6 @@ export function SiteShell({
   // vazia embaixo dele.
   const page = (
     <div className="flex min-h-dvh flex-col">
-      {preview && (
-        <p className="bg-berry px-4 py-1.5 text-center text-xs font-medium text-paper">
-          Prévia do site: os destaques do topo da home são exemplos, até serem cadastrados no admin.
-        </p>
-      )}
       {storeEnabled && storePause && (
         <p role="status" className="bg-moss px-4 py-2 text-center text-sm font-medium text-paper">
           {pauseText(storePause)}
