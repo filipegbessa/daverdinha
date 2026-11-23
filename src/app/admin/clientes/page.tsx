@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { formatCurrency } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { usePaginatedResource } from '@/features/admin/lib/use-paginated-resource';
 import { formatOrderDate } from '@/features/admin/lib/site-order-labels';
 import { formatPhone } from '@/features/admin/lib/format-phone';
@@ -72,31 +73,40 @@ export default function ClientesPage() {
         >
           {items.map((customer) => (
             <AdminListItem key={customer.email}>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{customer.name}</p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {customer.email} · {formatPhone(customer.phone)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {customer.ordersCount === 1 ? '1 pedido' : `${customer.ordersCount} pedidos`} · última compra em{' '}
-                  {formatOrderDate(customer.lastOrderAt)}
-                </p>
+              {/* No celular: nome e total no topo, contatos um por linha e os botões embaixo, dividindo a largura. */}
+              <div className="flex w-full min-w-0 items-start gap-3 sm:w-auto sm:flex-1 sm:items-center">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{customer.name}</p>
+                  <p className="text-sm text-muted-foreground sm:truncate">
+                    <span className="block truncate sm:inline">{customer.email}</span>
+                    <span className="hidden sm:inline"> · </span>
+                    <span className="block sm:inline">{formatPhone(customer.phone)}</span>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {customer.ordersCount === 1 ? '1 pedido' : `${customer.ordersCount} pedidos`} · última compra em{' '}
+                    {formatOrderDate(customer.lastOrderAt)}
+                  </p>
+                </div>
+                <span className="shrink-0 font-semibold tabular-nums">
+                  {formatCurrency(customer.totalSpent, 'BRL')}
+                </span>
               </div>
-              <span className="font-semibold tabular-nums">{formatCurrency(customer.totalSpent, 'BRL')}</span>
-              <Link
-                href={`/admin/pedidos?q=${encodeURIComponent(customer.email)}`}
-                className={buttonVariants({ variant: 'outline' })}
-              >
-                Pedidos
-              </Link>
-              {customer.conversationId && (
+              <div className="flex w-full gap-2 sm:w-auto">
                 <Link
-                  href={`/admin/conversas/${customer.conversationId}`}
-                  className={buttonVariants({ variant: 'outline' })}
+                  href={`/admin/pedidos?q=${encodeURIComponent(customer.email)}`}
+                  className={cn(buttonVariants({ variant: 'outline' }), 'flex-1 sm:flex-none')}
                 >
-                  Conversa
+                  Pedidos
                 </Link>
-              )}
+                {customer.conversationId && (
+                  <Link
+                    href={`/admin/conversas/${customer.conversationId}`}
+                    className={cn(buttonVariants({ variant: 'outline' }), 'flex-1 sm:flex-none')}
+                  >
+                    Conversa
+                  </Link>
+                )}
+              </div>
             </AdminListItem>
           ))}
         </AdminList>
