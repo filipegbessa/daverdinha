@@ -10,6 +10,7 @@ import {
   RETURNS_HREF,
 } from '@/features/site/lib/paths';
 import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
+import { isOnSale, SALE_HREF } from '@/features/site/lib/sale';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.SITE_URL;
@@ -41,8 +42,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getActiveProducts(),
     getUpcomingEvents(),
   ]);
-  // Só categoria com produto: as outras respondem 404.
+  // Só categoria com produto: as outras respondem 404. A "Promoção" entra só
+  // com produto em desconto.
   const withProducts = new Set(products.map((p) => p.category.slug));
+  const onSale = products.some(isOnSale);
   const page = (path: string, priority: number): MetadataRoute.Sitemap[number] => ({
     url: `${siteUrl}${path}`,
     lastModified: new Date(),
@@ -56,6 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page(RETURNS_HREF, 0.3),
     page(DELIVERY_INFO_HREF, 0.3),
     page(AGENDA_HREF, 0.8),
+    ...(onSale ? [page(SALE_HREF, 0.8)] : []),
     ...categories.filter((c) => withProducts.has(c.slug)).map((c) => page(categoryHref(c.slug), 0.8)),
     ...products.map((p) => page(productHref(p), 0.7)),
     ...events.map((e) => page(eventHref(e), 0.6)),

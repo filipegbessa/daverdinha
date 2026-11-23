@@ -9,6 +9,7 @@ import { Pagination } from '@/features/site/components/Pagination';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { PRODUCTS_HREF } from '@/features/site/lib/paths';
 import { getActiveCategories, getActiveProducts, getUpcomingEvents } from '@/features/site/lib/public-api';
+import { isOnSale } from '@/features/site/lib/sale';
 import { paginate } from '@/features/site/lib/pagination';
 import { CatalogControls } from '@/features/site/components/CatalogControls';
 import {
@@ -58,7 +59,7 @@ export default async function ProductsPage({ searchParams }: Props) {
             Tudo feito ou escolhido no ateliê. Pra pedir, abra o produto e fale com a gente pelo WhatsApp.
           </p>
           <div className="mt-6">
-            <CategoryChips categories={categories} />
+            <CategoryChips categories={categories} showSale={allProducts.some(isOnSale)} />
           </div>
           {allProducts.length > 0 && (
             <CatalogControls action={PRODUCTS_HREF} sort={params.sort} filter={params.filter} total={listed.length} />

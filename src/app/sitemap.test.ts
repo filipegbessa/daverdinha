@@ -75,5 +75,34 @@ describe('sitemap', () => {
     );
     // Kits não tem produto: a página dela é 404, não entra.
     expect(urls).not.toContain('https://daverdinha.com.br/produtos/kits');
+    // Nenhum produto com desconto: a "Promoção" é 404, não entra.
+    expect(urls).not.toContain('https://daverdinha.com.br/produtos/promocao');
+  });
+
+  it('adds the "Promoção" page while some product is discounted', async () => {
+    mockSiteSettings({ siteEnabled: true });
+    const responses: Record<string, unknown> = {
+      'https://api.test/product-categories/active': [{ id: 'c1', name: 'Vasos', slug: 'vasos', description: '' }],
+      'https://api.test/products/active': [
+        {
+          id: 'p1',
+          name: 'Vaso',
+          slug: 'vaso',
+          description: '',
+          price: 8,
+          listPrice: 10,
+          images: [],
+          category: { id: 'c1', name: 'Vasos', slug: 'vasos' },
+        },
+      ],
+      'https://api.test/events/upcoming': [],
+    };
+    (global.fetch as jest.Mock).mockImplementation(async (url: string) => ({
+      ok: true,
+      json: async () => responses[url],
+    }));
+
+    const urls = (await sitemap()).map((entry) => entry.url);
+    expect(urls).toContain('https://daverdinha.com.br/produtos/promocao');
   });
 });

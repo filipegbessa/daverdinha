@@ -18,12 +18,26 @@ import {
   type CatalogSearchParams,
 } from '@/features/site/lib/catalog-list';
 import { pageMetadata } from '@/features/site/lib/seo';
+import { isOnSale, SALE_CATEGORY } from '@/features/site/lib/sale';
+import type { Product } from '@/features/site/types/catalog';
 
 type Props = { params: Promise<{ categoria: string }>; searchParams: Promise<CatalogSearchParams> };
 
 async function findCategory(slug: string) {
   const categories = await getActiveCategories();
-  return { categories, category: categories.find((c) => c.slug === slug) };
+  const category = slug === SALE_CATEGORY.slug ? SALE_CATEGORY : categories.find((c) => c.slug === slug);
+  return { categories, category };
+}
+
+/**
+ * Os produtos da página e se o chip "Promoção" aparece. Na "Promoção", são
+ * os com desconto de todas as categorias.
+ */
+async function categoryProducts(slug: string): Promise<{ products: Product[]; showSale: boolean }> {
+  const all = await getActiveProducts();
+  const onSale = all.filter(isOnSale);
+  if (slug === SALE_CATEGORY.slug) return { products: onSale, showSale: onSale.length > 0 };
+  return { products: await getActiveProducts(slug), showSale: onSale.length > 0 };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -42,13 +56,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * Uma página por categoria, pra disputar buscas amplas ("vasos de cerâmica
  * Rio"). O texto de abertura vem do admin: uma página só com grade de cards é
  * fraca pra ranquear. Categoria sem produto ativo é 404, não página vazia
- * indexada.
+ * indexada; a "Promoção" sem produto com desconto também.
  */
 export default async function CategoryPage({ params, searchParams }: Props) {
   const { categoria } = await params;
-  const [{ categories, category }, allProducts, query, events] = await Promise.all([
+  const [{ categories, category }, { products: allProducts, showSale }, query, events] = await Promise.all([
     findCategory(categoria),
-    getActiveProducts(categoria),
+    categoryProducts(categoria),
     searchParams,
     getUpcomingEvents(),
   ]);
@@ -73,7 +87,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <h1 className="mt-6 font-serif text-3xl font-semibold text-ink md:text-4xl">{category.name}</h1>
           {category.description && <p className="mt-3 max-w-2xl text-lg text-ink-soft">{category.description}</p>}
           <div className="mt-6">
-            <CategoryChips categories={categories} active={category.slug} />
+            <CategoryChips categories={categories} active={category.slug} showSale={showSale} />
           </div>
           <CatalogControls
             action={categoryHref(category.slug)}
@@ -82,7 +96,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             total={listed.length}
           />
           {products.length === 0 ? (
-            <p className="mt-10 text-ink-soft">Nenhum produto desta categoria com esse filtro agora.</p>
+            <p className="mt-10 text-ink-soft">
+              Nenhum produto {category === SALE_CATEGORY ? 'em promoção' : 'desta categoria'} com esse filtro agora.
+            </p>
           ) : (
             <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-6 lg:grid-cols-4">
               {products.map((product) => (

@@ -8,6 +8,7 @@ import { Pagination } from '@/features/site/components/Pagination';
 import { ProductCard } from '@/features/site/components/ProductCard';
 import { SEARCH_HREF } from '@/features/site/lib/paths';
 import { getActiveCategories, getActiveProducts } from '@/features/site/lib/public-api';
+import { isOnSale } from '@/features/site/lib/sale';
 import { paginate } from '@/features/site/lib/pagination';
 import {
   applyCatalogParams,
@@ -93,7 +94,7 @@ export default async function SearchPage({ searchParams }: Props) {
                   ? 'Não achamos nada com essa busca. Tente outra palavra ou veja as categorias:'
                   : 'Nenhum resultado com esse filtro.'}
               </p>
-              {found.length === 0 && <CategoryChips categories={categories} />}
+              {found.length === 0 && <CategoryChips categories={categories} showSale={allProducts.some(isOnSale)} />}
             </div>
           )}
 

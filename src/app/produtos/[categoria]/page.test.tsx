@@ -1,5 +1,5 @@
 import { mockSiteSettings } from '@/lib/__mocks__/site-settings';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import Page from './page';
 
 // Sem os exemplos da prévia (saíram em 2026-11-18), a página só mostra o que
@@ -50,5 +50,21 @@ describe('/produtos/[categoria]', () => {
     expect(screen.getByRole('heading', { name: 'Próximos eventos' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Onde estamos' })).toBeInTheDocument();
     expect(screen.queryByText(/sob encomenda/)).not.toBeInTheDocument();
+  });
+  it('offers a "Promoção" chip while some product is discounted', async () => {
+    await renderPage('mudas');
+
+    const chips = screen.getByRole('navigation', { name: 'Categorias' });
+    expect(within(chips).getByRole('link', { name: 'Promoção' })).toHaveAttribute('href', '/produtos/promocao');
+  });
+
+  it('lists the discounted products of every category under "Promoção"', async () => {
+    await renderPage('promocao');
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Promoção');
+    expect(screen.getByRole('link', { name: /Vaso Pintado Folhagem/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Jiboia em cuia/ })).not.toBeInTheDocument();
+    const chips = screen.getByRole('navigation', { name: 'Categorias' });
+    expect(chips.querySelector('[aria-current="page"]')).toHaveTextContent('Promoção');
   });
 });

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { categoryHref, PRODUCTS_HREF } from '@/features/site/lib/paths';
+import { SALE_CATEGORY } from '@/features/site/lib/sale';
 import type { ProductCategory } from '@/features/site/types/catalog';
 
 /**
@@ -21,11 +22,23 @@ export function chipClass(current: boolean): string {
  * Filtro de categoria das páginas do catálogo, feito de links de verdade:
  * o Google segue link, não clique, e é assim que ele descobre as páginas de
  * categoria. (Na home, as tags filtram na própria página — ver
- * `ProductsSection`.)
+ * `ProductsSection`.) `showSale` põe "Promoção" logo depois de "Todos",
+ * quando há produto com desconto.
  */
-export function CategoryChips({ categories, active }: { categories: ProductCategory[]; active?: string }) {
+export function CategoryChips({
+  categories,
+  active,
+  showSale = false,
+}: {
+  categories: ProductCategory[];
+  active?: string;
+  showSale?: boolean;
+}) {
   const chips: { href: string; label: string; slug?: string }[] = [
     { href: PRODUCTS_HREF, label: 'Todos' },
+    ...(showSale
+      ? [{ href: categoryHref(SALE_CATEGORY.slug), label: SALE_CATEGORY.name, slug: SALE_CATEGORY.slug }]
+      : []),
     ...categories.map((c) => ({ href: categoryHref(c.slug), label: c.name, slug: c.slug })),
   ];
 
