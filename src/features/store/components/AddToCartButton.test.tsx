@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { AddToCartButton } from './AddToCartButton';
 import { CartProvider } from './CartProvider';
 import { CartDropdown } from './CartDropdown';
+import { StoreEnabledProvider } from './StoreEnabled';
 import { readCart } from '@/features/store/lib/cart-storage';
 import { SAMPLE_PRODUCTS } from '@/features/site/test-fixtures/catalog';
 import type { Product } from '@/features/site/types/catalog';
@@ -49,5 +50,19 @@ describe('AddToCartButton', () => {
     renderButton({ ...real, availability: 'sold_out' });
 
     expect(screen.getByRole('button', { name: 'Esgotado' })).toBeDisabled();
+  });
+
+  it('keeps the product on show but blocks adding while the store is paused', () => {
+    render(
+      <StoreEnabledProvider value pause={{ message: 'Estamos de férias!', until: '2027-01-06T03:00:00.000Z' }}>
+        <CartProvider>
+          <AddToCartButton product={real} />
+        </CartProvider>
+      </StoreEnabledProvider>,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Adicionar ao carrinho' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Loja em pausa' })).toBeDisabled();
+    expect(screen.getByText('Voltamos a receber pedidos em 6 de janeiro.')).toBeInTheDocument();
   });
 });

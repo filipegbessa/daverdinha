@@ -8,6 +8,8 @@ import { formatPrice } from '@/lib/format';
 import { PRODUCTS_HREF, productHref } from '@/features/site/lib/paths';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useCart } from '@/features/store/components/CartProvider';
+import { useStorePause } from '@/features/store/components/StoreEnabled';
+import { pauseText } from '@/features/store/lib/store-pause';
 import { FreeShippingProgress } from '@/features/store/components/FreeShippingProgress';
 import { MAX_ITEM_QUANTITY, type CartItem } from '@/features/store/lib/cart-storage';
 import { quoteCart } from '@/features/store/lib/store-api';
@@ -34,6 +36,7 @@ function cartKey(items: CartItem[]): string {
  */
 export function CartView() {
   const { items, ready, setQuantity, remove, syncFromQuote } = useCart();
+  const pause = useStorePause();
   const key = cartKey(items);
   const debouncedKey = useDebouncedValue(key, 400);
   const [quote, setQuote] = useState<{ key: string; data: CheckoutQuote } | null>(null);
@@ -85,7 +88,8 @@ export function CartView() {
   const current = quote?.key === key ? quote.data : null;
   const updating = !current && !failed;
   const problems = current?.problems ?? [];
-  const canCheckout = current !== null && problems.length === 0;
+  // Na pausa os itens ficam guardados no carrinho, mas o pedido não fecha.
+  const canCheckout = !pause && current !== null && problems.length === 0;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
@@ -170,6 +174,11 @@ export function CartView() {
             <p className="text-sm text-ink-soft">Pix ou cartão em até {current.installments}x sem juros.</p>
           )}
           {updating && <p className="text-sm text-ink-soft">Atualizando preços...</p>}
+          {pause && (
+            <p role="status" className="text-sm font-semibold text-berry">
+              {pauseText(pause)} Seus itens ficam guardados aqui.
+            </p>
+          )}
           {problems.length > 0 && (
             <p className="text-sm font-semibold text-berry">Ajuste os itens marcados pra continuar.</p>
           )}

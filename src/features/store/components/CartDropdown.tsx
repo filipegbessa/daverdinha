@@ -5,6 +5,7 @@ import { ShoppingBag, X } from 'lucide-react';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
 import { siteButtonClass } from '@/features/site/components/SiteButton';
 import { useCart } from '@/features/store/components/CartProvider';
+import { useStorePause } from '@/features/store/components/StoreEnabled';
 import { formatPrice } from '@/lib/format';
 import { productHref } from '@/features/site/lib/paths';
 
@@ -34,6 +35,7 @@ function hoverScreen(): boolean {
  */
 export function CartDropdown() {
   const { items, count, ready, remove, lastAddedAt } = useCart();
+  const pause = useStorePause();
   const [open, setOpen] = useState(false);
   const seenAddition = useRef(lastAddedAt);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -145,9 +147,13 @@ export function CartDropdown() {
                   <span>Subtotal</span>
                   <span className="tabular-nums">{formatPrice(subtotal)}</span>
                 </p>
-                <Link href="/checkout" className={siteButtonClass({ size: 'sm', className: 'w-full' })}>
-                  Finalizar compra
-                </Link>
+                {pause ? (
+                  <p className="text-center text-xs text-ink-soft">Loja em pausa: os itens ficam guardados.</p>
+                ) : (
+                  <Link href="/checkout" className={siteButtonClass({ size: 'sm', className: 'w-full' })}>
+                    Finalizar compra
+                  </Link>
+                )}
                 <Link href="/carrinho" className="block text-center text-xs font-semibold text-moss underline">
                   Ver carrinho
                 </Link>

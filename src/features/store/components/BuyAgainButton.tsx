@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { ShoppingBag } from 'lucide-react';
 import { SiteButton } from '@/features/site/components/SiteButton';
 import { useCart } from '@/features/store/components/CartProvider';
+import { useStorePause } from '@/features/store/components/StoreEnabled';
 import type { Product } from '@/features/site/types/catalog';
 
 export interface BuyAgainItem {
@@ -14,7 +15,8 @@ export interface BuyAgainItem {
 /**
  * Põe no carrinho os itens de um pedido antigo e leva pro carrinho, onde a
  * cotação mostra preço e estoque de hoje. Só recebe o que ainda está à venda;
- * `missing` conta os que saíram do catálogo ou esgotaram.
+ * `missing` conta os que saíram do catálogo ou esgotaram. Some com a loja em
+ * pausa.
  */
 export function BuyAgainButton({
   items,
@@ -27,7 +29,8 @@ export function BuyAgainButton({
 }) {
   const router = useRouter();
   const { add } = useCart();
-  if (items.length === 0) return null;
+  const pause = useStorePause();
+  if (items.length === 0 || pause) return null;
 
   function buyAgain() {
     for (const { product, quantity } of items) add(product, quantity);

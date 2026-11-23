@@ -25,14 +25,20 @@ export function generateMetadata(): Promise<Metadata> {
  * `docs/questionario-politicas.md`.
  */
 export default async function EntregaERetiradaPage() {
-  const [{ home, storeEnabled }, zones, pickup] = await Promise.all([
+  const [{ home, storeEnabled, storePause }, zones, pickup] = await Promise.all([
     shellProps(),
     getCoveredDeliveryZones(),
     getPickupInfo(),
   ]);
 
   return (
-    <PolicyPage home={home} storeEnabled={storeEnabled} title="Entrega e retirada" path={DELIVERY_INFO_HREF}>
+    <PolicyPage
+      home={home}
+      storeEnabled={storeEnabled}
+      storePause={storePause}
+      title="Entrega e retirada"
+      path={DELIVERY_INFO_HREF}
+    >
       <PolicySection title="Entrega">
         <p>
           Entregamos no Rio de Janeiro, nos bairros abaixo. O valor da entrega depende do bairro e aparece no carrinho

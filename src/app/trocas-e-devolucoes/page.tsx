@@ -24,11 +24,17 @@ export function generateMetadata(): Promise<Metadata> {
  * respostas do `docs/questionario-politicas.md`, revisadas pela cliente.
  */
 export default async function TrocasEDevolucoesPage() {
-  const { home, storeEnabled } = await shellProps();
+  const { home, storeEnabled, storePause } = await shellProps();
   const { email } = businessInfo.contact;
 
   return (
-    <PolicyPage home={home} storeEnabled={storeEnabled} title="Trocas e devoluções" path={RETURNS_HREF}>
+    <PolicyPage
+      home={home}
+      storeEnabled={storeEnabled}
+      storePause={storePause}
+      title="Trocas e devoluções"
+      path={RETURNS_HREF}
+    >
       <p>
         Esta página explica como desistir de uma compra feita no site, o que fazer se algo chegar com problema e como o
         dinheiro volta. Ficou alguma dúvida? Fale com a gente antes de comprar.

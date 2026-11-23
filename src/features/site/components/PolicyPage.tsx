@@ -1,5 +1,6 @@
 import { Breadcrumbs } from '@/features/site/components/Breadcrumbs';
 import { SiteShell } from '@/features/site/components/SiteShell';
+import type { StorePause } from '@/lib/site-settings';
 
 /**
  * A moldura das páginas de texto (privacidade, trocas, entrega): trilha,
@@ -8,18 +9,20 @@ import { SiteShell } from '@/features/site/components/SiteShell';
 export function PolicyPage({
   home,
   storeEnabled,
+  storePause = null,
   title,
   path,
   children,
 }: {
   home: string;
   storeEnabled: boolean;
+  storePause?: StorePause | null;
   title: string;
   path: string;
   children: React.ReactNode;
 }) {
   return (
-    <SiteShell home={home} storeEnabled={storeEnabled}>
+    <SiteShell home={home} storeEnabled={storeEnabled} storePause={storePause}>
       <section className="px-6 py-10 md:py-14">
         <div className="mx-auto max-w-3xl">
           <Breadcrumbs

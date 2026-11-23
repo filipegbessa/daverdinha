@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CartView } from './CartView';
 import { CartProvider } from './CartProvider';
+import { StoreEnabledProvider } from './StoreEnabled';
 import { CART_STORAGE_KEY, type CartItem } from '@/features/store/lib/cart-storage';
 import { quoteCart } from '@/features/store/lib/store-api';
 import type { CheckoutQuote } from '@/features/store/types/store';
@@ -140,5 +141,27 @@ describe('CartView', () => {
 
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
     await waitFor(() => expect(screen.getByRole('link', { name: 'Finalizar compra' })).toBeInTheDocument());
+  });
+
+  it('keeps the items but blocks checkout while the store is paused', async () => {
+    (quoteCart as jest.Mock).mockResolvedValue(quote());
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify([vaso]));
+    render(
+      <StoreEnabledProvider value pause={{ message: 'Estamos de férias!', until: '2027-01-06T03:00:00.000Z' }}>
+        <CartProvider>
+          <CartView />
+        </CartProvider>
+      </StoreEnabledProvider>,
+    );
+    await settle();
+
+    expect(screen.getByText('Vaso M')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Estamos de férias! Voltamos a receber pedidos em 6 de janeiro. Seus itens ficam guardados aqui.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Finalizar compra' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Finalizar compra' })).toBeDisabled();
   });
 });

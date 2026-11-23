@@ -67,4 +67,15 @@ describe('ProductCard add button', () => {
 
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
+
+  it('hides the add button while the store is paused', () => {
+    render(
+      <StoreEnabledProvider value pause={{ message: null, until: null }}>
+        <ProductCard product={real} />
+      </StoreEnabledProvider>,
+    );
+
+    expect(screen.getByText(real.name)).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
 });

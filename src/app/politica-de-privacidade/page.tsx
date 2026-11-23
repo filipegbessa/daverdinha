@@ -18,10 +18,16 @@ export function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PoliticaDePrivacidadePage() {
-  const { home, storeEnabled } = await shellProps();
+  const { home, storeEnabled, storePause } = await shellProps();
 
   return (
-    <PolicyPage home={home} storeEnabled={storeEnabled} title="Política de Privacidade" path={PATH}>
+    <PolicyPage
+      home={home}
+      storeEnabled={storeEnabled}
+      storePause={storePause}
+      title="Política de Privacidade"
+      path={PATH}
+    >
       <p>
         A Daverdinha é um ateliê de plantas no Santo Cristo, Rio de Janeiro. Esta página explica quais dados coletamos
         quando você visita este site ou fala com a gente pelo WhatsApp, e como usamos essas informações.

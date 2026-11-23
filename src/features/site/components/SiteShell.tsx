@@ -8,22 +8,13 @@ import { StoreEnabledProvider } from '@/features/store/components/StoreEnabled';
 import { isStoreEnabled } from '@/features/store/lib/store-enabled';
 import { homeHref } from '@/features/site/lib/paths';
 import { WHATSAPP_GREETING } from '@/features/site/lib/whatsapp-messages';
+import { pauseText } from '@/features/store/lib/store-pause';
 import { getSiteSettings, type StorePause } from '@/lib/site-settings';
 
 /** O que toda página passa pro `SiteShell`, lido dos interruptores do Dashboard. */
 export async function shellProps(): Promise<{ home: string; storeEnabled: boolean; storePause: StorePause | null }> {
   const [home, storeEnabled, settings] = await Promise.all([homeHref(), isStoreEnabled(), getSiteSettings()]);
   return { home, storeEnabled, storePause: storeEnabled ? settings.storePause : null };
-}
-
-const RETURN_DATE = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' });
-
-/** O aviso da loja em pausa, no topo de toda página que o recebe. */
-function pauseText(pause: StorePause): string {
-  const message = pause.message?.trim() || 'A loja está em pausa e não está recebendo pedidos agora.';
-  return pause.until
-    ? `${message} Voltamos a receber pedidos em ${RETURN_DATE.format(new Date(pause.until))}.`
-    : message;
 }
 
 /**
@@ -42,7 +33,7 @@ export function SiteShell({
   home: string;
   /** Interruptor "Loja" do Dashboard (`shellProps()` ou `isStoreEnabled()`). */
   storeEnabled: boolean;
-  /** Loja em pausa (`shellProps()`): mostra o aviso no topo. */
+  /** Loja em pausa (`shellProps()`): mostra o aviso no topo e tira a compra de produtos da tela. */
   storePause?: StorePause | null;
   children: React.ReactNode;
 }) {
@@ -74,7 +65,7 @@ export function SiteShell({
     </div>
   );
   return (
-    <StoreEnabledProvider value={storeEnabled}>
+    <StoreEnabledProvider value={storeEnabled} pause={storePause}>
       {storeEnabled ? <CartProvider>{page}</CartProvider> : page}
     </StoreEnabledProvider>
   );
