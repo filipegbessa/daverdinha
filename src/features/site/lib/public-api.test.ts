@@ -90,6 +90,21 @@ describe('public API reads', () => {
       expect(global.fetch).toHaveBeenCalledWith('https://api.test/hero-slides/active', { next: { revalidate: 60 } });
     });
 
+    it('turns a hero button link to the site itself into a path, so it opens in the same tab', async () => {
+      const originalSiteUrl = process.env.SITE_URL;
+      process.env.SITE_URL = 'https://www.daverdinha.com.br';
+      const own = { ...DEFAULT_HERO_SLIDE, id: 's1', linkUrl: 'https://daverdinha.com.br/agenda' };
+      const external = { ...DEFAULT_HERO_SLIDE, id: 's2', linkUrl: 'https://instagram.com/daverdinha' };
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => [own, external] });
+
+      try {
+        await expect(getHeroSlides()).resolves.toEqual([{ ...own, linkUrl: '/agenda' }, external]);
+      } finally {
+        if (originalSiteUrl === undefined) delete process.env.SITE_URL;
+        else process.env.SITE_URL = originalSiteUrl;
+      }
+    });
+
     it('uses the "Sobre" from the admin only once it was saved', async () => {
       const saved = {
         configured: true,

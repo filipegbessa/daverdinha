@@ -55,6 +55,18 @@ describe('Hero', () => {
     });
   });
 
+  // A pedido da cliente: página do site abre na mesma aba, link de fora em
+  // outra. O WhatsApp sempre em outra aba.
+  it('opens the button in the same tab for a site page and in a new tab for another site', () => {
+    const { rerender } = render(<Hero slides={[{ ...DEFAULT_HERO_SLIDE, linkUrl: '/agenda' }]} />);
+    expect(screen.getByRole('link', { name: 'Ver produtos' })).not.toHaveAttribute('target');
+
+    rerender(<Hero slides={[{ ...DEFAULT_HERO_SLIDE, linkUrl: 'https://instagram.com/daverdinha' }]} />);
+    const external = screen.getByRole('link', { name: 'Ver produtos' });
+    expect(external).toHaveAttribute('target', '_blank');
+    expect(external).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
   describe('with more than one slide', () => {
     it('becomes a slideshow, keeping a single H1 on the first slide', () => {
       render(<Hero slides={SLIDES} />);

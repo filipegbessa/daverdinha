@@ -44,3 +44,31 @@ export function absoluteUrl(path: string): string {
   const siteUrl = process.env.SITE_URL;
   return siteUrl ? `${siteUrl.replace(/\/$/, '')}${path}` : path;
 }
+
+/** O host sem `www.`, pra `daverdinha.com.br` e `www.daverdinha.com.br` valerem o mesmo. */
+function bareHost(host: string): string {
+  return host.toLowerCase().replace(/^www\./, '');
+}
+
+/**
+ * Link cadastrado no admin (o botão de um destaque) em caminho do site, se ele
+ * for do site: `/agenda` fica igual, e uma URL completa do próprio domínio
+ * (`https://www.daverdinha.com.br/agenda`) vira `/agenda`, pra navegar na mesma
+ * aba. Link pra fora do site volta como veio. Server-only (lê `SITE_URL`).
+ */
+export function toSitePath(url: string): string {
+  const siteUrl = process.env.SITE_URL;
+  if (!siteUrl || !/^https?:\/\//i.test(url)) return url;
+  try {
+    const target = new URL(url);
+    if (bareHost(target.host) !== bareHost(new URL(siteUrl).host)) return url;
+    return `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return url;
+  }
+}
+
+/** Caminho dentro do site (`/agenda`), e não `//outro-site.com`, que o navegador trata como externo. */
+export function isSitePath(url: string): boolean {
+  return url.startsWith('/') && !url.startsWith('//');
+}

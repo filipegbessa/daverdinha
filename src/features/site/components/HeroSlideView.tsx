@@ -4,12 +4,8 @@ import { getWhatsAppUrl } from '@/features/site/lib/whatsapp';
 import { ContactLink } from '@/features/site/components/ContactLink';
 import { Eyebrow } from '@/features/site/components/Eyebrow';
 import { ImagePlaceholder } from '@/features/site/components/ImagePlaceholder';
+import { isSitePath } from '@/features/site/lib/paths';
 import type { HeroSlide } from '@/features/site/types/hero-slide';
-
-/** Link pra fora do site abre em outra aba; caminho do site navega normal. */
-function isExternal(url: string): boolean {
-  return /^https?:\/\//.test(url);
-}
 
 /**
  * Um slide do topo. O primeiro da lista usa H1 (o título principal da página
@@ -34,14 +30,20 @@ export function HeroSlideView({ slide, isFirst }: { slide: HeroSlide; isFirst: b
         {(link || slide.whatsappMessage) && (
           <div className="mt-7 flex flex-wrap justify-center gap-3 md:justify-start">
             {link &&
-              (isExternal(link.url) ? (
-                <a href={link.url} target="_blank" rel="noreferrer" className={siteButtonClass({ size: 'sm' })}>
-                  {link.label}
-                </a>
-              ) : (
+              // Página do site navega na mesma aba; link pra fora abre em outra.
+              (isSitePath(link.url) ? (
                 <SiteButton href={link.url} size="sm">
                   {link.label}
                 </SiteButton>
+              ) : (
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={siteButtonClass({ size: 'sm' })}
+                >
+                  {link.label}
+                </a>
               ))}
             {slide.whatsappMessage && (
               <ContactLink

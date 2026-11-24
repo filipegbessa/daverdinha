@@ -293,7 +293,12 @@ export function HeroSlideForm({
                   onChange={(e) => set('linkLabel', e.target.value)}
                 />
               </FormField>
-              <FormField id="slideLinkUrl" label="Link" error={errors.link}>
+              <FormField
+                id="slideLinkUrl"
+                label="Link"
+                hint="Página do site abre na mesma aba; link de outro site, numa aba nova."
+                error={errors.link}
+              >
                 <Input
                   id="slideLinkUrl"
                   value={values.linkUrl}

@@ -1,4 +1,5 @@
 import { DEFAULT_HERO_SLIDE } from '@/features/site/data/hero';
+import { toSitePath } from '@/features/site/lib/paths';
 import type { Product, ProductCategory } from '@/features/site/types/catalog';
 import type { SiteEvent } from '@/features/site/types/event';
 import type { HeroSlide } from '@/features/site/types/hero-slide';
@@ -47,11 +48,14 @@ export async function getFeaturedProducts(categorySlug?: string): Promise<Produc
 
 /**
  * Nunca vazio: sem slide no ar (ou com a API fora), a home mostra o slide
- * padrão, e com um slide só não há slideshow.
+ * padrão, e com um slide só não há slideshow. Link do botão pro próprio site
+ * vira caminho (`/agenda`), pra abrir na mesma aba; o slideshow roda no
+ * navegador, onde `SITE_URL` não existe, então isso é resolvido aqui.
  */
 export async function getHeroSlides(): Promise<HeroSlide[]> {
   const slides = await fetchPublic<HeroSlide[]>('/hero-slides/active');
-  return slides && slides.length > 0 ? slides : [DEFAULT_HERO_SLIDE];
+  if (!slides || slides.length === 0) return [DEFAULT_HERO_SLIDE];
+  return slides.map((slide) => (slide.linkUrl ? { ...slide, linkUrl: toSitePath(slide.linkUrl) } : slide));
 }
 
 /** O "Sobre" salvo no admin; `null` (nunca salvo ou API fora) = o texto do código. */
