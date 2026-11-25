@@ -35,6 +35,7 @@ describe('Hero', () => {
   describe('with a single slide', () => {
     // O H1 é o sinal mais forte da página pro Google: diz o que a Daverdinha
     // é e onde fica.
+
     it('is a static section whose H1 says what the business is and where', () => {
       render(<Hero slides={[DEFAULT_HERO_SLIDE]} />);
 
