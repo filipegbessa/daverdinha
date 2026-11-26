@@ -166,6 +166,17 @@ describe('ProductForm', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Informe o prazo de confecção, de 1 a 180 dias.');
   });
 
+  it('does not save without a name or a description, with a message in Portuguese instead of the API error', async () => {
+    const apiFetch = mockSave();
+
+    render(<ProductForm product={null} categories={categories} onSaved={jest.fn()} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Criar produto' }));
+
+    expect(apiFetch).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Nome')).toHaveAccessibleDescription('Informe o nome do produto.');
+    expect(screen.getByLabelText('Descrição')).toHaveAccessibleDescription('Informe a descrição do produto.');
+  });
+
   it('shows the API error and stays open', async () => {
     const apiFetch = jest.fn().mockRejectedValue(new Error('Categoria não encontrada.'));
     (useApiClient as jest.Mock).mockReturnValue({ apiFetch });

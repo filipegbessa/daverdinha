@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ProductImagesInput, validateImages } from './ProductImagesInput';
+import { ImagesInput, validateImages } from './ImagesInput';
 
 const photo = (name: string, type = 'image/jpeg', size = 1000) => {
   const file = new File(['x'], name, { type });
@@ -12,7 +12,8 @@ const photo = (name: string, type = 'image/jpeg', size = 1000) => {
 function Harness({ currentImages = [] as string[], onChange = jest.fn() }) {
   const [files, setFiles] = useState<File[]>([]);
   return (
-    <ProductImagesInput
+    <ImagesInput
+      id="productImages"
       currentImages={currentImages}
       files={files}
       onChange={(next) => {
@@ -38,7 +39,7 @@ describe('validateImages', () => {
   });
 });
 
-describe('ProductImagesInput', () => {
+describe('ImagesInput', () => {
   beforeAll(() => {
     URL.createObjectURL = jest.fn((file: Blob) => `blob:${(file as File).name}`);
     URL.revokeObjectURL = jest.fn();

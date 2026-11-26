@@ -11,7 +11,7 @@ import { centsFromInput } from '@/features/admin/lib/currency-input';
 import { fromDatetimeLocal, toDatetimeLocal } from '@/features/admin/lib/datetime-local';
 import { FormField, SwitchField } from '@/features/admin/components/FormField';
 import { FormCard } from '@/features/admin/components/FormCard';
-import { ProductImagesInput } from '@/features/admin/components/ProductImagesInput';
+import { ImagesInput } from '@/features/admin/components/ImagesInput';
 import { ErrorText } from '@/features/admin/components/StatusMessage';
 import type { ProductAdmin, ProductCategoryAdmin } from '@/features/admin/types/admin';
 
@@ -93,6 +93,8 @@ export function ProductForm({
   const [values, setValues] = useState(baseline);
   const [files, setFiles] = useState<File[]>([]);
   const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    description?: string;
     stock?: string;
     leadTimeDays?: string;
     promo?: string;
@@ -127,6 +129,12 @@ export function ProductForm({
 
   function validate() {
     const errors: typeof fieldErrors = {};
+    if (values.name.trim() === '') {
+      errors.name = 'Informe o nome do produto.';
+    }
+    if (values.description.trim() === '') {
+      errors.description = 'Informe a descrição do produto.';
+    }
     if (values.promoCents !== null && values.promoCents >= values.priceCents) {
       errors.promo = 'O preço promocional precisa ser menor que o preço.';
     }
@@ -207,10 +215,10 @@ export function ProductForm({
         {/* No celular o status vem primeiro (como na Shopify); no computador, na lateral. */}
         <div className="order-2 space-y-6 lg:order-1">
           <FormCard title="Informações">
-            <FormField id="productName" label="Nome">
+            <FormField id="productName" label="Nome" error={fieldErrors.name}>
               <Input id="productName" value={values.name} onChange={(e) => set('name', e.target.value)} required />
             </FormField>
-            <FormField id="productDescription" label="Descrição">
+            <FormField id="productDescription" label="Descrição" error={fieldErrors.description}>
               <Textarea
                 id="productDescription"
                 value={values.description}
@@ -222,7 +230,8 @@ export function ProductForm({
           </FormCard>
 
           <FormCard title="Imagens">
-            <ProductImagesInput
+            <ImagesInput
+              id="productImages"
               currentImages={product?.images ?? []}
               files={files}
               onChange={(next) => {

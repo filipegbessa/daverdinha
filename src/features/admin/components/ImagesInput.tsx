@@ -17,15 +17,18 @@ export function validateImages(files: File[]): string | null {
 }
 
 /**
- * Escolha de fotos do produto. Sem arquivos escolhidos mostra as fotos atuais
- * (`currentImages`); escolher novas substitui todas — é como a API funciona,
- * e o aviso diz isso antes de a cliente salvar.
+ * Escolha de fotos (produto ou evento). Sem arquivos escolhidos mostra as
+ * fotos atuais (`currentImages`); escolher novas substitui todas — é como a
+ * API funciona, e o aviso diz isso antes de a cliente salvar.
  */
-export function ProductImagesInput({
+export function ImagesInput({
+  id,
   currentImages,
   files,
   onChange,
 }: {
+  /** Prefixo do `id` do campo (`productImages`, `eventImages`...), único na página. */
+  id: string;
   currentImages: string[];
   files: File[];
   onChange: (files: File[]) => void;
@@ -53,7 +56,7 @@ export function ProductImagesInput({
   return (
     <div>
       <FormField
-        id="productImages"
+        id={id}
         label="Fotos"
         hint={
           <>
@@ -64,7 +67,7 @@ export function ProductImagesInput({
         error={error}
       >
         <input
-          id="productImages"
+          id={id}
           type="file"
           accept={ALLOWED_TYPES.join(',')}
           multiple
