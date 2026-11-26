@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import AdminLayout from './layout';
+import { AdminLayoutClient as AdminLayout } from './admin-layout-client';
 import { useApiClient } from '@/features/admin/lib/api-client';
 
 jest.mock('@clerk/nextjs', () => ({ UserButton: () => <div data-testid="user-button" /> }));
