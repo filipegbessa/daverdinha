@@ -88,6 +88,18 @@ describe('EventForm', () => {
     expect(screen.getByLabelText('Vagas')).toBeDisabled();
   });
 
+  it('does not save without a title or a description, with a message in Portuguese instead of the API error', async () => {
+    const apiFetch = mockSave();
+    render(<EventForm event={null} onSaved={jest.fn()} />);
+
+    await userEvent.type(screen.getByLabelText('Início'), '2026-11-28T09:00');
+    await userEvent.click(screen.getByRole('button', { name: 'Criar evento' }));
+
+    expect(apiFetch).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Título')).toHaveAccessibleDescription('Informe o título do evento.');
+    expect(screen.getByLabelText('Descrição')).toHaveAccessibleDescription('Informe a descrição do evento.');
+  });
+
   it('does not send an event that ends before it starts', async () => {
     const apiFetch = mockSave();
     render(<EventForm event={null} onSaved={jest.fn()} />);
@@ -144,27 +156,23 @@ describe('EventForm', () => {
     expect(apiFetch).not.toHaveBeenCalled();
   });
 
-  it('sends a new cover photo, or asks to remove the current one', async () => {
+  it('sends new photos, replacing the current ones', async () => {
     const apiFetch = mockSave();
     render(<EventForm event={oficina} onSaved={jest.fn()} />);
 
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Remover a foto atual' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
-    expect(sentFields(apiFetch)).toMatchObject({ removeImage: 'true' });
-
     const file = new File(['x'], 'capa.webp', { type: 'image/webp' });
-    await userEvent.upload(screen.getByLabelText('Foto'), file);
+    await userEvent.upload(screen.getByLabelText('Fotos'), [file]);
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
     const body = apiFetch.mock.calls.at(-1)[1].body as FormData;
-    expect(body.get('image')).toBe(file);
-    expect(body.get('removeImage')).toBeNull();
+    expect(body.getAll('images')).toEqual([file]);
   });
 
   it('refuses a photo that is not JPEG, PNG or WebP', async () => {
     mockSave();
     render(<EventForm event={null} onSaved={jest.fn()} />);
 
-    await userEvent.upload(screen.getByLabelText('Foto'), new File(['x'], 'capa.gif', { type: 'image/gif' }), {
+    await userEvent.upload(screen.getByLabelText('Fotos'), new File(['x'], 'capa.gif', { type: 'image/gif' }), {
       applyAccept: false,
     });
 

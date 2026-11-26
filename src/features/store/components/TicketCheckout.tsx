@@ -408,7 +408,7 @@ export function TicketCheckout({ event, initialQuantity }: { event: SiteEvent; i
         className="h-fit space-y-4 rounded-2xl border border-sand-line bg-sand/60 p-5 lg:sticky lg:top-24"
       >
         <div className="flex gap-3">
-          <ImagePlaceholder src={event.imageUrl ?? undefined} alt="" className="size-16 shrink-0 rounded-xl" />
+          <ImagePlaceholder src={event.images[0] ?? undefined} alt="" className="size-16 shrink-0 rounded-xl" />
           <div className="min-w-0">
             <p className="font-semibold text-ink">{event.title}</p>
             <p className="text-sm text-ink-soft">{formatEventWhen(event.startsAt, event.endsAt)}</p>

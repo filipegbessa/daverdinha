@@ -27,7 +27,7 @@ const pastEvent = {
   locationAddress: null,
   price: 100,
   spots: null,
-  imageUrl: null,
+  images: [],
   ticketSales: false,
   maxTicketsPerOrder: 10,
   spotsLeft: null,

@@ -67,7 +67,7 @@ export function eventJsonLd(event: SiteEvent): Record<string, unknown> {
     ...(event.endsAt ? { endDate: event.endsAt } : {}),
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    ...(event.imageUrl ? { image: [event.imageUrl] } : {}),
+    ...(event.images.length > 0 ? { image: event.images } : {}),
     location: atAtelier
       ? {
           '@type': 'Place',

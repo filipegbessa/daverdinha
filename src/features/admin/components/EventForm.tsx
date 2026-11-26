@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/features/admin/lib/api-client';
 import { useApiMutation } from '@/features/admin/lib/use-api-mutation';
 import { fromDatetimeLocal, toDatetimeLocal } from '@/features/admin/lib/datetime-local';
-import { IMAGE_UPLOAD } from '@/features/admin/lib/image-upload';
 import { centsFromInput } from '@/features/admin/lib/currency-input';
 import { formatCurrency, formatDateTime } from '@/lib/format';
 import { FormCard } from '@/features/admin/components/FormCard';
 import { FormField, SwitchField } from '@/features/admin/components/FormField';
+import { ImagesInput } from '@/features/admin/components/ImagesInput';
 import { ErrorText } from '@/features/admin/components/StatusMessage';
 import type { EventAdmin } from '@/features/admin/types/admin';
 
@@ -20,7 +20,7 @@ const MIN_PER_ORDER = 1;
 const MAX_PER_ORDER = 50;
 const DEFAULT_PER_ORDER = 10;
 
-type Errors = Partial<Record<'endsAt' | 'spots' | 'maxTicketsPerOrder' | 'image', string>>;
+type Errors = Partial<Record<'title' | 'description' | 'endsAt' | 'spots' | 'maxTicketsPerOrder', string>>;
 
 interface Values {
   title: string;
@@ -57,14 +57,6 @@ function valuesOf(event: Partial<EventAdmin> | null): Values {
   };
 }
 
-function validImage(file: File): string | null {
-  if (!(IMAGE_UPLOAD.mimeTypes as readonly string[]).includes(file.type)) {
-    return `"${file.name}" precisa ser ${IMAGE_UPLOAD.typesLabel}.`;
-  }
-  if (file.size > IMAGE_UPLOAD.maxBytes) return `"${file.name}" passa de ${IMAGE_UPLOAD.maxLabel}.`;
-  return null;
-}
-
 /**
  * O cadastro de evento em página própria (`/admin/eventos/novo` e
  * `/admin/eventos/<id>`), no lugar do antigo modal, no mesmo padrão do
@@ -75,8 +67,8 @@ function validImage(file: File): string | null {
  * gratuito, sem vagas = sem limite). Datas no horário do Rio, enviadas em UTC.
  *
  * `event` é o que está salvo (editar); `initial` só preenche um evento novo
- * (duplicar), sem capa. Com alterações não salvas, fechar ou recarregar a aba
- * pede confirmação.
+ * (duplicar), sem fotos. Com alterações não salvas, fechar ou recarregar a
+ * aba pede confirmação.
  */
 export function EventForm({
   event,
@@ -93,18 +85,13 @@ export function EventForm({
   const save = useApiMutation('Erro ao salvar o evento.');
   const [baseline, setBaseline] = useState(() => valuesOf(event ?? initial ?? null));
   const [values, setValues] = useState(baseline);
-  const [image, setImage] = useState<File | null>(null);
-  const [removeImage, setRemoveImage] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<Errors>({});
   const [savedNotice, setSavedNotice] = useState<string | null>(notice ?? null);
-  const [preview, setPreview] = useState<string | null>(null);
 
   const dirty = useMemo(
-    () =>
-      image !== null ||
-      removeImage ||
-      (Object.keys(values) as (keyof Values)[]).some((key) => values[key] !== baseline[key]),
-    [values, baseline, image, removeImage],
+    () => files.length > 0 || (Object.keys(values) as (keyof Values)[]).some((key) => values[key] !== baseline[key]),
+    [values, baseline, files],
   );
   const canSave = !event || dirty;
 
@@ -115,16 +102,6 @@ export function EventForm({
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
 
-  useEffect(() => {
-    if (!image || typeof URL.createObjectURL !== 'function') {
-      setPreview(null);
-      return;
-    }
-    const url = URL.createObjectURL(image);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [image]);
-
   function set<K extends keyof Values>(key: K, value: Values[K]) {
     setSavedNotice(null);
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -132,6 +109,8 @@ export function EventForm({
 
   function validate(start: string | null, end: string | null): Errors {
     const found: Errors = {};
+    if (values.title.trim() === '') found.title = 'Informe o título do evento.';
+    if (values.description.trim() === '') found.description = 'Informe a descrição do evento.';
     if (start && end && end < start) found.endsAt = 'O fim tem que ser depois do início.';
     if (!values.unlimited && !(Number.isInteger(Number(values.spots)) && Number(values.spots) >= 1)) {
       found.spots = 'Informe a quantidade de vagas, ou marque "Sem limite de vagas".';
@@ -165,8 +144,7 @@ export function EventForm({
     form.append('ticketSales', String(values.ticketSales));
     // Só com a venda ligada: desligada, o limite salvo fica guardado na API.
     if (values.ticketSales) form.append('maxTicketsPerOrder', values.maxPerOrder);
-    if (image) form.append('image', image);
-    else if (removeImage) form.append('removeImage', 'true');
+    files.forEach((file) => form.append('images', file));
 
     let saved: EventAdmin | undefined;
     const ok = await save.run(async () => {
@@ -178,30 +156,19 @@ export function EventForm({
     const next = valuesOf(saved);
     setBaseline(next);
     setValues(next);
-    setImage(null);
-    setRemoveImage(false);
+    setFiles([]);
     if (event) setSavedNotice('Alterações salvas.');
     onSaved(saved);
   }
 
   function discard() {
     setValues(baseline);
-    setImage(null);
-    setRemoveImage(false);
+    setFiles([]);
     setErrors({});
     save.clearError();
   }
 
-  function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    const problem = file ? validImage(file) : null;
-    setErrors((prev) => ({ ...prev, image: problem ?? undefined }));
-    setSavedNotice(null);
-    setImage(problem ? null : file);
-    if (problem) e.target.value = '';
-  }
-
-  const cover = preview ?? (removeImage ? null : (event?.imageUrl ?? null));
+  const cover = files.length === 0 ? (event?.images[0] ?? null) : null;
   const start = fromDatetimeLocal(values.startsAt);
 
   return (
@@ -214,10 +181,10 @@ export function EventForm({
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="order-2 space-y-6 lg:order-1">
           <FormCard title="Informações">
-            <FormField id="eventTitle" label="Título">
+            <FormField id="eventTitle" label="Título" error={errors.title}>
               <Input id="eventTitle" value={values.title} onChange={(e) => set('title', e.target.value)} required />
             </FormField>
-            <FormField id="eventDescription" label="Descrição">
+            <FormField id="eventDescription" label="Descrição" error={errors.description}>
               <Textarea
                 id="eventDescription"
                 value={values.description}
@@ -264,29 +231,16 @@ export function EventForm({
             </div>
           </FormCard>
 
-          <FormCard title="Capa">
-            <FormField
-              id="eventImage"
-              label="Foto"
-              hint={`Capa do evento (${IMAGE_UPLOAD.typesLabel}, até ${IMAGE_UPLOAD.maxLabel}).`}
-              error={errors.image}
-            >
-              <Input id="eventImage" type="file" accept={IMAGE_UPLOAD.mimeTypes.join(',')} onChange={handleImage} />
-            </FormField>
-            {event?.imageUrl && !image && (
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={removeImage}
-                  onChange={(e) => {
-                    setSavedNotice(null);
-                    setRemoveImage(e.target.checked);
-                  }}
-                  className="h-4 w-4 accent-primary"
-                />
-                Remover a foto atual
-              </label>
-            )}
+          <FormCard title="Imagens">
+            <ImagesInput
+              id="eventImages"
+              currentImages={event?.images ?? []}
+              files={files}
+              onChange={(next) => {
+                setSavedNotice(null);
+                setFiles(next);
+              }}
+            />
           </FormCard>
 
           <FormCard title="Ingressos e vagas">

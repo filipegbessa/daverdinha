@@ -66,7 +66,7 @@ describe('/agenda/[slug]/ingressos', () => {
       locationAddress: null,
       price: null,
       spots: null,
-      imageUrl: null,
+      images: [],
       ticketSales: false,
       maxTicketsPerOrder: 10,
       spotsLeft: null,

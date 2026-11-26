@@ -22,7 +22,7 @@ const event: SiteEvent = {
   locationAddress: null,
   price: 45,
   spots: 20,
-  imageUrl: null,
+  images: [],
   ticketSales: true,
   maxTicketsPerOrder: 4,
   spotsLeft: 10,

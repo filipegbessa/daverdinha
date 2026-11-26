@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${event.title} · ${formatEventShort(event.startsAt)} · Daverdinha`,
     description: event.description.slice(0, 160),
     path: eventHref(event),
-    image: event.imageUrl ?? undefined,
+    image: event.images[0] ?? undefined,
   });
 }
 
@@ -73,7 +73,7 @@ export default async function EventPage({ params }: Props) {
           />
           <div className="mt-6 grid gap-10 md:grid-cols-2 md:gap-14">
             <ImagePlaceholder
-              src={event.imageUrl ?? undefined}
+              src={event.images[0] ?? undefined}
               alt={event.title}
               priority
               className="aspect-4/3 rounded-[2rem_0.75rem_2rem_0.75rem] shadow-card"

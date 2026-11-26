@@ -174,7 +174,7 @@ export function sampleEvents(now: Date = new Date()): SiteEvent[] {
       locationAddress: null,
       price: 120,
       spots: 8,
-      imageUrl: null,
+      images: [],
       // Venda pelo site ligada: a prévia mostra o formulário de ingresso pago.
       ticketSales: true,
       maxTicketsPerOrder: 4,
@@ -192,7 +192,7 @@ export function sampleEvents(now: Date = new Date()): SiteEvent[] {
       locationAddress: 'Praça da Harmonia, Gamboa, Rio de Janeiro',
       price: null,
       spots: null,
-      imageUrl: null,
+      images: [],
       // Gratuito com inscrição pelo site: a prévia mostra "Inscrever-se".
       ticketSales: true,
       maxTicketsPerOrder: 10,
@@ -210,7 +210,7 @@ export function sampleEvents(now: Date = new Date()): SiteEvent[] {
       locationAddress: null,
       price: 150,
       spots: 10,
-      imageUrl: null,
+      images: [],
       // Quase esgotado: o limite da compra vem das vagas, não do máximo por compra.
       ticketSales: true,
       maxTicketsPerOrder: 4,

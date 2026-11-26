@@ -19,7 +19,7 @@ const feirinha: EventAdmin = {
   ticketSales: false,
   published: false,
   sold: 0,
-  imageUrl: null,
+  images: [],
 };
 
 const inscricao: EventAdmin = {

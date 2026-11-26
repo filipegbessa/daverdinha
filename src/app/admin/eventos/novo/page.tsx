@@ -64,7 +64,7 @@ function NovoEvento() {
                   startsAt: undefined,
                   endsAt: null,
                   published: false,
-                  imageUrl: null,
+                  images: [],
                 }
               : undefined
           }

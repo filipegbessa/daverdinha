@@ -18,7 +18,8 @@ export interface SiteEvent {
   /** `null` = gratuito. */
   price: number | null;
   spots: number | null;
-  imageUrl: string | null;
+  /** URLs públicas; a primeira é a capa. */
+  images: string[];
   /**
    * Venda ou inscrição pelo site. A API já combina o "Vender ingressos pelo
    * site" do evento com o interruptor "Venda de ingressos" do Dashboard: o

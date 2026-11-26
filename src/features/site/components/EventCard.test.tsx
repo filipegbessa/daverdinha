@@ -13,7 +13,7 @@ const event: SiteEvent = {
   locationAddress: null,
   price: 120,
   spots: 8,
-  imageUrl: 'https://example.com/terrario.jpg',
+  images: ['https://example.com/terrario.jpg'],
   ticketSales: false,
   maxTicketsPerOrder: 10,
   spotsLeft: null,
@@ -39,7 +39,7 @@ describe('EventCard', () => {
   });
 
   it('shows a placeholder when the event has no photo', () => {
-    render(<EventCard event={{ ...event, imageUrl: null }} />);
+    render(<EventCard event={{ ...event, images: [] }} />);
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
