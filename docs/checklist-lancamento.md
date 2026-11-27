@@ -104,7 +104,8 @@ Tudo em `www.daverdinha.com.br/admin`. Dá para revisar o resultado em
       parte 1.
 - [ ] Cadastrar a chave de produção e o webhook de produção; fazer a compra
       real de valor baixo e estornar.
-- [ ] Adicionar o DMARC no DNS, para a confirmação do pedido não cair no spam.
+- [x] Registros de e-mail no DNS (Registro.br): DKIM, SPF e DMARC do Resend. *(Feito em 27/11.)*
+- [x] Reenviar uma confirmação para um Gmail e conferir SPF, DKIM e DMARC = PASS. *(Feito em 27/11.)*
 - [ ] Conferir o backup do banco (Neon).
 - [ ] Revisar a prévia com a Daverdinha.
 
