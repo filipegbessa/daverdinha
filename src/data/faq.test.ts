@@ -21,8 +21,9 @@ describe('faqItems', () => {
     expect(faqItems()[0].answer).toContain('WhatsApp');
   });
 
-  it('adds payment, pickup, tracking, returns, coupons and tickets with the store on', () => {
-    expect(questions(storeOn)).toHaveLength(11);
+  it('adds payment, pickup, tracking, invoice, returns, coupons and tickets with the store on', () => {
+    expect(questions(storeOn)).toHaveLength(12);
+    expect(questions(storeOn)).toContain('Vocês emitem nota fiscal?');
   });
 
   it('answers with what is set up in the admin', () => {

@@ -21,8 +21,8 @@ export function generateMetadata(): Promise<Metadata> {
 
 /**
  * Bairros e retirada vêm do admin (a mesma lista do bot e do checkout), não
- * de texto fixo. Prazos próprios entram com as respostas do
- * `docs/questionario-politicas.md`.
+ * de texto fixo. Prazos, dias de entrega e regras da retirada vêm das
+ * respostas da cliente ao `docs/questionario-politicas.md` (partes 1 a 3).
  */
 export default async function EntregaERetiradaPage() {
   const [{ home, storeEnabled, storePause }, zones, pickup] = await Promise.all([
@@ -45,8 +45,13 @@ export default async function EntregaERetiradaPage() {
           quando você informa o CEP.
         </p>
         <p>
-          Depois da confirmação do pagamento, combinamos o dia da entrega pelo WhatsApp e avisamos quando o pedido sair.
-          Peças sob encomenda saem depois da confecção, no prazo informado na página do produto.
+          Produtos de pronta entrega chegam em até <strong>4 dias úteis</strong> depois da confirmação do pagamento. O
+          dia é combinado com você pelo WhatsApp. Peças sob encomenda saem depois da confecção, no prazo informado na
+          página do produto.
+        </p>
+        <p>
+          Entregamos de <strong>quinta a sábado, das 10h às 16h</strong>, e avisamos pelo WhatsApp, com o horário
+          previsto, quando o pedido sair.
         </p>
         <div className="pt-2">
           <CepChecker />
@@ -78,6 +83,28 @@ export default async function EntregaERetiradaPage() {
           </p>
         )}
       </PolicySection>
+      <PolicySection title="Na hora de receber">
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            Qualquer pessoa no endereço pode receber (porteiro, vizinho, familiar). A partir daí, o pedido fica sob a
+            responsabilidade de quem recebeu.
+          </li>
+          <li>
+            Se não tiver ninguém pra receber, combinamos uma nova tentativa sem custo. Se a segunda também não der certo,
+            o pedido fica para retirar no ateliê.
+          </li>
+          <li>
+            Plantas que dá pra embalar vão em papel kraft. Ao receber, tire a planta da embalagem na hora e deixe em
+            lugar fresco.
+          </li>
+        </ul>
+      </PolicySection>
+      <PolicySection title="É presente?">
+        <p>
+          Dá pra mandar pra outra pessoa: coloque o endereço de quem vai receber no checkout e mande o recado pelo
+          WhatsApp, que a gente escreve num cartão.
+        </p>
+      </PolicySection>
       <PolicySection title="Retirada no ateliê">
         {pickup ? (
           <>
@@ -88,13 +115,30 @@ export default async function EntregaERetiradaPage() {
             </p>
             {pickup.instructions && <p className="whitespace-pre-line">{pickup.instructions}</p>}
             <p>
-              A retirada não tem custo. Avisamos pelo WhatsApp e por e-mail quando o pedido estiver pronto. Na retirada,
-              é só dizer o código do pedido (começa com DV).
+              A retirada não tem custo e é <strong>com hora marcada</strong>: o ateliê não abre todos os dias. O pedido
+              fica pronto em até 3 dias úteis depois da confirmação do pagamento; aí avisamos pelo WhatsApp e por e-mail
+              e combinamos o dia.
+            </p>
+            <p>
+              Na retirada, é só dizer o código do pedido (começa com DV) e o nome de quem comprou. Outra pessoa pode
+              buscar no seu lugar com essas duas informações.
+            </p>
+            <p>
+              O pedido fica guardado por até 10 dias depois do aviso. Passado esse prazo, entramos em contato. Se não
+              tivermos retorno, a planta pode ir pra outro cliente, e o valor pago vira crédito na loja (ou volta pra
+              você, se preferir).
             </p>
           </>
         ) : (
           <p>No momento, os pedidos do site são só com entrega.</p>
         )}
+      </PolicySection>
+      <PolicySection title="Se o pedido não puder sair">
+        <p>
+          Se, depois do pagamento, um produto não puder ser enviado (uma planta que se perdeu, um erro de estoque),
+          avisamos pelo WhatsApp em até 1 dia útil, e você escolhe entre trocar por outro produto ou receber todo o
+          dinheiro de volta.
+        </p>
       </PolicySection>
       <p>
         Desistiu ou algo chegou com problema? Veja{' '}

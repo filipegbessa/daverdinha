@@ -45,24 +45,57 @@ export default async function PoliticaDePrivacidadePage() {
             nome (se informado) e o conteúdo da conversa, pra dar continuidade ao atendimento e à entrega.
           </li>
           <li>
-            <strong>Compras pelo site:</strong> nome, e-mail, WhatsApp, CPF, CNPJ ou passaporte e o endereço de entrega,
-            pra processar o pagamento e entregar o pedido. Pra facilitar a próxima compra, nome, e-mail, WhatsApp e
-            endereço ficam salvos só no seu navegador; dá pra apagar no checkout, em &quot;Não é você? Limpar
+            <strong>Compras pelo site:</strong> nome, e-mail, WhatsApp e o endereço de entrega e, se você quiser
+            informar, CPF, CNPJ ou passaporte, pra processar o pagamento e entregar o pedido. Pra facilitar a próxima
+            compra, nome, e-mail, WhatsApp e endereço ficam salvos só no seu navegador; dá pra apagar no checkout, em &quot;Não é você? Limpar
             dados&quot;.
+          </li>
+          <li>
+            <strong>Proteção contra abuso:</strong> quando alguém faz um pedido ou pede os links em &ldquo;Meus
+            pedidos&rdquo;, registramos o endereço IP, só pra barrar robôs e tentativas repetidas.
           </li>
         </ul>
       </PolicySection>
       <PolicySection title="Como usamos esses dados">
         <p>
-          Usamos suas informações só pra atender pedidos, responder dúvidas e organizar entregas. Não vendemos nem
-          compartilhamos seus dados com terceiros, exceto com o Pagar.me, pra processar o pagamento, ou quando exigido
-          por lei.
+          Usamos suas informações só pra atender pedidos, responder dúvidas e organizar entregas. Não mandamos novidades
+          nem promoções por e-mail. Não vendemos seus dados e só os compartilhamos com os serviços que fazem a loja
+          funcionar, listados abaixo, ou quando exigido por lei.
         </p>
+      </PolicySection>
+      <PolicySection title="Serviços que usamos">
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            <strong>Pagar.me:</strong> processa o pagamento.
+          </li>
+          <li>
+            <strong>Resend:</strong> envia os e-mails do pedido.
+          </li>
+          <li>
+            <strong>Vercel e Neon:</strong> hospedam o site e o banco de dados.
+          </li>
+          <li>
+            <strong>Google Analytics:</strong> mede as visitas, só se você aceitar os cookies.
+          </li>
+          <li>
+            <strong>WhatsApp (Meta):</strong> as conversas de atendimento.
+          </li>
+        </ul>
+      </PolicySection>
+      <PolicySection title="Por quanto tempo guardamos">
+        <ul className="list-disc space-y-1 pl-5">
+          <li>Os dados dos pedidos (nome, contato e endereço) ficam guardados por 5 anos, por exigência contábil.</li>
+          <li>Fotos e áudios recebidos pelo WhatsApp são apagados depois de 3 anos.</li>
+        </ul>
       </PolicySection>
       <PolicySection title="Seus direitos">
         <p>
           De acordo com a Lei Geral de Proteção de Dados (LGPD), você pode pedir pra acessar, corrigir ou excluir seus
-          dados a qualquer momento — é só chamar a gente pelo WhatsApp.
+          dados a qualquer momento. É só chamar a gente pelo WhatsApp ou escrever pra{' '}
+          <a href={`mailto:${businessInfo.contact.email}`} className="font-semibold text-moss underline">
+            {businessInfo.contact.email}
+          </a>
+          .
         </p>
       </PolicySection>
       <PolicySection title="Contato">

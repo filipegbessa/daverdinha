@@ -82,6 +82,10 @@ export function faqItems(ctx: FaqContext = DEFAULT_FAQ_CONTEXT): FaqItem[] {
       link: { href: '/trocas-e-devolucoes', label: 'Trocas e devoluções' },
     },
     ctx.storeEnabled && {
+      question: 'Vocês emitem nota fiscal?',
+      answer: 'Precisa de nota fiscal? Peça pelo WhatsApp com o código do pedido (começa com DV).',
+    },
+    ctx.storeEnabled && {
       question: 'Como uso um cupom de desconto?',
       answer:
         'Digite o código no campo "Cupom" ao finalizar a compra. O desconto aparece no resumo antes do pagamento. Cada cupom tem as próprias regras, como valor mínimo e validade, e não vale pra produtos que já estão em promoção.',

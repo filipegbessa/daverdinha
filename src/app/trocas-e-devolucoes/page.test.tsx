@@ -11,6 +11,17 @@ describe('TrocasEDevolucoesPage', () => {
     expect(screen.getByText(/até 90 dias/)).toBeInTheDocument();
   });
 
+  it('states the store rules on top of the law', async () => {
+    render(await TrocasEDevolucoesPage());
+
+    expect(screen.getAllByText('48 horas', { selector: 'strong' })).toHaveLength(2);
+    expect(screen.getByText(/Trocamos por outra planta igual ou de mesmo valor/)).toBeInTheDocument();
+    expect(screen.getByText(/Depois de 7 dias da entrega, o cuidado/)).toBeInTheDocument();
+    expect(screen.getByText(/a troca é\s+feita só no ateliê/)).toBeInTheDocument();
+    expect(screen.getByText(/cancelar antes ou durante a confecção, com todo o dinheiro de volta/)).toBeInTheDocument();
+    expect(screen.getByText('3 dias úteis', { selector: 'strong' })).toBeInTheDocument();
+  });
+
   it('says how to ask, by WhatsApp or email, with the order code', async () => {
     render(await TrocasEDevolucoesPage());
     const main = within(screen.getByRole('main'));
